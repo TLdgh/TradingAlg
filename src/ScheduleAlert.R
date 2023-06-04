@@ -2,12 +2,12 @@ library(beepr)
 library(quantmod)
 library(dplyr)
 
-source("Script/ChanLunFunction.R")
-source("Script/StockPlotFunction.R") 
-source("Script/MACDPower.R")
+source("src/ChanLunFunction.R")
+source("src/StockPlotFunction.R") 
+source("src/MACDPower.R")
 
 datalocation<-commandArgs(trailingOnly = TRUE)
-write.table(datalocation,file="/Users/tengli/CandleStickComb/OutputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE) # To be deleted
+write.table(datalocation,file=paste0(getwd(),"/CandleStickComb/OutputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE) # To be deleted
 
 DataToCheck<-list()
 for (i in 1:length(datalocation)){
@@ -16,7 +16,7 @@ for (i in 1:length(datalocation)){
 }
 
 #this is the initial Pivotalplanet setup
-Pivotalplanet<-read.csv(file="/Users/tengli/CandleStickComb/Pivotalplanet.csv", header = TRUE)
+Pivotalplanet<-read.csv(file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"), header = TRUE)
 
 DivergenceSig<-function(Data){  #this function gives the divergence signal
   DivSig<-MACDPower(DataToBeTested=Data, ScheduleAlert=TRUE)
@@ -126,7 +126,7 @@ for (i in 1:length(DataToCheck)){
 }
 
 #save the NewPivotalplanet as the current one. Note if the check above is false, then this save won't change anything.
-write.csv(NewPivotalplanet,file="/Users/tengli/CandleStickComb/Pivotalplanet.csv",row.names = FALSE)
+write.csv(NewPivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
 
 #update the initial Pivotalplanet
 Pivotalplanet<-NewPivotalplanet

@@ -5,32 +5,32 @@ countlimit<-0
 RawDataLocation<-list()
 
 for (i in 1:length(StkToBePrepared)) {
-  source("Script/MakeName.R") #make a name for your file
+  source("src/MakeName.R") #make a name for your file
   nam<-c(nam,MakeName(StkToBePrepared[[i]][1,]))
   InputFileLoc_Stk<-paste0(getwd(),"/Data/OriginalStockData/", StkToBePrepared[[i]][1,"GlobalMarket"], "/", nam[i], ".csv") #save the clean data
-  OutputFileLoc_Stk<-paste0("/Data/", StkToBePrepared[[i]][1,"GlobalMarket"], "/", nam[i], ".csv") #Save the clean data
-  CombFileLoc_Stk<-paste0("/Users/tengli/CandleStickComb/",StkToBePrepared[[i]][1,"GlobalMarket"], "/", nam[i], "Comb.csv") #read the combined data
+  OutputFileLoc_Stk<-paste0(getwd(),"/Data/", StkToBePrepared[[i]][1,"GlobalMarket"], "/", nam[i], ".csv") #Save the clean data
+  CombFileLoc_Stk<-paste0(getwd(),"/CandleStickComb/",StkToBePrepared[[i]][1,"GlobalMarket"], "/", nam[i], "Comb.csv") #read the combined data
   InputCombtxt <- c(InputCombtxt,OutputFileLoc_Stk) #this gives all the input locations of data files for candlestick combination
   OutputCombtxt <- c(OutputCombtxt,CombFileLoc_Stk)  #this gives all the locations of the combined data files
   
   #Prepare the data for plot
   if(StkToBePrepared[[i]][1,"GlobalMarket"]=="US"){
-    source("Script/IntradayContract.R")   #Get the original stock data
+    source("src/IntradayContract.R")   #Get the original stock data
     Get_Stock(tws,StkToBePrepared[[i]][1,"Symb"],StkToBePrepared[[i]][1,"endDateTime"],StkToBePrepared[[i]][1,"barSize"],StkToBePrepared[[i]][1,"duration"],
               InputFileLoc_Stk)
   }
   else{
-    source("Script/IntradayContract.R")   #Get the original stock data
+    source("src/IntradayContract.R")   #Get the original stock data
     Get_ChineseStock(Symb=StkToBePrepared[[i]][1,"Symb"][[1]], freq=StkToBePrepared[[i]][1,"intv"][[1]], fileloc=InputFileLoc_Stk)
   }
   
   cat("The following data is: ", nam[i], "\n")
   SecurityType <-StkToBePrepared[[i]][1,"SecurityType"]
   GlobalMarket<-StkToBePrepared[[i]][1,"GlobalMarket"]
-  source("Script/MyStrategy.R")
+  source("src/MyStrategy.R")
   countlimit<-DownloadData(nam[i])
   if(i<length(StkToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
   RawDataLocation[nam[i]]<-InputFileLoc_Stk
 }
 
-write.table(InputCombtxt,"/Users/tengli/CandleStickComb/InputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+write.table(InputCombtxt,paste0(getwd(),"/CandleStickComb/InputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)

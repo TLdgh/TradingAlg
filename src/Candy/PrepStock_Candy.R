@@ -10,12 +10,12 @@ countlimit<-0
 RawDataLocation<-list()
 
 for (i in 1:nrow(StkToBePrepared)) {
-  source("Script/MakeName.R") #make a name for your file
+  source("src/MakeName.R") #make a name for your file
   nam<-c(nam,MakeName(StkToBePrepared[i,]))
   
   #Pleae update your file locations here if necessary:
   InputFileLoc_Stk<-paste0(getwd(),"/Data", StkToBePrepared[i,"GlobalMarket"], "/", nam[i], ".csv") #save the clean data
-  CombFileLoc_Stk<-paste0("/Users/tengli/CandleStickComb/",StkToBePrepared[i,"GlobalMarket"], "/", nam[i], "Comb.csv") #read the combined data
+  CombFileLoc_Stk<-paste0(getwd(),"/CandleStickComb/",StkToBePrepared[i,"GlobalMarket"], "/", nam[i], "Comb.csv") #read the combined data
   InputCombtxt <- c(InputCombtxt,InputFileLoc_Stk) #this gives all the input locations of data files for candlestick combination
   OutputCombtxt <- c(OutputCombtxt,CombFileLoc_Stk)  #this gives all the locations of the combined data files
   
@@ -32,4 +32,4 @@ for (i in 1:nrow(StkToBePrepared)) {
   
 }
 
-write.table(InputCombtxt,paste0("/Users/tengli/CandleStickComb/InputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+write.table(InputCombtxt,paste0(getwd(),"/CandleStickComb/InputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)

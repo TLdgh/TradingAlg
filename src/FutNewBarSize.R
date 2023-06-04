@@ -53,17 +53,17 @@ nam<-character()
 for (i in 1:length(FutToBePrepared)){
   if(FutToBePrepared[[i]][1,"barSize"]!="Continuous"){
     NewBarOutputfile<-paste0(getwd(),"/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4H.csv") #Save the new bar data at this location
-    OutputCombtxt<-c(OutputCombtxt,paste0("/Users/tengli/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HComb.csv"))  #this gives the location of the combined data files
+    OutputCombtxt<-c(OutputCombtxt,paste0(getwd(),"/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HComb.csv"))  #this gives the location of the combined data files
     nam<-c(nam,paste0(FutToBePrepared[[i]][1,"Symb"],"4H"))
   }else{
     NewBarOutputfile<-paste0(getwd(),"/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuous.csv") #Save the new bar data at this location
-    OutputCombtxt<-c(OutputCombtxt,paste0("/Users/tengli/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv"))  #this gives the location of the combined data files
+    OutputCombtxt<-c(OutputCombtxt,paste0(getwd(),"/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv"))  #this gives the location of the combined data files
     nam<-c(nam,paste0(FutToBePrepared[[i]][1,"Symb"],"4HContinuous"))
   }
   
   write.csv(FutNewBarSize(DataFile=RawDataLocation[[i]], interval="1H", barSize = 4), file=NewBarOutputfile, row.names = FALSE)
   InputCombtxt<-c(InputCombtxt,NewBarOutputfile)#this gives the input location of data files for candlestick combination app
 }    
-write.table(InputCombtxt,"/Users/tengli/CandleStickComb/InputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+write.table(InputCombtxt,paste0(getwd(),"/CandleStickComb/InputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
 
 

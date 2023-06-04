@@ -30,19 +30,18 @@ isConnected(tws)#check if connected or not
 twsConnectionTime(tws)# check what time did you connect
 twsDisconnect(tws)#to disconnect
 
-source("Script/FuturesInfo.R")
-source("Script/MyStrategy.R")
-source("Script/ChanLunFunction.R")
-source("Script/StockPlotFunction.R")
-source("Script/MACDPower.R")
-source("Script/SignalPlot.R")
-source("Script/ChartReplay.R")
-source("Script/Bootstrap.R")
+source("src/FuturesInfo.R")
+source("src/MyStrategy.R")
+source("src/ChanLunFunction.R")
+source("src/StockPlotFunction.R")
+source("src/MACDPower.R")
+source("src/SignalPlot.R")
+source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
 FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
-source("Script/PrepFutures.R")  #This script downloads the data and prepare for combination
+source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 
 #Step 2------------------------------------------
@@ -50,7 +49,7 @@ source("Script/PrepFutures.R")  #This script downloads the data and prepare for 
 
 
 #Step 3------------------------------------------
-#This script load the combined data
+#This src load the combined data
 
 ReadCombData(OutputCombtxt,nam) 
 
@@ -78,13 +77,13 @@ MultiChart(list(NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQ
 SimTrend(NQContinuous,n=2,CombineSim= TRUE)
 
 ################ Data with modified bar size. Need to download the smaller barsize data e.g 1H, then run FutNewBarSize function to convert to a bigger bar size.
-source("/Users/tengli/R/Script/FutNewBarSize.R") #the following function converts the barsize
+source("src/FutNewBarSize.R") #the following function converts the barsize
 
 #please combine the data using the CandleStickApp, then proceed with the next step
 
-ReadCombData(OutputCombtxt,nam)     #This script load the combined data
+ReadCombData(OutputCombtxt,nam)     #This src load the combined data
 
-source("/Users/tengli/R/Script/StockPlotFunction.R") #everytime we run a function from a different script, we must run this command
+source("src/StockPlotFunction.R") #everytime we run a function from a different src, we must run this command
 StockChart(NQ4H, Title = "NQ4H")
 StockChart(GC4H, Title = "GC4H")
 StockChart(GCW, Title = "GCW")
@@ -106,7 +105,7 @@ COTContinuous<-read.csv("Data/NQ/NQContinuous.csv",header = TRUE) #this is the r
 COTContinuous<-merge(COTContinuous[,1:5], VOI, by.y="Date",all = FALSE)
 COT<-COT_na_approx(pricedata = COTContinuous, COT = COT)
 
-source("Script/StockPlotFunction.R") #everytime we run a function from a different script, we must run this command
+source("src/StockPlotFunction.R") #everytime we run a function from a different src, we must run this command
 FPVChart(COTContinuous, COT)
 FPVCOTChart(COTContinuous, COT)
 
@@ -117,9 +116,9 @@ FPVCOTChart(COTContinuous, COT)
 #CoDivergence generates signals for a single stock
 #with multiple time scales.
 
-source("Script/SignalPlot.R") #everytime we run a function from a different script, we must run this command
+source("src/SignalPlot.R") #everytime we run a function from a different src, we must run this command
 FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
-source("Script/PrepFutures.R")
+source("src/PrepFutures.R")
 SignalPlot(list(NQContinuous=NQContinuous), AddSignal=TRUE)
 MultiSignalChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
 
@@ -168,7 +167,7 @@ ChartReplay(Pricedata=QQQ_daily,Title="QQQ_daily", StartDate="2000-04-14", UerIn
 #######################################################################################################
 
 #Bootstrap
-source("Script/BootStrap.R")
+source("src/BootStrap.R")
 BootStrap(DataToBeFit=NQ5F, OriginalData=NQ5FContinuous, nboot = 200)
 BootStrap(DataToBeFit=NQ30F, OriginalData=NQ30FContinuous, nboot = 200)
 BootStrap(DataToBeFit=NQContinuous, OriginalData=QQQ_daily, nboot = 5000)
@@ -179,7 +178,7 @@ BootStrap(DataToBeFit=QQQ_weekly, OriginalData=NQWContinuous, nboot=10000)
 #######################################################################################################
 #######################################################################################################
 #Calculate the maximum number of positions you can add
-source("Script/PL_Change.R") #everytime we run a function from a different script, we must run this command
+source("src/PL_Change.R") #everytime we run a function from a different src, we must run this command
 MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, Leverage=2)
 
 
@@ -193,13 +192,13 @@ Pivotalplanet<-data.frame()
 for (i in 1:length(DataToAlert)) {
   Pivotalplanet<-rbind(Pivotalplanet,tail(subset(as.data.frame(PlanetFunction(StarFunction(DataToAlert[[i]]))), PlanetHigh!=0),1))
 }
-write.csv(Pivotalplanet,file="/Users/tengli/CandleStickComb/Pivotalplanet.csv",row.names = FALSE)
+write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
 
 #Step2: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
 #Step3: if you need to get the updated data, run the following:
-OutputCombtxt<-readLines("/Users/tengli/CandleStickComb/OutputLoc.txt")
+OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
-ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This script load the combined data
+ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This src load the combined data
 StockChart(NQ1F, Title = "NQ1F")
 
 

@@ -18,13 +18,12 @@ library(tidyquant)
 library(plotly)
 library(IBrokers)
 
-source("Script/StockInfo.R")
-source("Script/MyStrategy.R")
-source("Script/ChanLunFunction.R")
-source("Script/StockPlotFunction.R")
-source("Script/MACDPower.R")
-source("Script/SignalPlot.R")
-source("Script/ChartReplay.R")
+source("src/StockInfo.R")
+source("src/MyStrategy.R")
+source("src/ChanLunFunction.R")
+source("src/StockPlotFunction.R")
+source("src/MACDPower.R")
+source("src/SignalPlot.R")
 
 #User must specify the IB port number
 tws <- twsConnect(port = ) #to connect with TWS
@@ -36,13 +35,13 @@ twsDisconnect(tws)#to disconnect
 #Step 1------------------------------------------
 #IMPORTANT! If the data does not exist, the user 
 #must initialize it by using InitializeStock.R.
-#Details please refer to the script.
+#Details please refer to the src.
 
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
 StkToBePrepared<-GetStockInfo(STK = c("TSLA","GOOGL","AAPL","MSFT","AMD"), interval = c("30F","daily"))
-source("Script/PrepStock.R")
+source("src/PrepStock.R")
 
 
 #Step 2------------------------------------------
@@ -50,7 +49,7 @@ source("Script/PrepStock.R")
 
 
 #Step 3------------------------------------------
-#This script load the combined data
+#This src load the combined data
 
 ReadCombData(OutputCombtxt,nam) 
 
@@ -135,7 +134,7 @@ ChartReplay(Pricedata=QQQ_daily,Title="QQQ_daily", StartDate="2000-04-14", UerIn
 #________________________________________Additional Features___________________________________________
 #######################################################################################################
 #Portfolio weight returns
-source("/Users/tengli/R/Script/Portfolio Weight.R")
+source("src/Portfolio Weight.R")
 MaxPortfolio(DataName=c("MARA_daily", "NVDA_daily", "AAPL_daily"), Bookcost = 100000)
 
 
@@ -144,7 +143,7 @@ MaxPortfolio(DataName=c("MARA_daily", "NVDA_daily", "AAPL_daily"), Bookcost = 10
 #######################################################################################################
 #Calculate the maximum number of positions you can add
 
-source("/Users/tengli/R/Script/PL_Change.R") #everytime we run a function from a different script, we must run this command
+source("src/PL_Change.R") #everytime we run a function from a different src, we must run this command
 MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, Leverage=2)
 
 
@@ -152,7 +151,7 @@ MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, 
 #######################################################################################################
 #######################################################################################################
 #Options
-source("/Users/tengli/R/Script/OptionCalculator.R")
+source("src/OptionCalculator.R")
 BlackScholes(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type = "C")
 Greeks(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type = "C")
 DGTOptionModel(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type="C",PredictedP=205,day=1)
@@ -168,14 +167,14 @@ Pivotalplanet<-data.frame()
 for (i in 1:length(DataToAlert)) {
   Pivotalplanet<-rbind(Pivotalplanet,tail(subset(as.data.frame(PlanetFunction(StarFunction(DataToAlert[[i]]))), PlanetHigh!=0),1))
 }
-write.csv(Pivotalplanet,file="/Users/tengli/CandleStickComb/Pivotalplanet.csv",row.names = FALSE)
+write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
 
 #Step2: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
 #Step3: if you need to get the updated data, run the following:
-OutputCombtxt<-readLines("/Users/tengli/CandleStickComb/OutputLoc.txt")
+OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
-source("/Users/tengli/R/Script/MyStrategy.R")
-ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This script load the combined data
+source("src/MyStrategy.R")
+ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This src load the combined data
 StockChart(AMD30F, Title = "AMD30F")
 
 

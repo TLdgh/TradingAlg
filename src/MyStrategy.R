@@ -35,8 +35,6 @@ DownloadData<- function(nam){
     print(head(fx_DWM))
     print(tail(fx_DWM))
     
-    #source("/Users/tengli/R/Script/Proceed.R") #check if data is ready ? if yes then we can proceed with candlestick combination   
-    #if (Proceed()=="n") {stop("please recheck data")}else{print("Data is saved! You may combine the condlesticks!")}
     write.csv(fx_DWM, file =InputFileLoc_Stk, row.names = FALSE)
     countlimit<-countlimit+1
     if(countlimit%%5==0){print("Please wait for 1 minute.");Sys.sleep(60);countlimit<-0}

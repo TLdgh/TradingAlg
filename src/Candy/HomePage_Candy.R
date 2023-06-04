@@ -13,12 +13,11 @@ library(tidyverse)
 library(tidyquant)
 library(plotly)
 
-source("Script/Candy/GetData_Candy.R")
-source("Script/ChanLunFunction.R")
-source("Script/StockPlotFunction.R")
-source("Script/MACDPower.R")
-source("Script/SignalPlot.R")
-source("Script/ChartReplay.R")
+source("src/Candy/GetData_Candy.R")
+source("src/ChanLunFunction.R")
+source("src/StockPlotFunction.R")
+source("src/MACDPower.R")
+source("src/SignalPlot.R")
 
 av_api_key("<77P2LJBQ51UX69O7>")
 
@@ -39,7 +38,7 @@ NumOfMonths <-c(1)
 GlobalMarket <- c("US")                                             
 OutputSize <- "full"                  
 
-source("Script/Candy/PrepStock_Candy.R")
+source("src/Candy/PrepStock_Candy.R")
 
 
 #Step 2:-----------------------------
@@ -47,7 +46,7 @@ source("Script/Candy/PrepStock_Candy.R")
 
 
 #Step 3:-----------------------------
-#This script load the combined data
+#This src load the combined data
 
 ReadCombData(OutputCombtxt,nam)     
 
@@ -118,7 +117,7 @@ ChartReplay(Pricedata=QQQ_daily,Title="QQQ_daily", StartDate="2000-04-14", UerIn
 #________________________________________Additional Features___________________________________________
 #######################################################################################################
 #Portfolio weight returns
-source("/Users/tengli/R/Script/Portfolio Weight.R")
+source("src/Portfolio Weight.R")
 MaxPortfolio(DataName=c("MARA_daily", "NVDA_daily", "AAPL_daily"), Bookcost = 100000)
 
 
@@ -127,7 +126,7 @@ MaxPortfolio(DataName=c("MARA_daily", "NVDA_daily", "AAPL_daily"), Bookcost = 10
 #######################################################################################################
 #Calculate the maximum number of positions you can add
 
-source("/Users/tengli/R/Script/PL_Change.R") #everytime we run a function from a different script, we must run this command
+source("src/PL_Change.R") #everytime we run a function from a different src, we must run this command
 MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, Leverage=2)
 
 
@@ -135,7 +134,7 @@ MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, 
 #######################################################################################################
 #######################################################################################################
 #Options
-source("/Users/tengli/R/Script/OptionCalculator.R")
+source("src/OptionCalculator.R")
 BlackScholes(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type = "C")
 Greeks(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type = "C")
 DGTOptionModel(S=200,K=200,r=0.05,delt=0,TimeToExpiry=30/365,sig=0.4,type="C",PredictedP=205,day=1)
