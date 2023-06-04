@@ -1,0 +1,154 @@
+library(beepr)
+library(quantmod)
+library(dplyr)
+
+source("Script/ChanLunFunction.R")
+source("Script/StockPlotFunction.R") 
+source("Script/MACDPower.R")
+
+datalocation<-commandArgs(trailingOnly = TRUE)
+write.table(datalocation,file="/Users/tengli/CandleStickComb/OutputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE) # To be deleted
+
+DataToCheck<-list()
+for (i in 1:length(datalocation)){
+  DataToCheck[[i]]<-read.csv(file=datalocation[i],header = TRUE)
+  DataToCheck[[i]]<-DataToCheck[[i]][order(DataToCheck[[i]]$Date, decreasing = FALSE),]
+}
+
+#this is the initial Pivotalplanet setup
+Pivotalplanet<-read.csv(file="/Users/tengli/CandleStickComb/Pivotalplanet.csv", header = TRUE)
+
+DivergenceSig<-function(Data){  #this function gives the divergence signal
+  DivSig<-MACDPower(DataToBeTested=Data, ScheduleAlert=TRUE)
+  
+  value<-sum(DivSig[[2]][,1])+sum(DivSig[[3]][,1])+sum(DivSig[[4]][,1])
+  ThreeLineDiv<-unique(DivSig[[6]][,"ThreeLineDivergence"])
+  BOLLvalue<-0
+  if (DivSig[[5]][,2]>=0.75 | DivSig[[5]][,2]<=0.25){BOLLvalue<-1}
+  StarStrength<-DivSig[[7]][,2] #this is 分型强度 in MACD
+  MACDalert<-DivSig[[7]][,3] #this is MACD Alert
+  
+  Signal<-0
+  if((value=>4 & StarStrength>0) | MACDalert==1){Signal<-1}
+  return(Signal)
+}
+
+TrendReverse<-function(PriceData,whichplanet=Pivotalplanet){    #check the alert signal for a planet, by default the latest planet 0
+  StarData <- StarFunction(PriceData)
+  Bi<- BiFunction(StarData)
+  
+  InPlanetBi<-subset(Bi, Bi$BiEndD==whichplanet$PlanetStartD)
+  OutPlanetBi<-subset(Bi, Bi$BiStartD==whichplanet$PlanetEndD)
+  
+  InIndex<-which(Bi$SLOPE==InPlanetBi$SLOPE & Bi$BiStartD==InPlanetBi$BiStartD)
+  OutIndex<-which(Bi$SLOPE==OutPlanetBi$SLOPE & Bi$BiStartD==OutPlanetBi$BiStartD)
+  
+  beginl<-OutIndex
+  Remain<-nrow(PriceData)-which(PriceData$Date==OutPlanetBi$BiEndD) #check #of data point remaining
+  
+  Signal<-0
+  if(beginl<=(nrow(Bi)-1) & Remain>=3){
+    Signal<-DivergenceSig(Data=subset(PriceData, index(PriceData)<=which(PriceData$Date==OutPlanetBi$BiEndD)+1))
+  }
+  
+  Alert<-0
+  while(beginl<=(nrow(Bi)-1) & Remain>=4){
+    if (Bi[beginl,"SLOPE"]==1) {
+      if(Bi[beginl+1, "MIN"]>Bi[beginl, "MIN"] & UpPlanetBreaker(Bi, beginl=InIndex, newhighline=nrow(Bi)+1)==0){
+        if(beginl<=(nrow(Bi)-5) & Bi[beginl+3, "MIN"]<Bi[beginl+1, "MAX"] & SimpThirdSale(Bi=Bi,planet_range=planet(Bi,InIndex+1,InIndex+3),beginl=OutIndex)==0){    #if line2 and line4 has intersect and no 3rd sale to the original planet
+          planet_range<-planet(Bi,beginl+1, beginl+3)
+          count3rdsale<-0
+          for (i in seq((beginl+5),nrow(Bi),2)) {
+            if(Bi[i, "MAX"] < planet_range[1,2]){count3rdsale<-1} #if any future bi's max < planet low
+          }
+          if(count3rdsale==1){Alert<-1; break}else{break}
+        }
+        else if(beginl<=(nrow(Bi)-5) & SimpThirdSale(Bi=Bi,planet_range=planet(Bi,InIndex+1,InIndex+3),beginl=OutIndex)==1){
+          Alert<-1;break
+        }
+        else{beginl<-beginl+2}
+      }
+      else if(Bi[beginl+1, "MIN"]<=Bi[beginl, "MIN"] & UpPlanetBreaker(Bi, beginl=InIndex, newhighline=nrow(Bi)+1)==0){
+        planet_range<-planet(Bi,InIndex+1, InIndex+3)
+        count3rdsale<-0
+        for (i in seq((beginl),nrow(Bi)-1,2)) {
+          if(Bi[i, "MAX"] < planet_range[1,2] | Bi[i,"MAX"]<Bi[beginl,"MIN"] ){count3rdsale<-1} #if any future bi's max < planet low or homo-thirdsale
+        }
+        if(count3rdsale==1){Alert<-1; break}else{break}
+      }
+      else if(UpPlanetBreaker(Bi, beginl=InIndex, newhighline=nrow(Bi)+1)!=0){Alert<-1; break}else{break}
+    }
+    else if (Bi[beginl,"SLOPE"]==-1) {
+      if(Bi[beginl+1, "MAX"]<Bi[beginl, "MAX"] & DownPlanetBreaker(Bi, beginl=InIndex, newlowline=nrow(Bi)+1)==0){
+        if(beginl<=(nrow(Bi)-5) & Bi[beginl+3, "MAX"]>Bi[beginl+1, "MIN"] & SimpThirdBuy(Bi=Bi,planet_range=planet(Bi,InIndex+1,InIndex+3),beginl=OutIndex)==0){             #if line2 and line4 has intersect
+          planet_range<-planet(Bi,beginl+1, beginl+3)
+          count3rdbuy<-0
+          for (i in seq((beginl+5),nrow(Bi),2)) {
+            if(Bi[i, "MIN"] > planet_range[1,1]){count3rdbuy<-1} #if any future bi's min > planet high
+          }
+          if(count3rdbuy==1){Alert<-1; break}else{break}
+        }
+        else if(beginl<=(nrow(Bi)-5) & SimpThirdBuy(Bi=Bi,planet_range=planet(Bi,InIndex+1,InIndex+3),beginl=OutIndex)==1){
+          Alert<-1;break
+        }
+        else{beginl<-beginl+2}
+      }
+      else if(Bi[beginl+1, "MAX"]>=Bi[beginl, "MAX"] & DownPlanetBreaker(Bi, beginl=InIndex, newlowline=nrow(Bi)+1)==0){
+        planet_range<-planet(Bi,InIndex+1, InIndex+3)
+        count3rdbuy<-0
+        for (i in seq((beginl),nrow(Bi)-1,2)) {
+          if(Bi[i, "MIN"]>planet_range[1,1] | Bi[i,"MIN"]>Bi[beginl,"MAX"] ){count3rdbuy<-1}   #if any future bi's min > planet high or homo-thirdbuy
+        }
+        if(count3rdbuy==1){Alert<-1; break}else{break}
+      }
+      else if(DownPlanetBreaker(Bi, beginl=InIndex, newlowline=nrow(Bi)+1)!=0){Alert<-1; break}else{break}
+    }
+  }
+  return(c(Alert,Signal))  #combine both the reversal alert and divergence signal
+}
+
+CheckPivotalplanet<-function(PriceData,Pivotalplanet){ #check if the next planet is of the same direction
+  Bi<-BiFunction(StarFunction(PriceData))
+  
+  NewPivotalplanet<-tail(subset(as.data.frame(PlanetFunction(Bi)), PlanetHigh!=0),1)
+  NewInPlanetBi<-subset(Bi, Bi$BiEndD==NewPivotalplanet$PlanetStartD)
+  
+  OldInPlanetBi<-subset(Bi, Bi$BiEndD==Pivotalplanet$PlanetStartD)
+  
+  if (NewInPlanetBi$SLOPE==OldInPlanetBi$SLOPE) {return(TRUE)}else{return(FALSE)}
+}
+
+NewPivotalplanet<-Pivotalplanet #setup new one the same way as the old one.
+for (i in 1:length(DataToCheck)){ 
+  if (CheckPivotalplanet(PriceData=DataToCheck[[i]],Pivotalplanet[i,])==TRUE){ #if true, update the pivotalplanet
+    NewPivotalplanet[i,]<-tail(subset(as.data.frame(PlanetFunction(Bi=BiFunction(StarFunction(DataToCheck[[i]])) )), PlanetHigh!=0),1)
+  }
+}
+
+#save the NewPivotalplanet as the current one. Note if the check above is false, then this save won't change anything.
+write.csv(NewPivotalplanet,file="/Users/tengli/CandleStickComb/Pivotalplanet.csv",row.names = FALSE)
+
+#update the initial Pivotalplanet
+Pivotalplanet<-NewPivotalplanet
+
+RevOrDiv<-TrendReverse(PriceData=DataToCheck[[i]],whichplanet=Pivotalplanet[i,])
+
+if (RevOrDiv[1]==1){ #the reversal alert
+  for(j in 1:5){
+    beep(1)
+    Sys.sleep(2)
+  }
+}
+
+if(RevOrDiv[2]==1){ #the divergence signal
+  for(j in 1:3){
+    beep(2)
+    Sys.sleep(1)
+  }
+}  
+
+
+
+
+
+

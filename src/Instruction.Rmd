@@ -1,0 +1,65 @@
+---
+title: "缠论程序"
+date: "12/18/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+#For all securities:
+library(tidyverse)
+library(tidyquant)
+library(plotly)
+library(knitr)
+library(timetk)
+library(meboot)
+library(KSgeneral)
+```
+
+### 简要
+通过研究缠论，我意识到这套理论最底层的一些逻辑，比如中枢的本质是资金博弈选择方向时候的过程，一个蓄力和阻碍的地方。跟某些领域比如工程上的碰撞分析很类似，中枢像一堵强，在价格的不同位置撞墙需要的能量和撞的位置是需要分析的。同时缠论引进的区间套的理论非常契合数学物理，类似于求导和傅立叶分析。行业内有基于傅立叶分析建立的金融数学模型，但是分析方法更像是物理上的信号处理，比如光学和电信号频谱分析。这没有理解到缠论背离的本质。分析目的在于找背离，但是傅立叶金融模型没有这个概念。所以有学术研究指出这个模型没用。我看过研究论文，里面就缺了找背离这一块，当然就没用。我逐渐在交易实践过程中发现某些蛛丝马迹，所以我的目标是分析这些因素，建立程序来辅助交易。
+
+### 缠论基本走势图
+数据已全k线合并（没有用简易化的版本）。优势在于电脑简单粗暴，而且可以减少省去线段这个概念的影响（我不用线段）。
+```{r}
+NQ30F<-read.csv("/Users/tengli/CandleStickComb/NQ/NQ30FComb.csv",header=TRUE)
+NQ30F<-NQ30F[order(NQ30F$Date, decreasing = FALSE),]
+NQ5F<-read.csv("/Users/tengli/CandleStickComb/NQ/NQ5FComb.csv",header=TRUE)
+NQ5F<-NQ5F[order(NQ5F$Date, decreasing = FALSE),]
+NQ1F<-read.csv("/Users/tengli/CandleStickComb/NQ/NQ1FComb.csv",header=TRUE)
+NQ1F<-NQ1F[order(NQ1F$Date, decreasing = FALSE),]
+source("/Users/tengli/R/Script/StockPlotFunction.R") 
+MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
+```
+
+### 背驰指标
+背驰指标有三种：中枢进出笔的幅度背驰；MACD能量背驰；和量的MACD能量背驰。进出笔背驰的前提是出去笔的走势级别要等于大于进入笔的走势级别，在这个前提下如果幅度还背驰才能被认为是真正的中枢进出部分背驰。MACD和VMACD能量背驰也对应着进出笔。量的背驰还需要继续研究，目前还是有问题。
+```{r}
+source("/Users/tengli/R/Script/MACDPower.R")
+MACDPower(DataToBeTested=NQ30F,Period = NULL, BarOverride=FALSE)
+```
+
+缠论区间套的意义就在不同级别下背驰引发各个级别共振，结合前面所有的分析后，给出这个共振信号。单个级别也可以分析，大行情需要共振。
+```{r}
+CoDivergence(DataToBeTested=list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F), BarOverride=c(FALSE,FALSE,FALSE))
+```
+
+### Bootstrap
+我把做盘周期对应的历史数据下载下来，比如看着30分钟做盘，就下载30分钟数据。然后将所有中枢进行分类，一共分出72种作为测试的原始数据。在当下的缠论中枢（样品）背驰地方我需要将这个中枢与历史数据作比较，看跟哪一种分类最相似，以此预测未来反转的概率和强度。比较用的模型基于Bootstrap 和 Kolmogorov-Smirnov test，一种非参数统计方法。模拟一千种样品分布函数（次数可以更多，看电脑有多贵）。非参数统计的好处在于不需要对数据的未来分布函数进行预设，函数由emperical cdf Fn 直接代替。理论上Fn无穷接近于真实的未来分布函数。现代金融模型理论里通常将未来函数假设成正态分布，所以是一种参数统计，问题很多而且现实不成立，所以我不选择这个传统方法。中枢分类方法见下图。分类能够涵盖大部分的走势，可能有一些怪异的中枢没有涵盖，暂时忽略。有些问题需要研究：这个模型需要大量的历史数据，理论上最好历史数据拥有全部72种分类，但是这在大周期上是不成立的，所以大周期的测试怎么进行？是否可以用5分钟的历史数据去测试周图上的样品中枢？同样问题也出现在比较新的股票，没有数据就歇菜。其次有些中枢分类是很少见的，比如类型1316，但整个历史数据中只有1个1316，所以当下的样品除非跟这个分类吻合度比较高，否则哪怕模拟1万次也没用。换句话说系统对于非常少见的走势是预测不准的。好在大部分正常的中枢有很多，模拟以后取平均值就可以。
+```{r}
+source("/Users/tengli/R/Script/Models.R")
+DataToBeFit<-subset(NQ5F,Date>="2021-12-27 15:10:00")
+DataToBeFit<-subset(DataToBeFit,Date<="2021-12-28 07:50:00")
+FitResult<-lapply(1:1,function(i) tryCatch(MainBootstrap(DataToBeFit=DataToBeFit,OriginalData=list(NQ5F)[[i]], nboot=100), error=function(e){message(paste("An error occurred for item", i,":\n"), e)} ))
+BootFinalResult<-sapply(unique(names(unlist(FitResult))), function(x) sum(unlist(FitResult)[x==names(unlist(FitResult))]))
+BootFinalResult<-setNames(object=BootFinalResult,nm=unique(names(unlist(BootFinalResult))))
+BootFinalResult<-split(BootFinalResult, c("ConfidenceRate","P(reversal|simulation)", "P(reversal|currentdata)"))
+sort(BootFinalResult$ConfidenceRate)
+```
+
+
+
+
+
