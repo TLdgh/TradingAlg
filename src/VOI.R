@@ -29,9 +29,9 @@ for (val in Instrument){
   VOI$Date<-as.character(VOI$Date)
   
   if (val=="NQ"){
-    write.csv(VOI,file="CMEVOI/NQ_DailyVOI.csv", row.names = F)
+    write.csv(VOI,file=paste0(getwd(), "CMEVOI/NQ_DailyVOI.csv"), row.names = F)
   }else if(val=="CAD"){
-    write.csv(VOI,file="CMEVOI/CAD_DailyVOI.csv", row.names = F)
+    write.csv(VOI,file=paste0(getwd(), "CMEVOI/CAD_DailyVOI.csv"), row.names = F)
   }
 }
 
@@ -103,10 +103,10 @@ for (val in Instrument){
   
   if (val=="NQ"){
     CFTC_OI<-CFTC_OI[order(CFTC_OI$Date, decreasing=FALSE),] #resort by date ascending.
-    write.csv(CFTC_OI,file="CFTC_OI/NQ_Open_Interest.csv", row.names = F)
+    write.csv(CFTC_OI,file=paste0(getwd(), "CFTC_OI/NQ_Open_Interest.csv"), row.names = F)
   }else if(val=="CAD"){
     CFTC_OI<-CFTC_OI[order(CFTC_OI$Date, decreasing=FALSE),]
-    write.csv(CFTC_OI,file="CFTC_OI/CAD_Open_Interest.csv", row.names = F)
+    write.csv(CFTC_OI,file=paste0(getwd(), "CFTC_OI/CAD_Open_Interest.csv"), row.names = F)
   }
   
 }

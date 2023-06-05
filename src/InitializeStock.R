@@ -35,7 +35,7 @@ tail(Sdata)
 #download the data to the correct directory, make sure to give the correct csv name
 #this will write the xts data into a csv, which is a dataframe when later imported
 
-write.zoo(Sdata, sep=",", file="/Data/OriginalStockData/US/AAPL_daily.csv")
+write.zoo(Sdata, sep=",", file=paste0(getwd(),"/Data/OriginalStockData/US/AAPL_daily.csv"))
 
 
 
