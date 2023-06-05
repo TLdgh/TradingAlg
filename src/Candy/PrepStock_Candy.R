@@ -14,7 +14,7 @@ for (i in 1:nrow(StkToBePrepared)) {
   nam<-c(nam,MakeName(StkToBePrepared[i,]))
   
   #Pleae update your file locations here if necessary:
-  InputFileLoc_Stk<-paste0(getwd(),"/Data", StkToBePrepared[i,"GlobalMarket"], "/", nam[i], ".csv") #save the clean data
+  InputFileLoc_Stk<-paste0(getwd(),"/Data/", StkToBePrepared[i,"GlobalMarket"], "/", nam[i], ".csv") #save the clean data
   CombFileLoc_Stk<-paste0(getwd(),"/CandleStickComb/",StkToBePrepared[i,"GlobalMarket"], "/", nam[i], "Comb.csv") #read the combined data
   InputCombtxt <- c(InputCombtxt,InputFileLoc_Stk) #this gives all the input locations of data files for candlestick combination
   OutputCombtxt <- c(OutputCombtxt,CombFileLoc_Stk)  #this gives all the locations of the combined data files
