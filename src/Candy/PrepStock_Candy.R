@@ -27,7 +27,7 @@ for (i in 1:nrow(StkToBePrepared)) {
   GlobalMarket<-StkToBePrepared[i,"GlobalMarket"]
   OutputSize<-StkToBePrepared[i,"OutputSize"]
   cat("The following data is: ", nam[i], "\n")
-  countlimit<-DownloadData()
+  countlimit<-GetData_Candy()
   RawDataLocation[nam[i]]<-InputFileLoc_Stk
   
 }

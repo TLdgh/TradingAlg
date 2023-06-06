@@ -1,4 +1,4 @@
-DownloadData<- function(nam){
+GetData_Candy<- function(nam){
   if(SecurityType == "STK" & GlobalMarket=="US"){
     if(intv=="daily" | intv=="weekly" | intv=="monthly"){
       
