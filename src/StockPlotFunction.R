@@ -298,13 +298,13 @@ ChartReplay<-function(Pricedata, Title, PausePeriod=3, StartCandle=NULL,StartDat
   if(is.null(StartCandle)==TRUE & is.null(StartDate)==TRUE){i<-1}
   else if(is.null(StartCandle)==FALSE){i<-StartCandle}
   else{i<-which(Pricedata$Date==StartDate)}
-  
+  j<-1
   while(i<=nrow(Pricedata)){
     possibleError<-tryCatch( #This returns an object depending on error or not
       #The try part:
       expr = {
         #Check if there's an error, if not proceed, else goes to error function
-        res<-StockChart(Pricedata[1:i,], Title)
+        if(i<300){res<-StockChart(Pricedata[1:i,], Title)}else{res<-StockChart(Pricedata[j:i,], Title);j<-j+1}
         
         #evaluate based on UserInput or not
         if(UerInput=="Y"){
