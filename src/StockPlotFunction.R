@@ -131,7 +131,7 @@ StockChart<-function (Pricedata, Title){
   if(Alldata$MACD[1]>=0){Alldata$MACDdirection[1]<-"green"}else{Alldata$MACDdirection[1] = "red"}
   if(Alldata$MFI[1]>=0){Alldata$MFIdirection[1]<-"green"}else{Alldata$MFIdirection[1] = "red"}
   if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOLdirection[1] = 'green'}else{Alldata$VOLdirection[1] = 'red'}
-
+  
   for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
     if (Alldata$MACD[i] >= 0) {
       if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"green"}else{Alldata$MACDdirection[i]<-"palegreen"}
@@ -156,7 +156,7 @@ StockChart<-function (Pricedata, Title){
     else{Alldata$VOLdirection[i] = 'gold'}
     
   }
-
+  
   
   VolumeChart<-plot_ly(data=Alldata, x=~Date, y=~Volume, type='bar', marker=list(color = ~VOLdirection))%>%
     layout(xaxis=list(showticklabels=FALSE))
@@ -298,13 +298,13 @@ ChartReplay<-function(Pricedata, Title, PausePeriod=3, StartCandle=NULL,StartDat
   if(is.null(StartCandle)==TRUE & is.null(StartDate)==TRUE){i<-1}
   else if(is.null(StartCandle)==FALSE){i<-StartCandle}
   else{i<-which(Pricedata$Date==StartDate)}
-  j<-1
+  
   while(i<=nrow(Pricedata)){
     possibleError<-tryCatch( #This returns an object depending on error or not
       #The try part:
       expr = {
         #Check if there's an error, if not proceed, else goes to error function
-        if(i<300){res<-StockChart(Pricedata[1:i,], Title)}else{res<-StockChart(Pricedata[j:i,], Title);j<-j+1}
+        if(i<=299){res<-StockChart(Pricedata[1:i,], Title)}else{res<-StockChart(Pricedata[(i-299):i,], Title)}
         
         #evaluate based on UserInput or not
         if(UerInput=="Y"){
