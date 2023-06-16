@@ -14,7 +14,7 @@ GetFutInfo<-function(FUT,interval){
     
     if(BasicInfo[i,1]=="NQ"){
       FutInfo[[paste0("NQ",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("NQ"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
-                                   endDateTime=format(with_tz(Sys.time(),tz="Canada/Eastern"),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20230616",currency="USD",multiplier="20")}
+                                   endDateTime=format(with_tz(Sys.time(),tz="Canada/Eastern"),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20230915",currency="USD",multiplier="20")}
     else if(BasicInfo[i,1]=="GC"){
       FutInfo[[paste0("GC",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("GC"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
                                    endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"),exch="COMEX",expiry="20211229",currency="USD",multiplier="100")}
