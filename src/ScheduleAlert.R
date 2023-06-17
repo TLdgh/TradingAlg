@@ -1,13 +1,13 @@
 library(beepr)
 library(quantmod)
-library(dplyr)
+library(tidyverse)
 
-source("src/ChanLunFunction.R")
-source("src/StockPlotFunction.R") 
-source("src/MACDPower.R")
+source("/Users/tengli/R/TradingAlg/src/ChanLunFunction.R")
+source("/Users/tengli/R/TradingAlg/src/StockPlotFunction.R") 
+source("/Users/tengli/R/TradingAlg/src/MACDPower.R")
 
 datalocation<-commandArgs(trailingOnly = TRUE)
-write.table(datalocation,file=paste0(getwd(),"/CandleStickComb/OutputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE) # To be deleted
+write.table(datalocation,file=paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/OutputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE) # To be deleted
 
 DataToCheck<-list()
 for (i in 1:length(datalocation)){
@@ -16,7 +16,8 @@ for (i in 1:length(datalocation)){
 }
 
 #this is the initial Pivotalplanet setup
-Pivotalplanet<-read.csv(file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"), header = TRUE)
+Pivotalplanet<-read.csv(file=paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/Pivotalplanet.csv"), header = TRUE)
+
 
 DivergenceSig<-function(Data){  #this function gives the divergence signal
   DivSig<-MACDPower(DataToBeTested=Data, ScheduleAlert=TRUE)
@@ -29,13 +30,13 @@ DivergenceSig<-function(Data){  #this function gives the divergence signal
   MACDalert<-DivSig[[7]][,3] #this is MACD Alert
   
   Signal<-0
-  if((value=>4 & StarStrength>0) | MACDalert==1){Signal<-1}
+  if((value>=4 & StarStrength>0) | MACDalert==1){Signal<-1}
   return(Signal)
 }
 
 TrendReverse<-function(PriceData,whichplanet=Pivotalplanet){    #check the alert signal for a planet, by default the latest planet 0
-  StarData <- StarFunction(PriceData)
-  Bi<- BiFunction(StarData)
+  SBPStr<-ChanLunStr(PriceData)
+  Bi<-SBPStr$Bi
   
   InPlanetBi<-subset(Bi, Bi$BiEndD==whichplanet$PlanetStartD)
   OutPlanetBi<-subset(Bi, Bi$BiStartD==whichplanet$PlanetEndD)
@@ -48,7 +49,7 @@ TrendReverse<-function(PriceData,whichplanet=Pivotalplanet){    #check the alert
   
   Signal<-0
   if(beginl<=(nrow(Bi)-1) & Remain>=3){
-    Signal<-DivergenceSig(Data=subset(PriceData, index(PriceData)<=which(PriceData$Date==OutPlanetBi$BiEndD)+1))
+    Signal<-DivergenceSig(Data=subset(PriceData, index(PriceData)<=which(PriceData$Date==OutPlanetBi$BiEndD)+3))
   }
   
   Alert<-0
@@ -108,31 +109,29 @@ TrendReverse<-function(PriceData,whichplanet=Pivotalplanet){    #check the alert
 }
 
 CheckPivotalplanet<-function(PriceData,Pivotalplanet){ #check if the next planet is of the same direction
-  Bi<-BiFunction(StarFunction(PriceData))
-  
-  NewPivotalplanet<-tail(subset(as.data.frame(PlanetFunction(Bi)), PlanetHigh!=0),1)
+  SBPStr<-ChanLunStr(PriceData)
+  Bi<-SBPStr$Bi
+  NewPivotalplanet<-tail(SBPStr$BiPlanetStr,1)
   NewInPlanetBi<-subset(Bi, Bi$BiEndD==NewPivotalplanet$PlanetStartD)
-  
   OldInPlanetBi<-subset(Bi, Bi$BiEndD==Pivotalplanet$PlanetStartD)
-  
-  if (NewInPlanetBi$SLOPE==OldInPlanetBi$SLOPE) {return(TRUE)}else{return(FALSE)}
+  res<-ifelse(NewInPlanetBi$SLOPE==OldInPlanetBi$SLOPE,TRUE,FALSE)
+  return(res)
 }
+
 
 NewPivotalplanet<-Pivotalplanet #setup new one the same way as the old one.
-for (i in 1:length(DataToCheck)){ 
-  if (CheckPivotalplanet(PriceData=DataToCheck[[i]],Pivotalplanet[i,])==TRUE){ #if true, update the pivotalplanet
-    NewPivotalplanet[i,]<-tail(subset(as.data.frame(PlanetFunction(Bi=BiFunction(StarFunction(DataToCheck[[i]])) )), PlanetHigh!=0),1)
+for (i in 1:length(DataToCheck)){
+  if(CheckPivotalplanet(PriceData=DataToCheck[[i]],Pivotalplanet[i,])==TRUE){ #if true, update the pivotalplanet
+    NewPivotalplanet[i,]<-tail(ChanLunStr(DataToCheck[[i]])$BiPlanetStr,1)%>%select(PlanetHigh:PlanetEndD)
   }
 }
-
 #save the NewPivotalplanet as the current one. Note if the check above is false, then this save won't change anything.
-write.csv(NewPivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
-
+write.csv(NewPivotalplanet,file=paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
 #update the initial Pivotalplanet
 Pivotalplanet<-NewPivotalplanet
 
-RevOrDiv<-TrendReverse(PriceData=DataToCheck[[i]],whichplanet=Pivotalplanet[i,])
 
+RevOrDiv<-TrendReverse(PriceData=DataToCheck[[i]],whichplanet=Pivotalplanet[i,])
 if (RevOrDiv[1]==1){ #the reversal alert
   for(j in 1:5){
     beep(1)
@@ -146,9 +145,3 @@ if(RevOrDiv[2]==1){ #the divergence signal
     Sys.sleep(1)
   }
 }  
-
-
-
-
-
-

@@ -40,7 +40,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
+FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5F"))
 source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 
@@ -187,10 +187,10 @@ MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, 
 #######################################################################################################
 #Automatic detecting trendreversal:
 #Step1: run the calc on top of this page to get the latest planet information of your data as an initial Pivotalplanet setup.
-DataToAlert<-list(subset(NQ1F, Date>="2022-12-29 01:30:00"))
+DataToAlert<-list(subset(NQ5F, Date<="2023-06-16 10:30:00"))
 Pivotalplanet<-data.frame()
 for (i in 1:length(DataToAlert)) {
-  Pivotalplanet<-rbind(Pivotalplanet,tail(subset(as.data.frame(PlanetFunction(StarFunction(DataToAlert[[i]]))), PlanetHigh!=0),1))
+  Pivotalplanet<-tail(ChanLunStr(DataToAlert[[i]])$BiPlanetStr,1)%>%select(PlanetHigh:PlanetEndD)
 }
 write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
 
@@ -199,7 +199,7 @@ write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
 ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This src load the combined data
-StockChart(NQ1F, Title = "NQ1F")
+StockChart(NQ5F, Title = "NQ5F")
 
 
 
