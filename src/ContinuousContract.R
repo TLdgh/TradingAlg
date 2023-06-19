@@ -111,7 +111,7 @@ write.csv(ContinuousFut, file=paste0(getwd(), "/Data/OriginalFuturesData/GC/GCCo
 
 
 ##### NQ
-NQExpD <- c("2023-06-16") #this is the expiry date of the contract, can be found in IB Description
+NQExpD <- c("2023-09-15") #this is the expiry date of the contract, can be found in IB Description
 
 for(i in 1:length(NQExpD)){
   exp <- format(as.Date(NQExpD[i]), "%Y%m%d")
@@ -141,6 +141,7 @@ FUT_NQ11<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20221216.csv"),header=T) 
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230317.csv"),header=T) 
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230616.csv"),header=T) 
+FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230915.csv"),header=T) 
 
 FUT_NQ1$FND<-"2020-03-20"
 FUT_NQ2$FND<-"2020-06-19"
@@ -156,6 +157,7 @@ FUT_NQ11$FND<-"2022-09-16"
 FUT_NQ12$FND<-"2022-12-16"
 FUT_NQ13$FND<-"2023-03-17"
 FUT_NQ14$FND<-"2023-06-16"
+FUT_NQ15$FND<-"2023-09-15"
 
 #daily
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20190920.csv"),header=T) 
@@ -174,6 +176,7 @@ FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20221216.csv"),header=T) 
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230317.csv"),header=T) 
 FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230616.csv"),header=T) 
+FUT_NQ17<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230915.csv"),header=T) 
 
 FUT_NQ1$FND<-"2019-09-20"
 FUT_NQ2$FND<-"2019-12-20"
@@ -191,6 +194,7 @@ FUT_NQ13$FND<-"2022-09-16"
 FUT_NQ14$FND<-"2022-12-16"
 FUT_NQ15$FND<-"2023-03-17"
 FUT_NQ16$FND<-"2023-06-16"
+FUT_NQ17$FND<-"2023-09-15"
 
 ContinuousFut<-ContFUT(FUT_NQ1, FUT_NQ2)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ3)
@@ -207,6 +211,7 @@ ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ13)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ14)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ15)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ16)
+ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ17)
 
 head(ContinuousFut,30)
 tail(ContinuousFut,30)

@@ -38,7 +38,7 @@ ContFUT <- function(OldF, NewF){
 ##### NQ
 #"2020-03-20","2020-06-19","2020-09-18","2020-12-18","2021-03-19","2021-06-18","2021-09-17","2021-12-17",
 
-NQExpD <- c("2023-03-17") #this is the expiry date of the contract, can be found in IB Description
+NQExpD <- c("2023-09-15") #this is the expiry date of the contract, can be found in IB Description
 
 for(i in 1:length(NQExpD)){
   exp <- format(as.Date(NQExpD[i]), "%Y%m%d")
@@ -67,6 +67,8 @@ FUT_NQ10<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ11<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20220916.csv"),header=T) 
 FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20221216.csv"),header=T) 
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230317.csv"),header=T) 
+FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230616.csv"),header=T) 
+FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230915.csv"),header=T) 
 
 
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20200320.csv"),header=T) 
@@ -82,6 +84,8 @@ FUT_NQ10<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ11<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20220916.csv"),header=T) 
 FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20221216.csv"),header=T) 
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230317.csv"),header=T) 
+FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230616.csv"),header=T) 
+FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230915.csv"),header=T) 
 
 
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20200320.csv"),header=T) 
@@ -97,6 +101,8 @@ FUT_NQ10<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ11<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20220916.csv"),header=T) 
 FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20221216.csv"),header=T) 
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230317.csv"),header=T) 
+FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230616.csv"),header=T) 
+FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230915.csv"),header=T) 
 
 
 FUT_NQ1$FND<-tail(FUT_NQ1$Index,1)
@@ -112,6 +118,8 @@ FUT_NQ10$FND<-tail(FUT_NQ10$Index,1)
 FUT_NQ11$FND<-tail(FUT_NQ11$Index,1)
 FUT_NQ12$FND<-tail(FUT_NQ12$Index,1)
 FUT_NQ13$FND<-tail(FUT_NQ13$Index,1)
+FUT_NQ14$FND<-tail(FUT_NQ14$Index,1)
+FUT_NQ15$FND<-tail(FUT_NQ15$Index,1)
 
 ContinuousFut<-ContFUT(FUT_NQ1, FUT_NQ2)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ3)
@@ -125,6 +133,8 @@ ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ10)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ11)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ12)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ13)
+ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ14)
+ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ15)
 
 
 head(ContinuousFut,30)
