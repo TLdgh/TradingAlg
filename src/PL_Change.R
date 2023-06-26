@@ -79,8 +79,11 @@ PnL<-function(data){
   print(res,n=Inf)
   
   res<-res%>%group_by(Symbol)%>%summarise(SubTotalPnL=sum(PnL))
-  cat("Total Profit/Loss by Symbol:")
-  print(res)
+  res<-res%>%bind_rows(summarise(.,
+                                 across(where(is.numeric), sum),
+                                 across(where(is.character), ~"Total")
+                                 )
+                       )
   cat("Total Profit/Loss:")
-  print(res%>%summarise(TotalPnL=sum(SubTotalPnL)))
+  print(res)
 }
