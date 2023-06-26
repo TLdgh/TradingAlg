@@ -47,8 +47,9 @@ for(i in 1:length(NQExpD)){
   fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
   
   twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=exp, currency="USD", multiplier = "20", include_expired="1")
-  NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='30 mins', duration='4 M', useRTH='0', whatToShow='TRADES')
-  write.zoo(NQ, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
+  NQ<-reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='30 mins', duration='4 M', useRTH='0', whatToShow='TRADES')
+  NQ<-data.frame(Index=format(index(NQ),"%Y-%m-%d %H:%M:%S"), coredata(NQ))
+  write_csv(NQ, file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
   assign(NQtitle,NQ)
   #Sys.sleep(20)
 }

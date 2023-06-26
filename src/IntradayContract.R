@@ -5,7 +5,8 @@
 Get_IntradayFut<-function(tws,Symb,exch,expiry,currency,multiplier,endDateTime,barSize,duration,fileloc){
   Contract<-twsFuture(symbol=Symb,exch=exch, expiry=expiry, currency=currency, multiplier=multiplier, include_expired="1")
   Fdata<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='0', whatToShow='TRADES') 
-  write.zoo(Fdata, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
+  Fdata<-data.frame(Index=format(index(Fdata),"%Y-%m-%d %H:%M:%S"), coredata(Fdata))
+  write_csv(Fdata,file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
 }
 
 
