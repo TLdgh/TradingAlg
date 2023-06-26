@@ -57,3 +57,30 @@ MaxPosition<- function(Profit, LossPercent, Currentprice, Stoploss, Leverage=1){
   cat("The maximum number of position you can open is: ", result, "\n")
 }
 
+
+
+
+PnL<-function(data){
+  if(!"Leverage" %in% colnames(data)){data<-data%>%mutate(Leverage=1, .before = Quantity)}
+  data<-data%>%select(Symbol,Leverage, Quantity, Price=T..Price,Comm=Comm.Fee, Code=Code)%>%na.omit()
+  
+  res<-data%>%group_by(Symbol)%>%mutate(Index = 1:n())%>%
+    pivot_wider(names_from = Code, values_from =  Quantity, values_fill = 0)%>% 
+    arrange(Symbol, Index)%>% 
+    mutate(TotalStock = cumsum(O) + cumsum(C), 
+           Sold = case_when(O == 0 ~ 0, # Nothing bought - cannot be sold
+                            sum(abs(C)) > cumsum(abs(O)) ~ O, # Total closed is greater than total open till current - everything is sold
+                            (cumsum(abs(O)) - abs(O)) > sum(abs(C)) ~ 0, # Total open excluding the current open is greater than total closed - nothing sold
+                            TRUE ~ O - (cumsum(O) + sum(C))), 
+           InStock = O - Sold,
+           Preceeds=if_else(O!=0,-Price*Leverage*O,-Price*Leverage*C),
+           PnL= if_else(O!=0, (Preceeds+Comm)*Sold/O, Preceeds+Comm)
+    )
+  print(res,n=Inf)
+  
+  res<-res%>%group_by(Symbol)%>%summarise(SubTotalPnL=sum(PnL))
+  cat("Total Profit/Loss by Symbol:")
+  print(res)
+  cat("Total Profit/Loss:")
+  print(res%>%summarise(TotalPnL=sum(SubTotalPnL)))
+}

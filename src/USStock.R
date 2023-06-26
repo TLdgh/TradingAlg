@@ -142,9 +142,12 @@ MaxPortfolio(DataName=c("MARA_daily", "NVDA_daily", "AAPL_daily"), Bookcost = 10
 #######################################################################################################
 #######################################################################################################
 #Calculate the maximum number of positions you can add
-
 source("src/PL_Change.R") #everytime we run a function from a different src, we must run this command
 MaxPosition(Profit=158.1, LossPercent=0.75, Currentprice=14784, Stoploss=14822, Leverage=2)
+
+#Calculate trading PnL:
+data<-read.csv("sample.csv")
+PnL(data)
 
 
 
