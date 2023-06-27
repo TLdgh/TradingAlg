@@ -61,6 +61,8 @@ MaxPosition<- function(Profit, LossPercent, Currentprice, Stoploss, Leverage=1){
 
 
 PnL<-function(data){
+  old<-options(pillar.sigfig=7)
+  
   if(!"Leverage" %in% colnames(data)){data<-data%>%mutate(Leverage=1, .before = Quantity)}
   data<-data%>%select(Symbol,Leverage, Quantity, Price=T..Price,Comm=Comm.Fee, Code=Code)%>%na.omit()
   
@@ -86,4 +88,5 @@ PnL<-function(data){
                        )
   cat("Total Profit/Loss:")
   print(res)
+  options(old)
 }
