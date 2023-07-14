@@ -7,6 +7,7 @@ PriceChart<-function(Pricedata, Title){
   Pricedata_EMA10 <- FuncEMA10(Pricedata)
   Pricedata_EMA30 <- FuncEMA30(Pricedata)
   Pricedata_EMA60 <- FuncEMA60(Pricedata)
+  Pricedata_BOLL<-PricedataBOLL(Pricedata)
   
   shape <- list( #initiate a rectangular layout shape object, see detail in https://plotly.com/r/horizontal-vertical-shapes/
     type = "rect",
@@ -54,7 +55,11 @@ PriceChart<-function(Pricedata, Title){
       add_lines(x=Pricedata_EMA30$Date, y=Pricedata_EMA30$EMA30, name='EMA30', type='scatter', mode='lines',
                 line=list(color='#4169E1', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA60$Date, y=Pricedata_EMA60$EMA60, name='EMA60', type='scatter', mode='lines',
-                line=list(color='purple', width=2),inherit = F)
+                line=list(color='purple', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
+                line=list(color='grey', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$upB, name='BOLL_upB', type='scatter', mode='lines',
+                line=list(color='grey', width=2),inherit = F)
   }else{
     plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
       layout(shapes=lines,annotations=arrows,xaxis = list(rangeslider = list(visible = F)))%>%
@@ -67,7 +72,11 @@ PriceChart<-function(Pricedata, Title){
       add_lines(x=Pricedata_EMA30$Date, y=Pricedata_EMA30$EMA30, name='EMA30', type='scatter', mode='lines',
                 line=list(color='#4169E1', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA60$Date, y=Pricedata_EMA60$EMA60, name='EMA60', type='scatter', mode='lines',
-                line=list(color='purple', width=2),inherit = F)
+                line=list(color='purple', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
+                line=list(color='silver', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$upB, name='BOLL_upB', type='scatter', mode='lines',
+                line=list(color='silver', width=2),inherit = F)
   }
 }
 
@@ -96,7 +105,7 @@ PricedataMFI<-function(Pricedata){
 
 PricedataBOLL<-function(Pricedata){
   BOLL<- BBands(Cl(Pricedata), n=60, sd=2, maType = EMA)
-  BOLL<-na.omit(data.frame(Date=Pricedata$Date,PctB=BOLL[,"pctB"]))
+  BOLL<-na.omit(data.frame(Date=Pricedata$Date,PctB=BOLL[,"pctB"], lwB=BOLL[,"dn"], upB=BOLL[,"up"]))
   return(BOLL)
 }
 
@@ -120,11 +129,8 @@ FuncEMA10<-function(Pricedata){
 
 StockChart<-function (Pricedata, Title){
   Pricedata_macd <- PricedataMACD(Pricedata)
-  #Pricedata_vmacd <- VMACD(Pricedata)
   Pricedata_MFI<-PricedataMFI(Pricedata)
-  
   Alldata<- merge(Pricedata,Pricedata_macd, by="Date")
-  #Alldata<- merge(Alldata,Pricedata_vmacd, by="Date")
   Alldata<- merge(Alldata,Pricedata_MFI, by="Date")
   Alldata<-na.omit(Alldata)
   
