@@ -299,7 +299,7 @@ MultiChart<-function(DataToBeTested){
 }
 
 
-ChartReplay<-function(Pricedata, Title, PausePeriod=3, StartCandle=NULL,StartDate=NULL, UerInput="N"){
+ChartReplay<-function(Pricedata,AuxillaryData=NULL, Title, PausePeriod=3, StartCandle=NULL,StartDate=NULL, UerInput="N"){
   #determine from which candlestick to start
   if(is.null(StartCandle)==TRUE & is.null(StartDate)==TRUE){i<-1}
   else if(is.null(StartCandle)==FALSE){i<-StartCandle}
@@ -310,7 +310,12 @@ ChartReplay<-function(Pricedata, Title, PausePeriod=3, StartCandle=NULL,StartDat
       #The try part:
       expr = {
         #Check if there's an error, if not proceed, else goes to error function
-        if(i<=399){res<-StockChart(Pricedata[1:i,], Title)}else{res<-StockChart(Pricedata[(i-399):i,], Title)}
+        maindate<-Pricedata[i,"Date"]
+        if(i<=399){
+          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[1:i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[1:i,], AuxChart=subset(AuxillaryData, Date<=maindate)))}
+        }else{
+          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[(i-399):i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[(i-399):i,], AuxChart=subset(AuxillaryData, Date<=maindate)))}
+        }
         
         #evaluate based on UserInput or not
         if(UerInput=="Y"){
