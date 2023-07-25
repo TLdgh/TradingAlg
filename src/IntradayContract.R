@@ -12,22 +12,33 @@ Get_IntradayFut<-function(tws,Symb,exch,expiry,currency,multiplier,endDateTime,b
 
 Get_Stock<-function(tws,Symb,endDateTime,barSize,duration,fileloc){   #this may also get the daily, weekly and monthly data
   #check if data exists already:
-  currentdata<-try(read.csv(file=fileloc,header = TRUE), stop("No data exists for this stock, please initialize first."))
-  toDate<-tail(currentdata,1)[,"Index"]
+  olddata<-try(read.csv(file=fileloc,header = TRUE), stop("No data exists for this stock, please initialize first."))
+  toDate<-tail(olddata,1)[,"Index"]
   NMonths<-interval(as.Date(toDate), Sys.time())%/%months(1)+1
   
-  Sdata<-list()
+  newdata<-list()
   for(i in 1:NMonths){
     Contract<-twsEquity(symbol=Symb)
     SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='1', whatToShow='TRADES') 
-    Sdata[[NMonths+1-i]]<-data.frame(Index=as.character(index(SdataNew)),SdataNew,row.names = NULL)
+    newdata[[NMonths+1-i]]<-data.frame(Index=as.character(index(SdataNew)),SdataNew,row.names = NULL)
     endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
     if(NMonths>1){Sys.sleep(22)}
   }
+  newdata<-do.call(rbind, newdata)
   
-  Sdata<-do.call(rbind, Sdata)
-  Sdata<-union(currentdata,Sdata)
-  write.csv(Sdata, file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
+  #Detect if stock split is announced:
+  pivotdate<-newdata$Index[1]
+  fac<-sort(table(as.numeric(newdata[which(newdata$Index==pivotdate),2:5] / olddata[which(olddata$Index==pivotdate),2:5])), 
+            decreasing = TRUE)[1]%>%names()%>%as.numeric()
+  if(fac!=1){
+    if(readline(prompt = "Need to split the stock. Please confirm: Y/N")=="Y"){
+      olddata[,2:5]<-fac*olddata[,2:5]}else{stop("Execution stopped.")}
+  }else{
+    cat("No need to split the stock.", "\n")
+  }
+  
+  newdata<-union(olddata[which(olddata$Index<newdata$Index[1]),],newdata)
+  write.csv(newdata, file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
 }
 
 Get_ChineseStock<-function(Symb,freq,fileloc){
