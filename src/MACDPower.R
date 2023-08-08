@@ -322,11 +322,37 @@ MFICalculator<-function(Pricedata, Data_mfi, StarData, Period){
   return(DivergenceMatrix)
 }
 
-MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_boll=NULL, ScheduleAlert=FALSE){
+EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
+  #initialize
+  DivergenceMatrix<-matrix(0, nrow = 1, ncol = 2)
+  colnames(DivergenceMatrix) <-c("Entanglement", "macd")
+  Direction<-ifelse(Pricedata[which(Pricedata$Date==Period$In1),"Close"]>Pricedata[which(Pricedata$Date==Period$Out2),"Close"], 1, -1)
+  
+  #check EMA
+  A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
+  if(!all(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))){
+    DivergenceMatrix[1,"Entanglement"]<-1
+  }else{
+    DivergenceMatrix[1,"Entanglement"]<-0}
+  
+  #check if any macd bar changes more than 50% within a period
+  if(as.numeric(rownames(last(Data_macd))) <= which(Data_macd$Date==Period$Out2)+3){#check at most 3 bars after Out2
+    Data_macd<-subset(Data_macd,Date>=Period$Out1)
+    res<-round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2)
+    res<-ifelse(Direction==-1, res, -res)
+    if(any(res[res>0]>0.5)){DivergenceMatrix[1,"macd"]<-1}else{DivergenceMatrix[1,"macd"]<-0}
+  }else{
+    DivergenceMatrix[1,"macd"]<-0
+  }
+  return(DivergenceMatrix)
+}
+
+MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_boll=NULL, Data_ema=NULL, ScheduleAlert=FALSE){
   Pdate<-tail(DataToBeTested$Date,1)
   if(is.null(Data_macd)==TRUE){Data_macd<-PricedataMACD(DataToBeTested)}else{Data_macd<-Data_macd%>%filter(Date<=Pdate)}
   if(is.null(Data_mfi)==TRUE){Data_mfi<-PricedataMFI(DataToBeTested)}else{Data_mfi<-Data_mfi%>%filter(Date<=Pdate)}
   if(is.null(Data_boll)==TRUE){Data_boll<-PricedataBOLL(DataToBeTested)}else{Data_boll<-Data_boll%>%filter(Date<=Pdate)}
+  if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA10=FuncEMA10(DataToBeTested), EMA60=FuncEMA60(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
   if(is.null(SBPStr)==TRUE){
     SBPStr<-ChanLunStr(DataToBeTested)
     StarData<-SBPStr$StarData
@@ -367,6 +393,7 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
     DivergenceList[["Period"]]<-Period
     DivergenceList[["MACD"]]<-MACDensemble[["DivergenceMatrix"]][["MacdMatrix"]]   #this gives the MACD
     DivergenceList[["MFI"]]<-MFICalculator(DataToBeTested, Data_mfi=Data_mfi, StarData, Period)         #this gives the MFI
+    DivergenceList[["EMA"]]<-EMACalculator(DataToBeTested, Data_ema=Data_ema, Data_macd=Data_macd, Period)  
     
     DivergenceList[["形态背驰"]]<-MACDensemble[["StructuralDivMatrix"]]
     
@@ -379,8 +406,6 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
       DivergenceList[["BOLL信号"]]<-matrix(c(-1,ifelse(boll>0.85, min(1,boll), max(0,boll)) ), nrow=1, byrow=TRUE)
       colnames(DivergenceList[["BOLL信号"]]) <-c("方向", "强度")
     }
-    
-    #DivergenceList[["VMACD"]]<-MACDCalculator(DataToBeTested, "VMACD", Period)         #this gives the Volume MACD
     
     DivergenceList[["ThreeLineDiv"]]<-MACDensemble[["ThreeLineDivMatrix"]]   #this gives the MACD
     DivergenceList[["Other"]]<-MACDensemble[["DivergenceMatrix"]][["Other"]]
