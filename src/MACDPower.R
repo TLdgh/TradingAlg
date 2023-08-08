@@ -326,7 +326,7 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   #initialize
   DivergenceMatrix<-matrix(0, nrow = 1, ncol = 2)
   colnames(DivergenceMatrix) <-c("Entanglement", "macd")
-  Direction<-ifelse(Pricedata[which(Pricedata$Date==Period$In1),"Close"]>Pricedata[which(Pricedata$Date==Period$Out2),"Close"], 1, -1)
+  Direction<-ifelse(Pricedata[which(Pricedata$Date==Period$In1),"Close"]<Pricedata[which(Pricedata$Date==Period$Out2),"Close"], 1, -1)
   
   #check EMA
   A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
@@ -336,10 +336,10 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
     DivergenceMatrix[1,"Entanglement"]<-0}
   
   #check if any macd bar changes more than 50% within a period
-  if(as.numeric(rownames(last(Data_macd))) <= which(Data_macd$Date==Period$Out2)+3){#check at most 3 bars after Out2
-    Data_macd<-subset(Data_macd,Date>=Period$Out1)
+  Data_macd<-subset(Data_macd,Date>=Period$Out1)
+  if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 3 bars after Out2
     res<-round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2)
-    res<-ifelse(Direction==-1, res, -res)
+    if(Direction==-1){res<-res}else{res<- -res}
     if(any(res[res>0]>0.5)){DivergenceMatrix[1,"macd"]<-1}else{DivergenceMatrix[1,"macd"]<-0}
   }else{
     DivergenceMatrix[1,"macd"]<-0

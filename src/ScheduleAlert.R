@@ -22,15 +22,15 @@ Pivotalplanet<-read.csv(file=paste0("/Users/tengli/R/TradingAlg","/CandleStickCo
 DivergenceSig<-function(Data){  #this function gives the divergence signal
   DivSig<-MACDPower(DataToBeTested=Data, ScheduleAlert=TRUE)
   
-  value<-sum(DivSig[[2]][,1])+sum(DivSig[[3]][,1])+sum(DivSig[[4]][,1])
-  ThreeLineDiv<-unique(DivSig[[6]][,"ThreeLineDivergence"])
+  value<-sum(DivSig[[2]][,1])+sum(DivSig[[3]][,1])+sum(DivSig[[5]][,1])
+  ThreeLineDiv<-unique(DivSig[[7]][,"ThreeLineDivergence"])
   BOLLvalue<-0
-  if (DivSig[[5]][,2]>=0.75 | DivSig[[5]][,2]<=0.25){BOLLvalue<-1}
-  StarStrength<-DivSig[[7]][,2] #this is 分型强度 in MACD
-  MACDalert<-DivSig[[7]][,3] #this is MACD Alert
+  if (DivSig[[6]][,2]>=0.75 | DivSig[[6]][,2]<=0.25){BOLLvalue<-1}
+  StarStrength<-DivSig[[8]][,2] #this is 分型强度 in MACD
+  MACDalert<-DivSig[[8]][,3] #this is MACD Alert
   
   Signal<-0
-  if((value>=4 & StarStrength>0) | MACDalert==1){Signal<-1}
+  if((value>=4 & StarStrength>0) | MACDalert==1 | sum(DivSig$EMA)==2){Signal<-1}
   return(Signal)
 }
 
