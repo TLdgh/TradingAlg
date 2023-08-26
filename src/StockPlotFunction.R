@@ -139,9 +139,11 @@ StockChart<-function (Pricedata, Title){
   if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOLdirection[1] = 'green'}else{Alldata$VOLdirection[1] = 'red'}
   
   for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
-    if (Alldata$MACD[i] >= 0) {
-      if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"green"}else{Alldata$MACDdirection[i]<-"palegreen"}
-    }else if(Alldata$MACD[i]<0){
+    if(abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<=0.5){Alldata$MACDdirection[i]<-"#8A2BE2"}
+    else if(Alldata$MACD[i] >= 0){
+      if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"green"}
+      else{Alldata$MACDdirection[i]<-"palegreen"}}
+    else if(Alldata$MACD[i]<0){
       if(Alldata$MACD[i]<Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"red"}else{Alldata$MACDdirection[i]<-"lightpink"}
     }
     
@@ -149,7 +151,8 @@ StockChart<-function (Pricedata, Title){
     #Alldata$VMACDdirection[i] = "green"
     #}else{Alldata$VMACDdirection[i] = "red"}
     
-    if (Alldata$MFI[i] >= 0){
+    if(abs(Alldata$MFI[i])/abs(Alldata$MFI[i-1])<=0.5){Alldata$MFIdirection[i]<-"#8A2BE2"}
+    else if (Alldata$MFI[i] >= 0){
       if(Alldata$MFI[i]>Alldata$MFI[i-1]){Alldata$MFIdirection[i]<-"green"}else{Alldata$MFIdirection[i]<-"palegreen"}
     }else if(Alldata$MFI[i]<0){
       if(Alldata$MFI[i]<Alldata$MFI[i-1]){Alldata$MFIdirection[i]<-"red"}else{Alldata$MFIdirection[i]<-"lightpink"}
