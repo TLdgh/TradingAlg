@@ -307,32 +307,35 @@ ChartReplay<-function(Pricedata,AuxillaryData=NULL, Title, PausePeriod=3, StartC
   if(is.null(StartCandle)==TRUE & is.null(StartDate)==TRUE){i<-1}
   else if(is.null(StartCandle)==FALSE){i<-StartCandle}
   else{i<-which(Pricedata$Date==StartDate)}
+  j<-1
   
-  while(i<=nrow(Pricedata)){
+  while(i<=nrow(Pricedata) & j<=nrow(AuxillaryData)){
     possibleError<-tryCatch( #This returns an object depending on error or not
       #The try part:
       expr = {
         #Check if there's an error, if not proceed, else goes to error function
         maindate<-Pricedata[i,"Date"]
-        if(i<=399){
-          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[1:i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[1:i,], AuxChart=subset(AuxillaryData, Date<=maindate)))}
+        j<-tail(which(AuxillaryData$Date<=maindate),1)
+        
+        if(i<=399 | j<=399){
+          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[1:i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[1:i,], AuxChart=subset(AuxillaryData[1:j,], Date<=maindate)))}
         }else{
-          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[(i-399):i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[(i-399):i,], AuxChart=subset(AuxillaryData, Date<=maindate)))}
+          if(is.null(AuxillaryData)==TRUE){res<-StockChart(Pricedata[(i-399):i,], Title)}else{res<-MultiChart(list(MainChart=Pricedata[(i-399):i,], AuxChart=subset(AuxillaryData[(j-399):j,], Date<=maindate)))}
         }
         
         #evaluate based on UserInput or not
         if(UerInput=="Y"){
           proceed<-readline(prompt="Next bar? Y/N")
-          if(proceed=="Y"){print(res);i<-i+1;next}else{break}
-        }else{print(paste0("Chart is ready! Candlestick: ",i));print(res);i<-i+1;Sys.sleep(PausePeriod)}
+          if(proceed=="Y"){print(res);i<-i+1;j<-j+1;next}else{break}
+        }else{print(paste0("Chart is ready! MainCandlestick: ",i, "------AuxillaryCandlestick: ", j));print(res);i<-i+1;j<-j+1;Sys.sleep(PausePeriod)}
       },
       
       #The error handling part
       error = function(e){
-        print(paste0("Chart is not ready for the ",i, "th candlestick. Please wait..."))
+        print(paste0("Chart is not ready for the ",i, "th MainCandlestick or the ", j, "th AuxillaryCandlestick. Please wait..."))
         e #this is needed because it is the original error message, and it should be returned to possibleError variable
       }
     )
-    if(inherits(possibleError,"error")){i<-i+1}
+    if(inherits(possibleError,"error")){i<-i+1; j<-j+1}
   }
 }
