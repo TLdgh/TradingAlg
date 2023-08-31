@@ -34,6 +34,13 @@ DivergenceSig<-function(Data){  #this function gives the divergence signal
   return(Signal)
 }
 
+TakeProfit<-function(Data){
+  res1<-FuncEMA10(Data[(nrow(Data)-79):nrow(Data), ])
+  res2<-FuncEMA30(Data[(nrow(Data)-79):nrow(Data), ])
+  
+  return(ifelse(last(res1$EMA10)<last(res2$EMA30), 1, 0))
+}
+
 TrendReverse<-function(PriceData,whichplanet=Pivotalplanet){    #check the alert signal for a planet, by default the latest planet 0
   SBPStr<-ChanLunStr(PriceData)
   Bi<-SBPStr$Bi
@@ -133,15 +140,25 @@ Pivotalplanet<-NewPivotalplanet
 
 RevOrDiv<-TrendReverse(PriceData=DataToCheck[[i]],whichplanet=Pivotalplanet[i,])
 if (RevOrDiv[1]==1){ #the reversal alert
-  for(j in 1:5){
+  for(j in 1:1){
     beep(1)
-    Sys.sleep(2)
+    Sys.sleep(1)
   }
 }
 
 if(RevOrDiv[2]==1){ #the divergence signal
-  for(j in 1:3){
+  for(j in 1:1){
     beep(2)
     Sys.sleep(1)
+  }
+}  
+
+#Profit taker function. Activate it when needed
+if(FALSE){
+  if(TakeProfit(DataToCheck[[i]])==1){ #the divergence signal
+    for(j in 1:3){
+      beep(3)
+      Sys.sleep(4)
+    }
   }
 }  
