@@ -40,7 +40,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5F"))
+FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5F", "30F", "1H"))
 source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 
@@ -75,19 +75,6 @@ MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 MultiChart(list(NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
 
 SimTrend(NQContinuous,n=2,CombineSim= TRUE)
-
-################ Data with modified bar size. Need to download the smaller barsize data e.g 1H, then run FutNewBarSize function to convert to a bigger bar size.
-source("src/FutNewBarSize.R") #the following function converts the barsize
-
-#please combine the data using the CandleStickApp, then proceed with the next step
-
-ReadCombData(OutputCombtxt,nam)     #This src load the combined data
-
-source("src/StockPlotFunction.R") #everytime we run a function from a different src, we must run this command
-StockChart(NQ4H, Title = "NQ4H")
-StockChart(GC4H, Title = "GC4H")
-StockChart(GCW, Title = "GCW")
-StockChart(CAD4H, Title = "CAD4H")
 
 
 ################ Futures COT and VOI price chart 
@@ -126,7 +113,7 @@ MACDPower(DataToBeTested=NQ1F, BarOverride=FALSE)
 MACDPower(DataToBeTested=NQ5F)
 MACDPower(DataToBeTested=NQ30F)
 MACDPower(DataToBeTested=NQ4H)
-MACDPower(DataToBeTested=NQContinuous, BarOverride=FALSE)
+  MACDPower(DataToBeTested=NQContinuous, BarOverride=FALSE)
 MACDPower(DataToBeTested=subset(NQ30F, Date<="2023-05-23 02:30:00"))
 
 MACDPower(DataToBeTested=GC30F, BarOverride=FALSE)
@@ -191,7 +178,7 @@ PnL(data)
 #######################################################################################################
 #Automatic detecting trendreversal:
 #Step1: run the calc on top of this page to get the latest planet information of your data as an initial Pivotalplanet setup.
-DataToAlert<-list(subset(NQ5F, Date<="2023-06-16 10:30:00"))
+DataToAlert<-list(NQ5F)
 Pivotalplanet<-data.frame()
 for (i in 1:length(DataToAlert)) {
   Pivotalplanet<-tail(ChanLunStr(DataToAlert[[i]])$BiPlanetStr,1)%>%select(PlanetHigh:PlanetEndD)
@@ -203,8 +190,6 @@ write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
 ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This src load the combined data
-StockChart(NQ5F, Title = "NQ5F")
-
-
+MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
 
