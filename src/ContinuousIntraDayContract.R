@@ -38,20 +38,20 @@ ContFUT <- function(OldF, NewF){
 ##### NQ
 #"2020-03-20","2020-06-19","2020-09-18","2020-12-18","2021-03-19","2021-06-18","2021-09-17","2021-12-17",
 
-NQExpD <- c("2023-09-15") #this is the expiry date of the contract, can be found in IB Description
+NQExpD <- c("2023-12-15") #this is the expiry date of the contract, can be found in IB Description
 
 for(i in 1:length(NQExpD)){
   exp <- format(as.Date(NQExpD[i]), "%Y%m%d")
   endtime<-paste(exp, "00:00:00")
-  NQtitle<-paste0("NQ30F_", exp)
+  NQtitle<-paste0("NQ5F_", exp)
   fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
   
   twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=exp, currency="USD", multiplier = "20", include_expired="1")
-  NQ<-reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='30 mins', duration='4 M', useRTH='0', whatToShow='TRADES')
+  NQ<-reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='5 mins', duration='4 M', useRTH='0', whatToShow='TRADES')
   NQ<-data.frame(Index=format(index(NQ),"%Y-%m-%d %H:%M:%S"), coredata(NQ))
   write_csv(NQ, file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
   assign(NQtitle,NQ)
-  #Sys.sleep(20)
+  Sys.sleep(20)
 }
 
 
@@ -70,6 +70,7 @@ FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230317.csv"),header=T) 
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230616.csv"),header=T) 
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20230915.csv"),header=T) 
+FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ5F_20231215.csv"),header=T) 
 
 
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20200320.csv"),header=T) 
@@ -87,6 +88,7 @@ FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230317.csv"),header=T) 
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230616.csv"),header=T) 
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20230915.csv"),header=T) 
+FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20231215.csv"),header=T) 
 
 
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20200320.csv"),header=T) 
@@ -104,6 +106,7 @@ FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230317.csv"),header=T) 
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230616.csv"),header=T) 
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20230915.csv"),header=T) 
+FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ1H_20231215.csv"),header=T) 
 
 
 FUT_NQ1$FND<-tail(FUT_NQ1$Index,1)
@@ -121,6 +124,7 @@ FUT_NQ12$FND<-tail(FUT_NQ12$Index,1)
 FUT_NQ13$FND<-tail(FUT_NQ13$Index,1)
 FUT_NQ14$FND<-tail(FUT_NQ14$Index,1)
 FUT_NQ15$FND<-tail(FUT_NQ15$Index,1)
+FUT_NQ16$FND<-tail(FUT_NQ16$Index,1)
 
 ContinuousFut<-ContFUT(FUT_NQ1, FUT_NQ2)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ3)
@@ -136,11 +140,12 @@ ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ12)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ13)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ14)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ15)
+ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ16)
 
 
 head(ContinuousFut,30)
 tail(ContinuousFut,30)
 
-write.csv(ContinuousFut, file=paste0(getwd(),"/Data/OriginalFuturesData/NQ/NQ30FContinuous.csv"), row.names = FALSE) 
+write.csv(ContinuousFut, file=paste0(getwd(),"/Data/OriginalFuturesData/NQ/NQ5FContinuous.csv"), row.names = FALSE) 
 
 

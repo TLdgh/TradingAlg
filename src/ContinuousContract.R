@@ -111,19 +111,19 @@ write.csv(ContinuousFut, file=paste0(getwd(), "/Data/OriginalFuturesData/GC/GCCo
 
 
 ##### NQ
-NQExpD <- c("2023-09-15") #this is the expiry date of the contract, can be found in IB Description
+NQExpD <- c("2023-09-15", "2023-12-15") #this is the expiry date of the contract, can be found in IB Description
 
 for(i in 1:length(NQExpD)){
   exp <- format(as.Date(NQExpD[i]), "%Y%m%d")
   endtime<-paste(exp, "00:00:00")
-  NQtitle<-paste0("NQ_", exp)
+  NQtitle<-paste0("NQW_", exp)
   fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
   
   twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=exp, currency="USD", multiplier = "20", include_expired="1")
-  NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='1 day', duration='4 M', useRTH='0', whatToShow='TRADES')
+  NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize='1 week', duration='4 M', useRTH='0', whatToShow='TRADES')
   write.zoo(NQ, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
   assign(NQtitle,NQ)
-  #Sys.sleep(20)
+  Sys.sleep(20)
 }
 
 #weekly:
@@ -142,22 +142,7 @@ FUT_NQ12<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ13<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230317.csv"),header=T) 
 FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230616.csv"),header=T) 
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20230915.csv"),header=T) 
-
-FUT_NQ1$FND<-"2020-03-20"
-FUT_NQ2$FND<-"2020-06-19"
-FUT_NQ3$FND<-"2020-09-18"
-FUT_NQ4$FND<-"2020-12-18"
-FUT_NQ5$FND<-"2021-03-19"
-FUT_NQ6$FND<-"2021-06-18"
-FUT_NQ7$FND<-"2021-09-17"
-FUT_NQ8$FND<-"2021-12-17"
-FUT_NQ9$FND<-"2022-03-18"
-FUT_NQ10$FND<-"2022-06-17"
-FUT_NQ11$FND<-"2022-09-16"
-FUT_NQ12$FND<-"2022-12-16"
-FUT_NQ13$FND<-"2023-03-17"
-FUT_NQ14$FND<-"2023-06-16"
-FUT_NQ15$FND<-"2023-09-15"
+FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQW_20231215.csv"),header=T) 
 
 #daily
 FUT_NQ1<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20190920.csv"),header=T) 
@@ -177,24 +162,27 @@ FUT_NQ14<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuo
 FUT_NQ15<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230317.csv"),header=T) 
 FUT_NQ16<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230616.csv"),header=T) 
 FUT_NQ17<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20230915.csv"),header=T) 
+FUT_NQ18<-read.csv(file = paste0(getwd(), "/Data/OriginalFuturesData/NQ/Continuous/NQ_20231215.csv"),header=T) 
 
-FUT_NQ1$FND<-"2019-09-20"
-FUT_NQ2$FND<-"2019-12-20"
-FUT_NQ3$FND<-"2020-03-20"
-FUT_NQ4$FND<-"2020-06-19"
-FUT_NQ5$FND<-"2020-09-18"
-FUT_NQ6$FND<-"2020-12-18"
-FUT_NQ7$FND<-"2021-03-19"
-FUT_NQ8$FND<-"2021-06-18"
-FUT_NQ9$FND<-"2021-09-17"
-FUT_NQ10$FND<-"2021-12-17"
-FUT_NQ11$FND<-"2022-03-18"
-FUT_NQ12$FND<-"2022-06-17"
-FUT_NQ13$FND<-"2022-09-16"
-FUT_NQ14$FND<-"2022-12-16"
-FUT_NQ15$FND<-"2023-03-17"
-FUT_NQ16$FND<-"2023-06-16"
-FUT_NQ17$FND<-"2023-09-15"
+FUT_NQ1$FND<-tail(FUT_NQ1$Index,1)
+FUT_NQ2$FND<-tail(FUT_NQ2$Index,1)
+FUT_NQ3$FND<-tail(FUT_NQ3$Index,1)
+FUT_NQ4$FND<-tail(FUT_NQ4$Index,1)
+FUT_NQ5$FND<-tail(FUT_NQ5$Index,1)
+FUT_NQ6$FND<-tail(FUT_NQ6$Index,1)
+FUT_NQ7$FND<-tail(FUT_NQ7$Index,1)
+FUT_NQ8$FND<-tail(FUT_NQ8$Index,1)
+FUT_NQ9$FND<-tail(FUT_NQ9$Index,1)
+FUT_NQ10$FND<-tail(FUT_NQ10$Index,1)
+FUT_NQ11$FND<-tail(FUT_NQ11$Index,1)
+FUT_NQ12$FND<-tail(FUT_NQ12$Index,1)
+FUT_NQ13$FND<-tail(FUT_NQ13$Index,1)
+FUT_NQ14$FND<-tail(FUT_NQ14$Index,1)
+FUT_NQ15$FND<-tail(FUT_NQ15$Index,1)
+FUT_NQ16$FND<-tail(FUT_NQ16$Index,1)
+FUT_NQ17$FND<-tail(FUT_NQ17$Index,1)
+FUT_NQ18$FND<-tail(FUT_NQ18$Index,1)
+
 
 ContinuousFut<-ContFUT(FUT_NQ1, FUT_NQ2)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ3)
@@ -212,11 +200,12 @@ ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ14)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ15)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ16)
 ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ17)
+ContinuousFut<-ContFUT(ContinuousFut, FUT_NQ18)
 
 head(ContinuousFut,30)
 tail(ContinuousFut,30)
 
-write.csv(ContinuousFut, file=paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQContinuous.csv"), row.names = FALSE) 
+write.csv(ContinuousFut, file=paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQWContinuous.csv"), row.names = FALSE) 
 
 
 #################### ES
