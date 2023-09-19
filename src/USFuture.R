@@ -72,7 +72,7 @@ MultiChart(list(NQ5F=NQ5F,NQ1F=NQ1F))
 
 MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
-MultiChart(list(NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
+MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
 
 SimTrend(NQContinuous,n=2,CombineSim= TRUE)
 

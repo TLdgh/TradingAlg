@@ -15,12 +15,10 @@ for (i in 1:length(StkToBePrepared)) {
   
   #Prepare the data for plot
   if(StkToBePrepared[[i]][1,"GlobalMarket"]=="US"){
-    source("src/IntradayContract.R")   #Get the original stock data
     Get_Stock(tws,StkToBePrepared[[i]][1,"Symb"],StkToBePrepared[[i]][1,"endDateTime"],StkToBePrepared[[i]][1,"barSize"],StkToBePrepared[[i]][1,"duration"],
               InputFileLoc_Stk)
   }
   else{
-    source("src/IntradayContract.R")   #Get the original stock data
     Get_ChineseStock(Symb=StkToBePrepared[[i]][1,"Symb"][[1]], freq=StkToBePrepared[[i]][1,"intv"][[1]], fileloc=InputFileLoc_Stk)
   }
   
