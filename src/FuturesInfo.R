@@ -142,8 +142,6 @@ Get_ContinuousFut<-function(ExpD){
   
     if(latesttime<exp){
       print(paste("Data", NQtitle, "needs to be updated."))
-      print(head(NQ))
-      print(tail(NQ))
       proceed<-readline(prompt="You're updating an existing data. Are you really sure you want to overwrite? Y/N: ")
       if(proceed=="Y"){
         print(paste("Downloading new data", NQtitle))
@@ -154,7 +152,7 @@ Get_ContinuousFut<-function(ExpD){
         
         write.zoo(NQ, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
         NQ<-read.csv(file = fileloc, header=T)
-        #Sys.sleep(20)
+        Sys.sleep(20)
       }else{stop("Downloading stopped.")}
     }else{print(paste(NQtitle, "has been previously downloaded and does not require update."))}
     
