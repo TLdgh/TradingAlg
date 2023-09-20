@@ -144,14 +144,19 @@ Get_ContinuousFut<-function(ExpD){
       print(paste("Data", NQtitle, "needs to be updated."))
       proceed<-readline(prompt="You're updating an existing data. Are you really sure you want to overwrite? Y/N: ")
       if(proceed=="Y"){
-        print(paste("Downloading new data", NQtitle))
+        cat("Downloading new data", NQtitle, ".....", "\n")
         
         endtime<-paste(ExpD[i], "00:00:00")
         twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=ExpD[i], currency="USD", multiplier = "20", include_expired="1")
         NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize=barSize, duration='4 M', useRTH='0', whatToShow='TRADES')
         
-        write.csv(data.frame(Index=format(index(NQ), "%Y-%m-%d %H:%M:%S"), NQ), file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
+        if(deparse(substitute(ExpD)) %in% c("NQExpD","NQWExpD")){Index<-format(index(NQ), "%Y-%m-%d")}
+        else{Index<-format(index(NQ), "%Y-%m-%d %H:%M:%S")}
+        
+        write.csv(data.frame(Index=Index, NQ), file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
         NQ<-read.csv(file = fileloc, header=T)
+        
+        cat("\n", "The complete contract looks like:--------------------------------------------------------", "\n")
       }else{stop("Downloading stopped.")}
     }else{print(paste(NQtitle, "has been previously downloaded and does not require update."))}
     
