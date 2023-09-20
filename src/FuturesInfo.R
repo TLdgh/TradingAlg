@@ -2,7 +2,7 @@
 NQWExpD <- c("20200320", "20200619", "20200918", "20201218", 
              "20210319", "20210618", "20210917", "20211217",
              "20220318", "20220617", "20220916", "20221216",
-             "20230317", "20230616", "20230915")
+             "20230317", "20230616", "20230915", "20231215")
 NQ5FExpD <- NQWExpD
 NQ30FExpD <- NQWExpD
 NQ1HExpD <- NQWExpD
@@ -11,7 +11,7 @@ NQExpD <- c("20190920", "20191220",
             "20200320", "20200619", "20200918", "20201218", 
             "20210319", "20210618", "20210917", "20211217",
             "20220318", "20220617", "20220916", "20221216",
-            "20230317", "20230616", "20230915") 
+            "20230317", "20230616", "20230915", "20231215") 
 
 
 
@@ -84,57 +84,67 @@ CombineContracts <- function(OldF, NewF){
 Get_ContinuousFut<-function(ExpD){
   FUT_NQ<-list()
   for(i in 1:length(ExpD)){
-    if(deparse(substitute(ExpD))=="NQExpD"){
-      NQtitle<-paste0("NQ_", ExpD[i])
-      fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
-      NQ<-read.csv(file = fileloc, header=T)
-      exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
-      latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
-      
-      barSize<-"1 day"
-      saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQContinuous.csv")
-    }else if(deparse(substitute(ExpD))=="NQWExpD"){
-      NQtitle<-paste0("NQW_", ExpD[i])
-      fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
-      NQ<-read.csv(file = fileloc, header=T)
-      exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
-      latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
-      
-      barSize<-"1 week"
-      saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQWContinuous.csv")
-    }else if(deparse(substitute(ExpD))=="NQ5FExpD"){
-      NQtitle<-paste0("NQ5F_", ExpD[i])
-      fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
-      NQ<-read.csv(file = fileloc, header=T)
-      exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(5)
-      latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
-      
-      barSize<-"5 mins"
-      saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ5FContinuous.csv")
-    }else if(deparse(substitute(ExpD))=="NQ30FExpD"){
-      NQtitle<-paste0("NQ30F_", ExpD[i])
-      fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
-      NQ<-read.csv(file = fileloc, header=T)
-      exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(30)
-      latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
-      
-      barSize<-"30 mins"
-      saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ30FContinuous.csv")
-    }else if(deparse(substitute(ExpD))=="NQ1HExpD"){
-      NQtitle<-paste0("NQ1H_", ExpD[i])
-      fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
-      NQ<-read.csv(file = fileloc, header=T)
-      exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-hours(1)
-      latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
-      
-      barSize<-"1 hour"
-      saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ1HContinuous.csv")
-    }else{stop("You need to update the Get_ContinuousFut function.")}
-    
+    possibleError<-tryCatch(
+      expr={
+        if(deparse(substitute(ExpD))=="NQExpD"){
+          NQtitle<-paste0("NQ_", ExpD[i])
+          fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
+          NQ<-read.csv(file = fileloc, header=T)
+          exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
+          
+          barSize<-"1 day"
+          saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQContinuous.csv")
+        }else if(deparse(substitute(ExpD))=="NQWExpD"){
+          NQtitle<-paste0("NQW_", ExpD[i])
+          fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
+          NQ<-read.csv(file = fileloc, header=T)
+          exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
+          
+          barSize<-"1 week"
+          saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQWContinuous.csv")
+        }else if(deparse(substitute(ExpD))=="NQ5FExpD"){
+          NQtitle<-paste0("NQ5F_", ExpD[i])
+          fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
+          NQ<-read.csv(file = fileloc, header=T)
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(5)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          
+          barSize<-"5 mins"
+          saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ5FContinuous.csv")
+        }else if(deparse(substitute(ExpD))=="NQ30FExpD"){
+          NQtitle<-paste0("NQ30F_", ExpD[i])
+          fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
+          NQ<-read.csv(file = fileloc, header=T)
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(30)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          
+          barSize<-"30 mins"
+          saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ30FContinuous.csv")
+        }else if(deparse(substitute(ExpD))=="NQ1HExpD"){
+          NQtitle<-paste0("NQ1H_", ExpD[i])
+          fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
+          NQ<-read.csv(file = fileloc, header=T)
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-hours(1)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          
+          barSize<-"1 hour"
+          saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ1HContinuous.csv")
+        }else{stop("You need to update the Get_ContinuousFut function.")}
+      },
+      error=function(e){
+        cat("We have an error: ", conditionMessage(e), "\n")
+        warning(e)
+        stop("There is no csv file for the expiration date, please initialize the file.")}
+    )
 
+  
     if(latesttime<exp){
-      print(last(NQ))
-      proceed<-readline(prompt="Please check data before proceeding. Y/N")
+      print(paste("Data", NQtitle, "needs to be updated."))
+      print(head(NQ))
+      print(tail(NQ))
+      proceed<-readline(prompt="You're updating an existing data. Are you really sure you want to overwrite? Y/N: ")
       if(proceed=="Y"){
         print(paste("Downloading new data", NQtitle))
         
@@ -144,9 +154,9 @@ Get_ContinuousFut<-function(ExpD){
         
         write.zoo(NQ, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
         NQ<-read.csv(file = fileloc, header=T)
-        Sys.sleep(20)
+        #Sys.sleep(20)
       }else{stop("Downloading stopped.")}
-    }else{print(paste(NQtitle, "has been downloaded."))}
+    }else{print(paste(NQtitle, "has been previously downloaded and does not require update."))}
     
     NQ$FND<-last(NQ$Index)
     FUT_NQ[[NQtitle]]<-NQ
@@ -157,7 +167,7 @@ Get_ContinuousFut<-function(ExpD){
   print(head(ContinuousFut,30))
   print(tail(ContinuousFut,30))
   
-  proceed<-readline(prompt="Do you want to save the new data? Y/N")
+  proceed<-readline(prompt="Do you want to save the new data? Y/N: ")
   if(proceed=="Y"){
     write.csv(ContinuousFut, file=saveloc, row.names = FALSE) 
   }
