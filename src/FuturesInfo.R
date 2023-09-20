@@ -150,7 +150,7 @@ Get_ContinuousFut<-function(ExpD){
         twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=ExpD[i], currency="USD", multiplier = "20", include_expired="1")
         NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize=barSize, duration='4 M', useRTH='0', whatToShow='TRADES')
         
-        write.zoo(NQ, sep=",", file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
+        write.csv(data.frame(Index=format(index(NQ), "%Y-%m-%d %H:%M:%S"), NQ), sep=",", file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
         NQ<-read.csv(file = fileloc, header=T)
         Sys.sleep(20)
       }else{stop("Downloading stopped.")}
