@@ -108,7 +108,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   }else{
     SignalStickRank<-which(sort(unique(SignalStickReturn), decreasing = TRUE)==tail(SignalStickReturn,1) )
   }
-  SignalStickRank<-ifelse(SignalStickRank<=3, 1, 0)
+  SignalStickRank<-ifelse(SignalStickRank<=3, 1, 0) #check if the stick is within the biggest three.
   
   
   
@@ -330,7 +330,9 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   
   #check EMA
   A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
-  if(!all(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))){
+  if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))) |
+     ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))))
+     ){
     DivergenceMatrix[1,"Entanglement"]<-1
   }else{
     DivergenceMatrix[1,"Entanglement"]<-0}
