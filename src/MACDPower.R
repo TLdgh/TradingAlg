@@ -121,37 +121,6 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   
   
   ####################################################################################################
-  ####---------------Get the MACD area for the ThreeLine model to consider divergence--------------###
-  ####################################################################################################
-  NumBi<-ifelse(prod(tail(SBPStr$Bi,2)$SLOPE)>0, nrow(SBPStr$Bi)-1 ,nrow(SBPStr$Bi))
-  
-  LineDiv1<-SBPStr$Bi[NumBi-3, c(5,6)]
-  LineDiv2<-SBPStr$Bi[NumBi-1, c(5,6)]
-  LineDivPeriod<-rbind(LineDiv1,LineDiv2)
-  
-  #calculate MACD of the ThreeLine model
-  LineDiv1MACD<-subset(Data_macd,Date>=LineDivPeriod[1,"BiStartD"] & Date<=LineDivPeriod[1,"BiEndD"])
-  LineDiv2MACD<-subset(Data_macd,Date>=LineDivPeriod[2,"BiStartD"] & Date<=LineDivPeriod[2,"BiEndD"])
-  
-  #the range of time
-  LDiv1Length<-nrow(LineDiv1MACD)
-  LDiv2Length<-nrow(LineDiv2MACD)
-  L_TimeWeight<-LDiv2Length/LDiv1Length
-  
-  #the range of price
-  LDiv1Barlength<-SBPStr$Bi[NumBi-3, c("MIN","MAX")]%>%as.numeric()%>%diff() 
-  LDiv2Barlength<-SBPStr$Bi[NumBi-1, c("MIN","MAX")]%>%as.numeric()%>%diff() 
-  L_PriceWeight<-LDiv2Barlength/LDiv1Barlength
-  
-  LDiveMeanWeight<-mean(c(L_TimeWeight,L_PriceWeight))
-  
-  #the MACD data for the lines considered
-  Line_bar_1<-mean(abs(LineDiv1MACD$MACD)) 
-  Line_bar_2<-mean(abs(LineDiv2MACD$MACD))*LDiveMeanWeight #the smaller the value, the closer of two EMA lines in MACD, hence more likely to reverse
-  
-  
-  
-  ####################################################################################################
   ####------------------------------------Check schedule alert-------------------------------------###
   ####################################################################################################
   if (ScheduleAlert==TRUE){  
@@ -258,12 +227,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   
   DivergenceMatrix<-list(MacdMatrix=MacdMatrix, Other=Other)
   
-  ThreeLineDivMatrix<-rbind(data.frame(Date=LineDivPeriod[1,"BiStartD"], MACD_Bar_area=Line_bar_1),
-                            data.frame(Date=LineDivPeriod[2,"BiStartD"],MACD_Bar_area=Line_bar_2))
-  
-  ThreeLineDivMatrix<-cbind(ThreeLineDivMatrix, ThreeLineDivergence=as.numeric(Line_bar_1>Line_bar_2))
-  
-  return(list(DivergenceMatrix=DivergenceMatrix,ThreeLineDivMatrix=ThreeLineDivMatrix, StructuralDivMatrix=StructuralDivMatrix))
+  return(list(DivergenceMatrix=DivergenceMatrix, StructuralDivMatrix=StructuralDivMatrix))
 }
 
 
@@ -409,7 +373,6 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
       colnames(DivergenceList[["BOLL信号"]]) <-c("方向", "强度")
     }
     
-    DivergenceList[["ThreeLineDiv"]]<-MACDensemble[["ThreeLineDivMatrix"]]   #this gives the MACD
     DivergenceList[["Other"]]<-MACDensemble[["DivergenceMatrix"]][["Other"]]
     
     DivergenceList[["Class"]]<-paste(c(as.numeric(DivergenceList[["MACD"]][,1]),
