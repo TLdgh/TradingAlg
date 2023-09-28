@@ -201,7 +201,8 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
     
     Power<-correct/nrow(PowerTable) #If reverse true, how many scenarios I can catch. 1-Power will be how many scenarios I'll miss
     Alpha<-incorrect/nrow(ErrorTable) #If reverse false, how many false signal. More dangerous
-    SuccessRate<-correct/(correct+incorrect) #Given a signal (rejection region), number of scenarios in ReverseTrue/ number of scenarios in ReverseFalse 
+    SuccessRate<-correct/(correct+incorrect) #Given a signal (rejection region), one needs to reject if >= this signal. But it can either be correct or incorrect. 
+                                             #This SuccessRate is the number of scenarios in ReverseTrue/ number of scenarios in ReverseFalse 
     
     return(data.frame(Alpha,Power,SuccessRate))
   }))%>%mutate(RejectionRegion=1:8,.before=Alpha)%>%mutate(Diff=Power-Alpha,.before=SuccessRate)%>%arrange(desc(Alpha)) 
