@@ -219,7 +219,7 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
 
 
 SimTrend<-function(Data,n,SeparateSim=FALSE,CombineSim=FALSE){
-  if(n>4){stop("Cannot plot more than three levels!")}
+  if(n>4){stop("Cannot plot more than four levels!")}
   #Initiate the BeginTrend dataframe consisting 3 rows of data
   BeginTrend<-BiFunction(StarData = StarFunction(Data))
   BeginTrend<-tail(BeginTrend,3)
