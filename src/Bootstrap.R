@@ -209,7 +209,7 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
   #Smaller alpha can give higher success rate, but also very small power, so will miss most of the chances.
   
   print(DecisionTable)
-  AlphaPower<-data.frame(RejectionRegion=1:8, Alpha=Reliab_error, Power=Reliab_power)%>%gather("Type","Value",-1)
+  AlphaPower<-data.frame(RejectionRegion=1:8, Alpha=DecisionTable$Alpha, Power=DecisionTable$Power)%>%gather("Type","Value",-1)
   ggplot(AlphaPower, aes(RejectionRegion,Value,color=Type))+geom_line()
 }
 
