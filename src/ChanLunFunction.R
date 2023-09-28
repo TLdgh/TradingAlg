@@ -364,14 +364,16 @@ ChanLunStr<-function(Pricedata){
   
   Rev1<-function(OutIndex,SLOPE,OutMIN,InMAX,OutMAX,InMIN){ #this checks if the planet is truely reversed
     i<-OutIndex+2
+    j<-OutIndex+4
+    
     Reversal<-0
     if(SLOPE==-1){
-      while(i<=nrow(Bi) & Bi[i, "MIN"]>OutMIN){
-        if(Bi[i, "MAX"]>InMAX){Reversal<-1;break}else{i<-i+2}
+      while(j<=nrow(Bi) & (Bi[i, "MIN"]>OutMIN | Bi[j, "MIN"]>OutMIN) ){
+        if(Bi[i, "MAX"]>InMAX | Bi[j, "MAX"]>InMAX ){Reversal<-1;break}else{i<-i+2; j<-j+2}
       }
     }else{
-      while(i<=nrow(Bi) & Bi[i, "MAX"]<OutMAX){
-        if(Bi[i, "MIN"]<InMIN){Reversal<-1;break}else{i<-i+2}
+      while(j<=nrow(Bi) & (Bi[i, "MAX"]<OutMAX | Bi[j, "MAX"]<OutMAX) ){
+        if(Bi[i, "MIN"]<InMIN | Bi[j, "MIN"]<InMIN ){Reversal<-1;break}else{i<-i+2; j<-j+2}
       }
     }
     return(Reversal)
