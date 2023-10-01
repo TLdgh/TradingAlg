@@ -113,7 +113,7 @@ PricedataBOLL<-function(Pricedata){
 }
 
 PricedataSAR<-function(Pricedata){
-  SAR_Pricedata<- Pricedata%>%transmute(Date=Pricedata$Date, sar=as.numeric(SAR(Pricedata[,c("High", "Low")])), SAR_col=ifelse(sar>=High, "red", "green"))
+  SAR_Pricedata<- Pricedata%>%transmute(Date=Pricedata$Date, sar=as.numeric(SAR(Pricedata[,c("High", "Low")], accel=c(0.01, 0.2))), SAR_col=ifelse(sar>=High, "red", "green"))
   SAR_Pricedata<-na.omit(data.frame(Date=Pricedata$Date,SAR_Pricedata))
   return(SAR_Pricedata)
 }
