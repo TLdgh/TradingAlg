@@ -8,6 +8,7 @@ PriceChart<-function(Pricedata, Title){
   Pricedata_EMA30 <- FuncEMA30(Pricedata)
   Pricedata_EMA60 <- FuncEMA60(Pricedata)
   Pricedata_BOLL<-PricedataBOLL(Pricedata)
+  Pricedata_SAR<-PricedataSAR(Pricedata)
   
   shape <- list( #initiate a rectangular layout shape object, see detail in https://plotly.com/r/horizontal-vertical-shapes/
     type = "rect",
@@ -76,7 +77,9 @@ PriceChart<-function(Pricedata, Title){
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
                 line=list(color='silver', width=2),inherit = F)%>%
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$upB, name='BOLL_upB', type='scatter', mode='lines',
-                line=list(color='silver', width=2),inherit = F)
+                line=list(color='silver', width=2),inherit = F)%>%
+      add_trace(x=Pricedata_SAR$Date, y=Pricedata_SAR$sar, name='SAR', type='scatter', mode='markers',
+                marker = list(color = Pricedata_SAR$SAR_col, size=4),inherit = F)
   }
 }
 
@@ -107,6 +110,12 @@ PricedataBOLL<-function(Pricedata){
   BOLL<- BBands(Cl(Pricedata), n=60, sd=2, maType = EMA)
   BOLL<-na.omit(data.frame(Date=Pricedata$Date,PctB=BOLL[,"pctB"], lwB=BOLL[,"dn"], upB=BOLL[,"up"]))
   return(BOLL)
+}
+
+PricedataSAR<-function(Pricedata){
+  SAR_Pricedata<- Pricedata%>%transmute(Date=Pricedata$Date, sar=as.numeric(SAR(Pricedata[,c("High", "Low")])), SAR_col=ifelse(sar>=High, "red", "green"))
+  SAR_Pricedata<-na.omit(data.frame(Date=Pricedata$Date,SAR_Pricedata))
+  return(SAR_Pricedata)
 }
 
 FuncEMA60<-function(Pricedata){
