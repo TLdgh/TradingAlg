@@ -123,7 +123,8 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####------------------------------------Check schedule alert-------------------------------------###
   ####################################################################################################
-  if (ScheduleAlert==TRUE){  
+  if (ScheduleAlert==TRUE){
+    NumBi<-ifelse(prod(tail(SBPStr$Bi,2)$SLOPE)>0, nrow(SBPStr$Bi)-1 ,nrow(SBPStr$Bi))
     OutIndex<-tail(SBPStr$BiPlanetStr,1)$OutIndex
     StopInd<-NumBi-OutIndex
     i<-1
