@@ -178,7 +178,9 @@ Get_ContinuousFut<-function(ExpD){
 
 
 FutNewBarSize <- function(DataFile, interval=NULL, barSize=NULL){
-  DataInput <-read.csv(file = DataFile, header = T) #get the futures data
+  DataInput <- read.csv(file = DataFile, header = T) #get the futures data
+  DataInput <- rbind(DataInput, last(DataInput)) #use the last time as a ghost bar
+  DataInput$Index[nrow(DataInput)]<-as.character(as.POSIXct(DataInput$Index[nrow(DataInput)], format="%Y-%m-%d %H:%M:%S")+hours(1)) #change the time for the ghost bar
   
   if(interval %in% c("1H","1HContinuous")){ #currently only support conversion from 1H to 4H
     barintv<-c(which(format(as.POSIXct(DataInput[,1]), "%H:%M:%S")=="18:00:00"), nrow(DataInput)) #get the interval from 18:00:00 everyday
