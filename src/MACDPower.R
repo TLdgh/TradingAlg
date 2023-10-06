@@ -301,21 +301,36 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
   if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))) |
      ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))))
-     ){
+  ){
     DivergenceMatrix[1,"Entanglement"]<-1
   }else{
     DivergenceMatrix[1,"Entanglement"]<-0}
   
   #check if any macd bar changes more than 50% within a period
-  Data_macd<-subset(Data_macd,Date>=Period$Out1)
-  if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 3 bars after Out2
-    res<-round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2)
-    if(Direction==-1 & Pricedata[nrow(Pricedata), "Low"]>Pricedata[which(Pricedata$Date==Period$Out2),"Low"]){res<-res}
-    else if(Direction==1 & Pricedata[nrow(Pricedata), "High"]<Pricedata[which(Pricedata$Date==Period$Out2),"High"]){res<- -res}
-    if(any(res[res>0]>0.5)){DivergenceMatrix[1,"macd"]<-1}else{DivergenceMatrix[1,"macd"]<-0}
-  }else{
-    DivergenceMatrix[1,"macd"]<-0
+  Data_macd<-subset(Data_macd,Date>=Period$Out1)%>%
+    mutate(B=paste0(ifelse(MACD > 0, "positive_", "negative_"),consecutive_id(MACD > 0)))
+  
+  Pospart<-Data_macd%>%filter(MACD>0)%>%group_by(B)%>%summarise(val=max(MACD))%>%mutate(x=1:nrow(.))
+  Negpart<-Data_macd%>%filter(MACD<=0)%>%group_by(B)%>%summarise(val=min(MACD))%>%mutate(x=1:nrow(.))
+  
+  if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 4 bars after Out2
+    res<-tail(round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2),4)
+    if(Direction==-1 & Pricedata[nrow(Pricedata), "Low"]>Pricedata[which(Pricedata$Date==Period$Out2),"Low"]){
+      res<-res
+      if(any(res[res>0]>0.5) & nrow(Negpart)==1){DivergenceMatrix[1,"macd"]<-1}
+      else if(any(res[res>0]>0.5) & coefficients(lm(val~x, Negpart))[2]>0){DivergenceMatrix[1,"macd"]<-2}
+      else{DivergenceMatrix[1,"macd"]<-0}
+    }
+    else if(Direction==1 & Pricedata[nrow(Pricedata), "High"]<Pricedata[which(Pricedata$Date==Period$Out2),"High"]){
+      res<-res
+      if(any(res[res>0]>0.5) & nrow(Negpart)==1){DivergenceMatrix[1,"macd"]<-1}
+      else if(any(res[res>0]>0.5) & coefficients(lm(val~x, Negpart))[2]<=0){DivergenceMatrix[1,"macd"]<-2}
+      else{DivergenceMatrix[1,"macd"]<-0}
+    }
+    else{res<-0}
   }
+  else{DivergenceMatrix[1,"macd"]<-0}
+  
   return(DivergenceMatrix)
 }
 
