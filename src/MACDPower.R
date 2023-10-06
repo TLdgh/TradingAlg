@@ -64,6 +64,8 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####----------------------------Calculate the OpenPositionSignal---------------------------------###
   ####################################################################################################
+  #This is 分型强度
+  
   StarBeginDate<-tail(A2_interval,2)$Date[1]
   StarBeginHigh<-Pricedata[which(Pricedata$Date==StarBeginDate),"High"]
   StarBeginLow<-Pricedata[which(Pricedata$Date==StarBeginDate),"Low"]
@@ -102,7 +104,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####------------------------Calculate the rank of the last three returns-------------------------###
   ####################################################################################################
-  SignalStickReturn<-ROC(Pricedata[which(Pricedata$Date==Period$In1):(which(Pricedata$Date==Period$Out2)+StopCount*CountIndex),]$Close,type="discrete")
+  SignalStickReturn<-ROC(Pricedata[which(Pricedata$Date==Period$Out1):(which(Pricedata$Date==Period$Out2)+StopCount*CountIndex),]$Close,type="discrete")
   if(Direction==1){
     SignalStickRank<-which(sort(unique(SignalStickReturn), decreasing = FALSE)==tail(SignalStickReturn,1) )
   }else{
@@ -123,6 +125,8 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####------------------------------------Check schedule alert-------------------------------------###
   ####################################################################################################
+  #This function detects if a reverse has an macd bar surpassing the previous macd bars in a trend
+  
   if (ScheduleAlert==TRUE){
     NumBi<-ifelse(prod(tail(SBPStr$Bi,2)$SLOPE)>0, nrow(SBPStr$Bi)-1 ,nrow(SBPStr$Bi))
     OutIndex<-tail(SBPStr$BiPlanetStr,1)$OutIndex
@@ -306,7 +310,8 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   Data_macd<-subset(Data_macd,Date>=Period$Out1)
   if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 3 bars after Out2
     res<-round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2)
-    if(Direction==-1){res<-res}else{res<- -res}
+    if(Direction==-1 & Pricedata[nrow(Pricedata), "Low"]>Pricedata[which(Pricedata$Date==Period$Out2),"Low"]){res<-res}
+    else if(Direction==1 & Pricedata[nrow(Pricedata), "High"]<Pricedata[which(Pricedata$Date==Period$Out2),"High"]){res<- -res}
     if(any(res[res>0]>0.5)){DivergenceMatrix[1,"macd"]<-1}else{DivergenceMatrix[1,"macd"]<-0}
   }else{
     DivergenceMatrix[1,"macd"]<-0
