@@ -25,11 +25,15 @@ DivergenceSig<-function(Data){  #this function gives the divergence signal
   value<-sum(DivSig[[2]][,1])+sum(DivSig[[3]][,1])+sum(DivSig[[5]][,1])
   BOLLvalue<-0
   if (DivSig[[6]][,2]>=0.75 | DivSig[[6]][,2]<=0.25){BOLLvalue<-1}
+  
+  CandleRank<-DivSig[[7]][,1] #this is 启动K线排名
   StarStrength<-DivSig[[7]][,2] #this is 分型强度 in MACD
   MACDalert<-DivSig[[7]][,3] #this is MACD Alert
   
   Signal<-0
-  if((value>=4 & StarStrength>0) | MACDalert==1 | sum(DivSig$EMA)==2){Signal<-1}
+  if((value>=4 & DivSig$EMA[,"macd"]==1 & StarStrength>0) & (DivSig$EMA[,"Entanglement"]==1 | CandleRank!=0 | MACDalert==1) ){Signal<-1}
+  else if(DivSig$EMA[,"macd"]==2 & StarStrength>0){Signal<-1}
+  print(DivSig)
   return(Signal)
 }
 
