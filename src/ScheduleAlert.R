@@ -33,7 +33,7 @@ DivergenceSig<-function(Data){  #this function gives the divergence signal
   Signal<-0
   if((value>=4 & DivSig$EMA[,"macd"]==1 & StarStrength>0) & (DivSig$EMA[,"Entanglement"]==1 | CandleRank!=0 | MACDalert==1) ){Signal<-1}
   else if(DivSig$EMA[,"macd"]==2 & StarStrength>0){Signal<-1}
-  print(DivSig)
+
   return(Signal)
 }
 
