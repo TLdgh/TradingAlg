@@ -308,23 +308,32 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   
   #check if any macd bar changes more than 50% within a period
   Data_macd<-subset(Data_macd,Date>=Period$Out1)%>%
-    mutate(B=paste0(ifelse(MACD > 0, "positive_", "negative_"),consecutive_id(MACD > 0)))
-  
-  Pospart<-Data_macd%>%filter(MACD>0)%>%group_by(B)%>%summarise(val=max(MACD))%>%mutate(x=1:nrow(.))
-  Negpart<-Data_macd%>%filter(MACD<=0)%>%group_by(B)%>%summarise(val=min(MACD))%>%mutate(x=1:nrow(.))
-  
+      mutate(D=c(0,diff(MACD)), Category=paste0(
+        ifelse(MACD > 0, "positive_", "negative_"),
+        consecutive_id(MACD > 0)),
+        Lag=lag(MACD,1)
+      )%>%na.omit()%>%mutate(Pct=D/abs(Lag), DMean=(DIFF+DEA)/2)%>%
+      mutate(x=1:nrow(.))
+    
+    res<-Data_macd%>%filter(Date>=Period$Out2 & Pct>0.5)
+    Div<-(which(Data_macd$DMean==min(Data_macd$DMean))<nrow(Data_macd))
+    numChunk<-Data_macd%>%filter(MACD<0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
+
   if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 4 bars after Out2
-    res<-tail(round(diff(Data_macd$MACD)/abs(Data_macd$MACD[-nrow(Data_macd)]),2),4)
     if(Direction==-1 & Pricedata[nrow(Pricedata), "Low"]>Pricedata[which(Pricedata$Date==Period$Out2),"Low"]){
-      res<-res
-      if(any(res[res>0]>0.5) & nrow(Negpart)==1){DivergenceMatrix[1,"macd"]<-1}
-      else if(any(res[res>0]>0.5) & coefficients(lm(val~x, Negpart))[2]>0){DivergenceMatrix[1,"macd"]<-2}
+      Div<-(which(Data_macd$DMean==min(Data_macd$DMean))<nrow(Data_macd))
+      numChunk<-Data_macd%>%filter(MACD<0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
+      
+      if(nrow(res)!=0 & numChunk==1){DivergenceMatrix[1,"macd"]<-1}
+      else if(nrow(res)!=0 & Div==TRUE & numChunk>1){DivergenceMatrix[1,"macd"]<-2}
       else{DivergenceMatrix[1,"macd"]<-0}
     }
     else if(Direction==1 & Pricedata[nrow(Pricedata), "High"]<Pricedata[which(Pricedata$Date==Period$Out2),"High"]){
-      res<-res
-      if(any(res[res>0]>0.5) & nrow(Negpart)==1){DivergenceMatrix[1,"macd"]<-1}
-      else if(any(res[res>0]>0.5) & coefficients(lm(val~x, Negpart))[2]<=0){DivergenceMatrix[1,"macd"]<-2}
+      Div<-(which(Data_macd$DMean==max(Data_macd$DMean))<nrow(Data_macd))
+      numChunk<-Data_macd%>%filter(MACD>0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
+      
+      if(nrow(res)!=0 & numChunk==1){DivergenceMatrix[1,"macd"]<-1}
+      else if(nrow(res)!=0 & Div==TRUE & numChunk>1){DivergenceMatrix[1,"macd"]<-2}
       else{DivergenceMatrix[1,"macd"]<-0}
     }
     else{res<-0}
