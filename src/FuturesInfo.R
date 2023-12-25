@@ -2,7 +2,8 @@
 NQWExpD <- c("20200320", "20200619", "20200918", "20201218", 
              "20210319", "20210618", "20210917", "20211217",
              "20220318", "20220617", "20220916", "20221216",
-             "20230317", "20230616", "20230915", "20231215")
+             "20230317", "20230616", "20230915", "20231215",
+             "20240315")
 NQ5FExpD <- NQWExpD
 NQ30FExpD <- NQWExpD
 NQ1HExpD <- NQWExpD
@@ -11,9 +12,10 @@ NQExpD <- c("20190920", "20191220",
             "20200320", "20200619", "20200918", "20201218", 
             "20210319", "20210618", "20210917", "20211217",
             "20220318", "20220617", "20220916", "20221216",
-            "20230317", "20230616", "20230915", "20231215") 
+            "20230317", "20230616", "20230915", "20231215",
+            "20240315") 
 
-
+TimeZ<-"America/Toronto"
 
 GetFutInfo<-function(FUT,interval){
   BasicInfo<-merge(FUT,interval)
@@ -31,7 +33,7 @@ GetFutInfo<-function(FUT,interval){
     
     if(BasicInfo[i,1]=="NQ"){
       FutInfo[[paste0("NQ",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("NQ"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
-                                                      endDateTime=format(with_tz(Sys.time(),tz="Canada/Eastern"),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20231215",currency="USD",multiplier="20")}
+                                                      endDateTime=format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20231215",currency="USD",multiplier="20")}
     else if(BasicInfo[i,1]=="GC"){
       FutInfo[[paste0("GC",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("GC"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
                                                       endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"),exch="COMEX",expiry="20211229",currency="USD",multiplier="100")}
@@ -50,8 +52,9 @@ GetFutInfo<-function(FUT,interval){
 Get_IntradayFut<-function(tws,Symb,exch,expiry,currency,multiplier,endDateTime,barSize,duration,fileloc){
   Contract<-twsFuture(symbol=Symb,exch=exch, expiry=expiry, currency=currency, multiplier=multiplier, include_expired="1")
   Fdata<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='0', whatToShow='TRADES') 
-  Fdata<-data.frame(Index=format(index(Fdata),"%Y-%m-%d %H:%M:%S"), coredata(Fdata))
-  write_csv(Fdata,file=fileloc) #this will write the xts data into a csv, which is a dataframe when later imported
+  Index=format(as.POSIXct(index(Fdata),tz=TimeZ),"%Y-%m-%d %H:%M:%S")
+  write.csv(data.frame(Index=Index, Fdata), file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
+  
 }
 
 
@@ -76,7 +79,7 @@ CombineContracts <- function(OldF, NewF){
   VolAdj<-subset(merge(OldF[,c(1,6)], NewF[,c(1,6)], by= "Date"),Date<=RollPoint) #sum the volume of the two contracts that have overlaps before the rollpoint
   OldF[match(VolAdj$Date,OldF$Date,),]$Volume <- rowSums(VolAdj[,2:3])
   NewF[which(NewF$Date==RollPoint),]$Volume <- OldF[which(OldF$Date==RollPoint),]$Volume
-  ContinuousFut <- rbind(filter(OldF, as.POSIXct(Date) < as.POSIXct(RollPoint)), filter(NewF, as.POSIXct(Date) >= as.POSIXct(RollPoint)))
+  ContinuousFut <- rbind(filter(OldF, as.POSIXct(Date,tz=TimeZ) < as.POSIXct(RollPoint,tz=TimeZ)), filter(NewF, as.POSIXct(Date, tz=TimeZ) >= as.POSIXct(RollPoint,tz=TimeZ)))
   ContinuousFut$FND <- unique(NewF$FND)
   return(ContinuousFut)
 }
@@ -90,8 +93,8 @@ Get_ContinuousFut<-function(ExpD){
           NQtitle<-paste0("NQ_", ExpD[i])
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
-          exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
+          exp<-as.POSIXct(ExpD[i], format="%Y%m%d", tz=TimeZ)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ)-days(1)
           
           barSize<-"1 day"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQContinuous.csv")
@@ -99,8 +102,8 @@ Get_ContinuousFut<-function(ExpD){
           NQtitle<-paste0("NQW_", ExpD[i])
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
-          exp<-as.POSIXct(ExpD[i], format="%Y%m%d")
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d")
+          exp<-as.POSIXct(ExpD[i], format="%Y%m%d", tz=TimeZ)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ)-weeks(1)
           
           barSize<-"1 week"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQWContinuous.csv")
@@ -108,8 +111,8 @@ Get_ContinuousFut<-function(ExpD){
           NQtitle<-paste0("NQ5F_", ExpD[i])
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
-          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(5)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-minutes(5)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
           
           barSize<-"5 mins"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ5FContinuous.csv")
@@ -117,8 +120,8 @@ Get_ContinuousFut<-function(ExpD){
           NQtitle<-paste0("NQ30F_", ExpD[i])
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
-          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-minutes(30)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-minutes(30)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
           
           barSize<-"30 mins"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ30FContinuous.csv")
@@ -126,8 +129,8 @@ Get_ContinuousFut<-function(ExpD){
           NQtitle<-paste0("NQ1H_", ExpD[i])
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
-          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S")-hours(1)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S")
+          exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-hours(1)
+          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
           
           barSize<-"1 hour"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ1HContinuous.csv")
@@ -152,11 +155,14 @@ Get_ContinuousFut<-function(ExpD){
         
         if(deparse(substitute(ExpD)) %in% c("NQExpD","NQWExpD")){Index<-format(index(NQ), "%Y-%m-%d")}
         else{Index<-format(index(NQ), "%Y-%m-%d %H:%M:%S")}
+        NQ<-data.frame(Index=Index, NQ)
+        print(filter(NQ, hour(as.POSIXct(NQ$Index))<=1))
         
-        write.csv(data.frame(Index=Index, NQ), file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
-        NQ<-read.csv(file = fileloc, header=T)
-        
-        cat("\n", "The complete contract looks like:--------------------------------------------------------", "\n")
+        proceed<-readline(prompt="Does the data have a problem on the format of the date? Y/N: ")
+        if(proceed=="N"){
+          write.csv(NQ, file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
+          NQ<-read.csv(file = fileloc, header=T)
+          }else{stop("Data downloading process has a problem. Please fix the issue first on the source code level.")}
       }else{stop("Downloading stopped.")}
     }else{print(paste(NQtitle, "has been previously downloaded and does not require update."))}
     
@@ -164,12 +170,13 @@ Get_ContinuousFut<-function(ExpD){
     FUT_NQ[[NQtitle]]<-NQ
   }
   
+  cat("\n", "The complete contract looks like:--------------------------------------------------------", "\n")
   ContinuousFut<-CombineContracts(FUT_NQ[[1]], FUT_NQ[[2]])
-  for(i in 3:length(FUT_NQ)){ContinuousFut<-CombineContracts(ContinuousFut, FUT_NQ[[i]])}
+  for(i in 3:(length(FUT_NQ)-1)){ContinuousFut<-CombineContracts(ContinuousFut, FUT_NQ[[i]])}
   print(head(ContinuousFut,30))
   print(tail(ContinuousFut,30))
-  
-  proceed<-readline(prompt="Do you want to save the new data? Y/N: ")
+  ContinuousFut<-CombineContracts(ContinuousFut, FUT_NQ[[length(FUT_NQ)]])
+  proceed<-readline(prompt="Has the data gotten combined correctly, and do you want to save the new data? Y/N: ")
   if(proceed=="Y"){
     write.csv(ContinuousFut, file=saveloc, row.names = FALSE) 
   }
@@ -180,10 +187,10 @@ Get_ContinuousFut<-function(ExpD){
 FutNewBarSize <- function(DataFile, interval=NULL, barSize=NULL){
   DataInput <- read.csv(file = DataFile, header = T) #get the futures data
   DataInput <- rbind(DataInput, last(DataInput)) #use the last time as a ghost bar
-  DataInput$Index[nrow(DataInput)]<-as.character(as.POSIXct(DataInput$Index[nrow(DataInput)], format="%Y-%m-%d %H:%M:%S")+hours(1)) #change the time for the ghost bar
+  DataInput$Index[nrow(DataInput)]<-as.character(as.POSIXct(DataInput$Index[nrow(DataInput)], format="%Y-%m-%d %H:%M:%S", tz=TimeZ)+hours(1)) #change the time for the ghost bar
   
   if(interval %in% c("1H","1HContinuous")){ #currently only support conversion from 1H to 4H
-    barintv<-c(which(format(as.POSIXct(DataInput[,1]), "%H:%M:%S")=="18:00:00"), nrow(DataInput)) #get the interval from 18:00:00 everyday
+    barintv<-c(which(format(as.POSIXct(DataInput[,1], tz=TimeZ), "%H:%M:%S")=="18:00:00"), nrow(DataInput)) #get the interval from 18:00:00 everyday
   }
   
   NewData <-data.frame()

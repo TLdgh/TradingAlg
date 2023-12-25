@@ -42,5 +42,22 @@ write.zoo(Sdata, sep=",", file=paste0(getwd(),"/Data/OriginalStockData/US/AAPL_d
 
 
 
+# Initialize Futures contracts. Please mannually update the barSize and file names. If intraday, please check the format at 00:00:00 midnight.
+#barsize<-c("5 mins", "30 mins", "1 hour", "1 day", "1 week")
+
+endtime<-format(with_tz(Sys.time(),tz="Canada/Eastern"),"%Y%m%d %H:%M:%S")
+twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry="20240315", currency="USD", multiplier = "20", include_expired="1")
+NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize="30 mins", duration='4 M', useRTH='0', whatToShow='TRADES')
+NQ<-data.frame(Index=format(as.POSIXct(index(NQ),tz="America/Toronto"), "%Y-%m-%d %H:%M:%S"), NQ)
+head(NQ,100)
+tail(NQ)
+
+write.csv(NQ, file=paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20240315.csv"), row.names = FALSE)
+
+
+
+
+
+
 
 

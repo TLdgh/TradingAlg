@@ -40,7 +40,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5F", "30F", "1H"))
+FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("WContinuous"))
 source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 
@@ -71,6 +71,8 @@ StockChart(NQContinuous, Title = "NQContinuous")
 MultiChart(list(NQ5F=NQ5F,NQ1F=NQ1F))
 
 MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
+
+MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H))
 
 MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
 
