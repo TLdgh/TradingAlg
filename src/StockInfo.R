@@ -30,14 +30,27 @@ Get_Stock<-function(tws,Symb,endDateTime,barSize,duration,fileloc){   #this may 
   olddata<-try(read.csv(file=fileloc,header = TRUE), stop("No data exists for this stock, please initialize first."))
   toDate<-tail(olddata,1)[,"Index"]
   NMonths<-interval(as.Date(toDate), Sys.time())%/%months(1)+1
+  NYears<-interval(as.Date(toDate), Sys.time())%/%years(1)+1
   
   newdata<-list()
-  for(i in 1:NMonths){
-    Contract<-twsEquity(symbol=Symb)
-    SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='1', whatToShow='TRADES') 
-    newdata[[NMonths+1-i]]<-data.frame(Index=as.character(index(SdataNew)),SdataNew,row.names = NULL)
-    endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
-    if(NMonths>1){Sys.sleep(22)}
+  if(barSize=="30 mins"){
+    for(i in 1:NMonths){
+      Contract<-twsEquity(symbol=Symb)
+      SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='1', whatToShow='TRADES') 
+      print("Please wait for 20 seconds")
+      Sys.sleep(22)
+      newdata[[NMonths+1-i]]<-data.frame(Index=as.character(index(SdataNew)),SdataNew,row.names = NULL)
+      endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
+    }
+  }else if(barSize=="1 day"){
+    for(i in 1:NYears){
+      Contract<-twsEquity(symbol=Symb)
+      SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize=barSize, duration=duration, useRTH='1', whatToShow='TRADES') 
+      print("Please wait for 20 seconds")
+      Sys.sleep(22)
+      newdata[[NYears+1-i]]<-data.frame(Index=as.character(index(SdataNew)),SdataNew,row.names = NULL)
+      endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
+    }
   }
   newdata<-do.call(rbind, newdata)
   

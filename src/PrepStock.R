@@ -27,7 +27,6 @@ for (i in 1:length(StkToBePrepared)) {
   GlobalMarket<-StkToBePrepared[[i]][1,"GlobalMarket"]
   source("src/MyStrategy.R")
   countlimit<-DownloadData(nam[i])
-  if(i<length(StkToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
   RawDataLocation[nam[i]]<-InputFileLoc_Stk
 }
 
