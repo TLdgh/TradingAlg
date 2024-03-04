@@ -311,7 +311,7 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
       mutate(D=c(0,diff(MACD)), Category=paste0(
         ifelse(MACD > 0, "positive_", "negative_"),
         consecutive_id(MACD > 0)),
-        Lag=lag(MACD,1)
+        Lag=stats::lag(MACD,1)
       )%>%na.omit()%>%mutate(Pct=D/abs(Lag), DMean=(DIFF+DEA)/2)%>%
       mutate(x=1:nrow(.))
     

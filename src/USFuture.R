@@ -40,7 +40,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5F", "30F", "1HContinuous", "Continuous", "WContinuous"))
+FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("1HContinuous"))
 source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 

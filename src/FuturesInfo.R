@@ -94,7 +94,7 @@ Get_ContinuousFut<-function(ExpD){
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
           exp<-as.POSIXct(ExpD[i], format="%Y%m%d", tz=TimeZ)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ)-days(1)
+          latesttime<-ifelse("latesttime" %in% colnames(NQ), last(NQ$latesttime), as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ))
           
           barSize<-"1 day"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQContinuous.csv")
@@ -103,7 +103,7 @@ Get_ContinuousFut<-function(ExpD){
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
           exp<-as.POSIXct(ExpD[i], format="%Y%m%d", tz=TimeZ)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ)-weeks(1)
+          latesttime<-ifelse("latesttime" %in% colnames(NQ), last(NQ$latesttime), as.POSIXct(last(NQ)$Index, format="%Y-%m-%d", tz=TimeZ))
           
           barSize<-"1 week"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQWContinuous.csv")
@@ -112,7 +112,7 @@ Get_ContinuousFut<-function(ExpD){
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
           exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-minutes(5)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
+          latesttime<-ifelse("latesttime" %in% colnames(NQ), last(NQ$latesttime), as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ))
           
           barSize<-"5 mins"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ5FContinuous.csv")
@@ -121,7 +121,7 @@ Get_ContinuousFut<-function(ExpD){
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
           exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-minutes(30)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
+          latesttime<-ifelse("latesttime" %in% colnames(NQ), last(NQ$latesttime), as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ))
           
           barSize<-"30 mins"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ30FContinuous.csv")
@@ -130,7 +130,7 @@ Get_ContinuousFut<-function(ExpD){
           fileloc<-paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/", NQtitle, ".csv")
           NQ<-read.csv(file = fileloc, header=T)
           exp <- as.POSIXct(paste(ExpD[i], "00:00:00"), format="%Y%m%d %H:%M:%S", tz=TimeZ)-hours(1)
-          latesttime<-as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ)
+          latesttime<-ifelse("latesttime" %in% colnames(NQ), last(NQ$latesttime), as.POSIXct(last(NQ)$Index, format="%Y-%m-%d %H:%M:%S", tz=TimeZ))
           
           barSize<-"1 hour"
           saveloc<-paste0(getwd(), "/Data/OriginalFuturesData/NQ/NQ1HContinuous.csv")
@@ -141,8 +141,8 @@ Get_ContinuousFut<-function(ExpD){
         warning(e)
         stop("There is no csv file for the expiration date, please initialize the file.")}
     )
-
-  
+    
+    
     if(latesttime<exp){
       print(paste("Data", NQtitle, "needs to be updated."))
       proceed<-readline(prompt="You're updating an existing data. Are you really sure you want to overwrite? Y/N: ")
@@ -153,21 +153,27 @@ Get_ContinuousFut<-function(ExpD){
         twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry=ExpD[i], currency="USD", multiplier = "20", include_expired="1")
         NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize=barSize, duration='4 M', useRTH='0', whatToShow='TRADES')
         
-        if(deparse(substitute(ExpD)) %in% c("NQExpD","NQWExpD")){Index<-format(index(NQ), "%Y-%m-%d")}
-        else{Index<-format(index(NQ), "%Y-%m-%d %H:%M:%S")}
-        NQ<-data.frame(Index=Index, NQ)
+        if(deparse(substitute(ExpD)) %in% c("NQExpD","NQWExpD")){
+          Index<-format(index(NQ), "%Y-%m-%d")
+          latesttime<-format(with_tz(Sys.time(),tz=TimeZ),"%Y-%m-%d")
+        }else{
+          Index<-format(index(NQ), "%Y-%m-%d %H:%M:%S")
+          latesttime<-format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S")
+        }
+        
+        NQ<-data.frame(Index=Index, NQ, latesttime=latesttime)
         print(filter(NQ, hour(as.POSIXct(NQ$Index))<=1))
         
         proceed<-readline(prompt="Does the data have a problem on the format of the date? Y/N: ")
         if(proceed=="N"){
           write.csv(NQ, file=fileloc, row.names = FALSE) #this will write the xts data into a csv, which is a dataframe when later imported
           NQ<-read.csv(file = fileloc, header=T)
-          }else{stop("Data downloading process has a problem. Please fix the issue first on the source code level.")}
+        }else{stop("Data downloading process has a problem. Please fix the issue first on the source code level.")}
       }else{stop("Downloading stopped.")}
     }else{print(paste(NQtitle, "has been previously downloaded and does not require update."))}
     
     NQ$FND<-last(NQ$Index)
-    FUT_NQ[[NQtitle]]<-NQ
+    if("latesttime" %in% colnames(NQ)){FUT_NQ[[NQtitle]]<-select(NQ, -"latesttime")}else{FUT_NQ[[NQtitle]]<-NQ}
   }
   
   cat("\n", "The complete contract looks like:--------------------------------------------------------", "\n")
