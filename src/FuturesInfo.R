@@ -267,7 +267,7 @@ GetFutInfo<-setRefClass(
       Fut_data <- Fut_data[order(Fut_data$Date, decreasing = TRUE),]
       print(head(Fut_data))
       print(tail(Fut_data))
-      #write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
+      write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
     },
     
     
