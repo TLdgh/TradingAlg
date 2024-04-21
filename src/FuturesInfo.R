@@ -67,8 +67,7 @@ GetFutInfo<-setRefClass(
       
       
       for (i in 1:length(FutToBePrepared)){
-        source("/Users/tengli/R/TradingAlg/src/MakeName.R") #make a name for your file
-        .self$nam<-c(nam,MakeName(FutToBePrepared[[i]][1,]))
+        .self$nam<-c(nam,.self$MakeName(FutToBePrepared[[i]][1,]))
         InputFileLoc_Fut<-paste0("/Users/tengli/R/TradingAlg","/Data/OriginalFuturesData/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv") #read the original data
         OutputFileLoc_Fut<-paste0("/Users/tengli/R/TradingAlg","/Data/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv") #Save the clean data
         CombFileLoc_Fut<-paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], "Comb.csv") #read the combined data
@@ -329,6 +328,27 @@ GetFutInfo<-setRefClass(
         print(tail(CombData))
         assign(nam[i], CombData, envir = .GlobalEnv)
       }
+    },
+    
+    
+    
+    MakeName=function(DataInfo){
+      if (DataInfo["SecurityType"]=="FUT") {   #give the name of the security and its corresponding file names
+        namresult <- paste(DataInfo["Symb"],DataInfo["intv"], sep = "")
+      }else if(DataInfo["SecurityType"] == "STK"){
+        if(DataInfo["intv"]=="daily" | DataInfo["intv"]=="weekly" | DataInfo["intv"]=="monthly"){
+          if(DataInfo["GlobalMarket"]=="China"){
+            namresult <- paste(DataInfo["A_STOK"],"_",DataInfo["intv"], sep = "")
+          }else{
+            namresult <- paste(toupper(DataInfo["Symb"]),"_",DataInfo["intv"], sep = "")
+          }
+        }
+        else{namresult <- paste(toupper(DataInfo["Symb"]),DataInfo["intv"], sep = "")
+        }
+      }else if(DataInfo["SecurityType"] == "FOREX" ){
+        namresult <- paste(toupper(gsub("/","",DataInfo["Symb"])),"_",DataInfo["intv"], sep = "")
+      }
+      return(namresult)
     }
   )
 )
