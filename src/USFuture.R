@@ -31,7 +31,6 @@ twsConnectionTime(tws)# check what time did you connect
 twsDisconnect(tws)#to disconnect
 
 source("src/FuturesInfo.R")
-source("src/MyStrategy.R")
 source("src/ChanLunFunction.R")
 source("src/StockPlotFunction.R")
 source("src/MACDPower.R")
@@ -40,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("1HContinuous", "WContinuous"), RealData=FALSE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("WContinuous"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp

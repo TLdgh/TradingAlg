@@ -15,8 +15,3 @@ ChartReplay(Pricedata=SPY_daily,Title="SPY_daily", StartCandle=4454, PausePeriod
 ChartReplay(Pricedata=NQ5FContinuous, AuxillaryData=NQ30FContinuous, 
             StartCandle=4542, PausePeriod=5, UerInput = "N")
 
-x<-c(0)
-for(i in 2:10000){
-  x[i]<-sample(c(-1,1), 1, prob = c(0.45,0.55))+x[i-1]
-}
-plot(x, type="lines")
