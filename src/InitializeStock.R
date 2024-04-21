@@ -47,12 +47,12 @@ write.zoo(Sdata, sep=",", file=paste0(getwd(),"/Data/OriginalStockData/US/AAPL_d
 
 endtime<-format(with_tz(Sys.time(),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
 twsNQ <- twsFuture(symbol = "NQ",exch="CME", expiry="20240621", currency="USD", multiplier = "20", include_expired="1")
-NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize="1 week", duration='4 M', useRTH='0', whatToShow='TRADES')
-NQ<-data.frame(Index=format(as.POSIXct(index(NQ),tz="America/Toronto"), "%Y-%m-%d"), NQ, latesttime=index(NQ))
-head(NQ,100)
+NQ<- reqHistoricalData(tws, Contract=twsNQ, endDateTime=endtime, barSize="30 mins", duration='4 M', useRTH='0', whatToShow='TRADES')
+NQ<-data.frame(Index=format(as.POSIXct(index(NQ),tz="America/Toronto"), "%Y-%m-%d %H:%M:%S"), NQ)%>%mutate(latesttime=last(Index))
+head(NQ)
 tail(NQ)
 
-write.csv(NQ, file=paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/NQW_20240621.csv"), row.names = FALSE)
+write.csv(NQ, file=paste0(getwd(),"/Data/OriginalFuturesData/NQ/Continuous/NQ30F_20240621.csv"), row.names = FALSE)
 
 
 
