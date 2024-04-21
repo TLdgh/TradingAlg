@@ -158,7 +158,7 @@ Get_ContinuousFut<-function(ExpD){
           latesttime<-format(with_tz(Sys.time(),tz=TimeZ),"%Y-%m-%d")
         }else{
           Index<-format(index(NQ), "%Y-%m-%d %H:%M:%S")
-          latesttime<-format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S")
+          latesttime<-format(with_tz(Sys.time(),tz=TimeZ),"%Y-%m-%d %H:%M:%S")
         }
         
         NQ<-data.frame(Index=Index, NQ, latesttime=latesttime)
