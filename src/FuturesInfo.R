@@ -319,7 +319,7 @@ GetFutInfo<-setRefClass(
     
     
     
-    ReadCombData=function(){  #This script read and load the combined data
+    ReadCombData=function(OutputCombtxt=.self$OutputCombtxt, nam=.self$nam){  #This script read and load the combined data
       for (i in 1:length(OutputCombtxt)) { 
         CombData <- read.csv(OutputCombtxt[i], header = T) 
         CombData <- CombData[order(CombData$Date, decreasing = FALSE),]
