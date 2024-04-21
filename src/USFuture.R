@@ -40,7 +40,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("5FContinuous"))
+FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
 source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
 
 
@@ -115,7 +115,7 @@ MACDPower(DataToBeTested=NQ1F, BarOverride=FALSE)
 MACDPower(DataToBeTested=NQ5F)
 MACDPower(DataToBeTested=NQ30F)
 MACDPower(DataToBeTested=NQ4H)
-  MACDPower(DataToBeTested=NQContinuous, BarOverride=FALSE)
+MACDPower(DataToBeTested=NQContinuous, BarOverride=FALSE)
 MACDPower(DataToBeTested=subset(NQ30F, Date<="2023-05-23 02:30:00"))
 
 MACDPower(DataToBeTested=GC30F, BarOverride=FALSE)
