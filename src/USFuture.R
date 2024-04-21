@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("WContinuous"), RealData=FALSE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30F"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -186,7 +186,7 @@ write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"
 #Step3: if you need to get the updated data, run the following:
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
-ReadCombData(OutputCombtxt=OutputCombtxt,nam)     #This src load the combined data
+FutToBePrepared$ReadCombData(OutputCombtxt=OutputCombtxt,nam=nam)     #This src load the combined data
 MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
 
