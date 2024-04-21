@@ -40,18 +40,14 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
-source("src/PrepFutures.R")  #This src downloads the data and prepare for combination
-
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("1HContinuous", "WContinuous"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
 
-
 #Step 3------------------------------------------
 #This src load the combined data
-
-ReadCombData(OutputCombtxt,nam) 
+FutToBePrepared$ReadCombData() 
 
 
 #Step 4------------------------------------------
