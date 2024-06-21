@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30F"), RealData=FALSE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30FContinuous","1HContinuous","Continuous","WContinuous"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -69,7 +69,7 @@ MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
 MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H))
 
-MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H,NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
+MultiChart(list(NQ30F=subset(NQ30FContinuous,Date>="2024-04-01"),NQ4H=subset(NQ4HContinuous,Date>="2024-01-01"),NQContinuous=NQContinuous,NQWContinuous=NQWContinuous))
 
 SimTrend(NQContinuous,n=2,CombineSim= TRUE)
 
@@ -187,6 +187,6 @@ write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
 FutToBePrepared$ReadCombData(OutputCombtxt=OutputCombtxt,nam=nam)     #This src load the combined data
-MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
+StockChart(NQ5F, Title = "NQ5F") #MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
 

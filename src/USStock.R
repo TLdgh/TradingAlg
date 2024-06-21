@@ -19,14 +19,13 @@ library(plotly)
 library(IBrokers)
 
 source("src/StockInfo.R")
-source("src/MyStrategy.R")
 source("src/ChanLunFunction.R")
 source("src/StockPlotFunction.R")
 source("src/MACDPower.R")
 source("src/SignalPlot.R")
 
 #User must specify the IB port number
-tws <- twsConnect(port = ) #to connect with TWS
+tws <- twsConnect(port = 7496) #to connect with TWS
 isConnected(tws)#check if connected or not
 twsConnectionTime(tws)# check what time did you connect
 twsDisconnect(tws)#to disconnect
@@ -40,9 +39,7 @@ twsDisconnect(tws)#to disconnect
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
-StkToBePrepared<-GetStockInfo(STK = c("TSLA","GOOGL","AAPL","MSFT","AMD"), interval = c("30F","daily"))
-source("src/PrepStock.R")
-
+StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AAPL","MSFT","AMD"), interval = c("30F","daily"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -51,8 +48,7 @@ source("src/PrepStock.R")
 #Step 3------------------------------------------
 #This src load the combined data
 
-ReadCombData(OutputCombtxt,nam) 
-
+StkToBePrepared$ReadCombData() 
 
 #Step 4------------------------------------------
 #StockChart plots a single stock.
@@ -73,11 +69,11 @@ StockChart(AAPL_daily, Title = "AAPL_daily")
 StockChart(MSFT30F, Title = "MSFT30F")
 StockChart(MSFT_daily, Title = "MSFT_daily")
 
-MultiChart(list(GOOGL_daily=subset(GOOGL_daily, Date>"2020-01-01"),GOOGL30F=subset(GOOGL30F, Date>"2023-07-01 09:00:00")))
-MultiChart(list(AMD_daily=subset(AMD_daily, Date>"2020-01-01"),AMD30F=subset(AMD30F,Date>="2021-07-01 09:30:00")))
-MultiChart(list(TSLA_daily=subset(TSLA_daily, Date>"2020-01-01"),TSLA30F=subset(TSLA30F, Date>"2023-07-01 09:00:00")))
-MultiChart(list(AAPL_daily=subset(AAPL_daily, Date>"2020-01-01"),AAPL30F=subset(AAPL30F, Date>"2023-07-01 09:00:00")))
-MultiChart(list(MSFT_daily=subset(MSFT_daily, Date>"2020-01-01"),MSFT30F=subset(MSFT30F, Date>"2023-07-01 09:00:00")))
+MultiChart(list(GOOGL_daily=subset(GOOGL_daily, Date>"2020-01-01"),GOOGL30F=subset(GOOGL30F, Date>"2024-04-01 09:00:00")))
+MultiChart(list(AMD_daily=subset(AMD_daily, Date>"2020-01-01"),AMD30F=subset(AMD30F,Date>="2024-04-01 09:00:00")))
+MultiChart(list(TSLA_daily=subset(TSLA_daily, Date>"2020-01-01"),TSLA30F=subset(TSLA30F, Date>"2024-04-01 09:00:00")))
+MultiChart(list(AAPL_daily=subset(AAPL_daily, Date>"2020-01-01"),AAPL30F=subset(AAPL30F, Date>"2024-04-01 09:00:00")))
+MultiChart(list(MSFT_daily=subset(MSFT_daily, Date>"2020-01-01"),MSFT30F=subset(MSFT30F, Date>"2024-04-01 09:00:00")))
 
 SignalPlot(list(NQ1F=NQ1F))
 MultiSignalChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
