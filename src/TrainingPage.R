@@ -7,11 +7,9 @@ PnL(data)
 
 
 #SPY:
-ChartReplay(Pricedata=SPY_daily,Title="SPY_daily", StartCandle=4454, PausePeriod = 7, UerInput = "N")
-
-178+176+530+806+2056+882-40+1436+48
+ChartReplay(Data=list(SPY_daily=SPY_daily),Title="SPY_daily",PausePeriod = 4)
 
 #NQ:
-ChartReplay(Pricedata=NQ5FContinuous, AuxillaryData=NQ30FContinuous, 
-            StartCandle=4542, PausePeriod=5, UerInput = "N")
+ChartReplay(Data=list(NQContinuous=NQContinuous, NQWContinuous=NQWContinuous), PausePeriod = 4)
+
 
