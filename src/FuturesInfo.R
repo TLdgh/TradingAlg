@@ -49,6 +49,7 @@ GetFutInfo<-setRefClass(
     
     PrepFutures=function(tws, RealData){
       #this is the expiry date of the available contracts, can be found in IB Description
+      #To initialize the file for the updated expiration date, copy paste a csv and save the file name to the new expiration date
       NQWExpD <- c("20200320", "20200619", "20200918", "20201218", 
                    "20210319", "20210618", "20210917", "20211217",
                    "20220318", "20220617", "20220916", "20221216",
@@ -138,6 +139,7 @@ GetFutInfo<-setRefClass(
     
     #to find the contract details like conId, go to IB Watchlist, right click contract name and click Financial Instrument Info and select Detail
     #see duration and barsize in https://interactivebrokers.github.io/tws-api/historical_limitations.html#pacing_violations
+    
     CombineContracts=function(OldF, NewF){
       colnames(OldF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
       colnames(NewF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
