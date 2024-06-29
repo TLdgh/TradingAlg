@@ -328,21 +328,13 @@ ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UerInput="N"){
         maindate<-mainData[i, "Date"]
         Indices <-map(Data, ~tail(which(.x$Date<=maindate), 1))
         
-        if(any(unlist(Indices)<=399)){
-          if(length(Data)==1){
-            newtotdata<-Data[[1]][1:i,]
-            res<-StockChart(newtotdata, Title)}
-          else{
-            newtotdata<-map2(Data, Indices, ~ slice(.x, 1:.y))
-            res<-MultiChart(newtotdata)}
-        }else{
-          if(length(Data)==1){
-            newtotdata<-Data[[1]][(i-399):i,]
-            res<-StockChart(newtotdata, Title)}          
-          else{
-            newtotdata<-map2(Data, Indices, ~ slice(.x, (.y-399):.y))
-            res<-MultiChart(newtotdata)}
-        }
+        if(length(Data)==1){
+          newtotdata<-Data[[1]][max(c(1, i-399)):i,]
+          res<-StockChart(newtotdata, Title)}
+        else{
+          newtotdata<-map2(Data, Indices, ~ slice(.x, max(c(1, .y-399)):.y))
+          res<-MultiChart(newtotdata)}
+        
         
         #evaluate based on UserInput or not
         if(UerInput=="Y"){
