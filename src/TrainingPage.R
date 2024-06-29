@@ -10,6 +10,6 @@ PnL(data)
 ChartReplay(Data=list(SPY_daily=SPY_daily),Title="SPY_daily",PausePeriod = 4)
 
 #NQ:
-ChartReplay(Data=list(NQContinuous=NQContinuous, NQWContinuous=NQWContinuous), PausePeriod = 4)
+ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous, NQContinuous=NQContinuous, NQWContinuous=NQWContinuous), PausePeriod = 4)
 
 

@@ -313,7 +313,7 @@ MultiChart<-function(DataToBeTested){
 
 ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UerInput="N"){
   #determine from which candlestick to start
-  if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 85))%>%unlist()%>%max()}
+  if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 88))%>%unlist()%>%max()}
   initialInd<-map(Data, ~tail(which(.x$Date<=StartDate), 1))
   maxInd<-map(Data, ~nrow(.x))%>%unlist()%>%min()
   mainData<-Data[[initialInd%>%which.max()]]

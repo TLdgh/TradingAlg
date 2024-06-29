@@ -73,7 +73,7 @@ MultiChart(list(GOOGL_daily=subset(GOOGL_daily, Date>"2020-01-01"),GOOGL30F=subs
 MultiChart(list(AMD_daily=subset(AMD_daily, Date>"2020-01-01"),AMD30F=subset(AMD30F,Date>="2024-04-01 09:00:00")))
 MultiChart(list(TSLA_daily=subset(TSLA_daily, Date>"2020-01-01"),TSLA30F=subset(TSLA30F, Date>"2024-04-01 09:00:00")))
 MultiChart(list(AAPL_daily=subset(AAPL_daily, Date>"2020-01-01"),AAPL30F=subset(AAPL30F, Date>"2024-04-01 09:00:00")))
-MultiChart(list(MSFT_daily=subset(MSFT_daily, Date>"2020-01-01"),MSFT30F=subset(MSFT30F, Date>"2024-04-01 09:00:00")))
+MultiChart(list(MSFT_daily=subset(MSFT_daily, Date>"2020-01-01"),MSFT30F=subset(MSFT30F, Date>"2024-03-01 09:00:00")))
 
 SignalPlot(list(NQ1F=NQ1F))
 MultiSignalChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
