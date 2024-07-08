@@ -58,9 +58,11 @@ PriceChart<-function(Pricedata, Title){
       add_lines(x=Pricedata_EMA60$Date, y=Pricedata_EMA60$EMA60, name='EMA60', type='scatter', mode='lines',
                 line=list(color='purple', width=2),inherit = F)%>%
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
-                line=list(color='grey', width=2),inherit = F)%>%
+                line=list(color='silver', width=2),inherit = F)%>%
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$upB, name='BOLL_upB', type='scatter', mode='lines',
-                line=list(color='grey', width=2),inherit = F)
+                line=list(color='silver', width=2),inherit = F)%>%
+      add_trace(x=Pricedata_SAR$Date, y=Pricedata_SAR$sar, name='SAR', type='scatter', mode='markers',
+                marker = list(color = Pricedata_SAR$SAR_col, size=4),inherit = F)
   }else{
     plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
       layout(shapes=lines,annotations=arrows,xaxis = list(rangeslider = list(visible = F)))%>%
