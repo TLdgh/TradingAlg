@@ -214,7 +214,7 @@ StockChart<-function (Pricedata, Title){
     }
     
     if (Alldata$Volume[i]<2*Alldata$Volume[i-1]){
-      if(Alldata$Close[i] >= Alldata$Open[i]){Alldata$VOLdirection[i] = 'green'}
+      if(Alldata$Close[i] >= Alldata$Close[i-1]){Alldata$VOLdirection[i] = 'green'}
       else{Alldata$VOLdirection[i] = 'red'}
     }
     else{Alldata$VOLdirection[i] = 'gold'}
