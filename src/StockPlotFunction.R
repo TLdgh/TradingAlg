@@ -94,16 +94,61 @@ PricedataMACD <- function (Pricedata){
   return(Pricedata_macd)
 }
 
-VMACD <- function (Pricedata){
-  Volume_macd <- as.data.frame(MACD(Vo(Pricedata[order(Pricedata$Date, decreasing = F),]), nFast = 12, nSlow = 26, nSig = 9, maType = EMA, percent = FALSE))
-  Volume_macd$MACD <- (Volume_macd$macd - Volume_macd$signal)
-  Volume_macd$Date <- Pricedata[order(Pricedata$Date, decreasing = F),]$Date
-  colnames(Volume_macd) <- c("VDIFF", "VDEA", "VMACD", "Date")
-  return(Volume_macd)
+MyMFI <-function(HLC, volume, n=14){
+  
+  # Money Flow Index
+  
+  HLC <- try.xts(HLC, error=as.matrix)
+  volume <- try.xts(volume, error=as.matrix)
+  
+  if(!(is.xts(HLC) && is.xts(volume))) {
+    HLC <- as.matrix(HLC)
+    volume <- as.matrix(volume)
+  }
+  
+  if(NCOL(HLC)==3) {
+    if(is.xts(HLC)) {
+      HLC <- xts(apply(HLC, 1, mean),index(HLC))
+    } else {
+      HLC <- apply(HLC, 1, mean)
+    }
+  } else
+    if(NCOL(HLC)!=1) {
+      stop("Price series must be either High-Low-Close, or Close/univariate.")
+    }
+  
+  if(is.xts(HLC)) {
+    priceLag <- lag.xts(HLC)
+  } else {
+    priceLag <- c( NA, HLC[-NROW(HLC)] )
+  }
+  
+  # Calculate Money Flow
+  # Calculate positive and negative Money Flow
+  pmf <- ifelse( HLC > priceLag, abs(HLC-priceLag)*volume, 0 )
+  nmf <- ifelse( HLC < priceLag, abs(HLC-priceLag)*volume, 0 )
+  
+  # Calculate Money Ratio and Money Flow Index
+  num <- runSum( pmf, n )
+  den <- runSum( nmf, n )
+  mr <- num / den
+  mfi <- 100 - ( 100 / ( 1 + mr ) )
+  mfi[0 == den] <- 100
+  mfi[0 == den & 0 == num] <- 50
+  
+  if(is.xts(mfi)) colnames(mfi) <- 'mfi'
+  
+  reclass( mfi, HLC )
+}
+
+PricedataMoneyFlow<-function(Pricedata){
+  x<-transmute(Pricedata, MF=(Close-lag(Close))*Volume)
+  MF<-na.omit(data.frame(Date=Pricedata$Date,MoneyFlow=x$MF))
+  return(MF)
 }
 
 PricedataMFI<-function(Pricedata){
-  MFI<-MFI(HLC(Pricedata), volume = Pricedata$Volume, n=10)-50
+  MFI<-MyMFI(HLC(Pricedata), volume = Pricedata$Volume, n=10)-50
   MFI<-na.omit(data.frame(Date=Pricedata$Date,MFI=MFI))
   return(MFI)
 }
@@ -141,8 +186,11 @@ FuncEMA10<-function(Pricedata){
 StockChart<-function (Pricedata, Title){
   Pricedata_macd <- PricedataMACD(Pricedata)
   Pricedata_MFI<-PricedataMFI(Pricedata)
+  Pricedata_MoneyFlow<-PricedataMoneyFlow(Pricedata)
   Alldata<- merge(Pricedata,Pricedata_macd, by="Date")
   Alldata<- merge(Alldata,Pricedata_MFI, by="Date")
+  Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
+  
   Alldata<-na.omit(Alldata)
   
   if(Alldata$MACD[1]>=0){Alldata$MACDdirection[1]<-"green"}else{Alldata$MACDdirection[1] = "red"}
@@ -157,10 +205,6 @@ StockChart<-function (Pricedata, Title){
     else if(Alldata$MACD[i]<0){
       if(Alldata$MACD[i]<Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"red"}else{Alldata$MACDdirection[i]<-"lightpink"}
     }
-    
-    #if (Alldata$VMACD[i] >= 0) {
-    #Alldata$VMACDdirection[i] = "green"
-    #}else{Alldata$VMACDdirection[i] = "red"}
     
     if(abs(Alldata$MFI[i])/abs(Alldata$MFI[i-1])<=0.5){Alldata$MFIdirection[i]<-"#8A2BE2"}
     else if (Alldata$MFI[i] >= 0){
@@ -178,7 +222,7 @@ StockChart<-function (Pricedata, Title){
   }
   
   
-  VolumeChart<-plot_ly(data=Alldata, x=~Date, y=~Volume, type='bar', marker=list(color = ~VOLdirection))%>%
+  MoneyFlowChart<-plot_ly(data=Alldata, x=~Date, y=~MoneyFlow, type='bar', marker=list(color = ~VOLdirection))%>%
     layout(xaxis=list(showticklabels=FALSE))
   
   MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
@@ -187,29 +231,21 @@ StockChart<-function (Pricedata, Title){
     add_bars(y=~MACD,name="MACD", marker=list(color=~MACDdirection))%>%
     layout(xaxis = list(rangeslider = list(visible = F)))
   
-  #VMACDChart<-plot_ly(data=Alldata,x=~Date)%>%
-  #add_trace(y=~VDIFF,name="VDIFF",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>%
-  #add_trace(y=~VDEA,name="VDEA",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
-  #add_bars(y=~VMACD,name="VMACD",marker=list(color=~VMACDdirection))%>%
-  #layout(xaxis = list(rangeslider = list(visible = F)))
-  
   MFIlines<-function(y, color="black"){list(type="line",x0=0, x1=1, y0=y,y1=y, xref="paper", line=list(color=color))} #this gives the lines in MFI chart
   MFIChart<-plot_ly(data=Alldata, x=~Date)%>%
     add_bars(y=~MFI,name="MFI", marker=list(color=~MFIdirection))%>%
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=34), MFIlines(y=-34)))
   
-  p<-subplot(PriceChart(Alldata, Title), VolumeChart, MACDChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
+  p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
     layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
            yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis2=list(side = "left", title = "Volume",showspikes=TRUE, spikemode='across', 
-                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis3 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+           yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+           yaxis3=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
+                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
            yaxis4 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           #yaxis5 = list(side = "left",title = "VMACD",showspikes=TRUE, spikemode='across', 
-           #spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
            annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
            hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   return(p)
