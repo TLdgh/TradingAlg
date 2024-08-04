@@ -449,3 +449,4 @@ SectorPerformanceChart<-function(datalist){
     layout(xaxis=list(range=c(-0.1,0.1), tickvals=seq(-0.1,0.1, by=0.01)))%>%
     animation_opts(frame = 2000,redraw = FALSE)
   fig
+}
