@@ -236,7 +236,7 @@ StockChart<-function (Pricedata, Title){
     add_bars(y=~MFI,name="MFI", marker=list(color=~MFIdirection))%>%
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=34), MFIlines(y=-34)))
   
-  p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
+  p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.3, 0.15)) %>%
     layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
            yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
@@ -393,3 +393,59 @@ ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UerInput="N"){
     if(inherits(possibleError,"error")){Indices<-map(Indices, ~.x+1)}
   }
 }
+
+
+
+getPerformance<-function(Pricedata){
+  Pricedata$Date<-as.Date(Pricedata$Date)
+  
+  # Add a 'Week' column to group by week
+  stock_data <- Pricedata %>%
+    mutate(Week = floor_date(Date, unit = "week",week_start = getOption("lubridate.week.start", 5)))
+  
+  # Summarize weekly OHLC prices
+  weekly_stock <- stock_data %>%
+    group_by(Week) %>%
+    summarize(
+      High = max(High),
+      Open = first(Open),
+      Low = min(Low),
+      Close = last(Close),
+      Volume=sum(Volume)
+    )
+  
+  # Print the summarized weekly stock data
+  weekly_stock<-mutate(weekly_stock, Date=as.character(Week), .before='High')%>%select(-Week)
+  
+  # Calculate weekly returns based on closing prices
+  weekly_stock <- weekly_stock %>%
+    mutate(Return = (Close / lag(Close)) - 1)%>%
+    filter(!is.na(Return))
+  return(weekly_stock)
+}
+
+SectorPerformanceChart<-function(datalist){
+  returns<-lapply(datalist,getPerformance)
+  
+  # Use map to add a Source column to each data frame and then bind them together
+  allds<-returns%>%map(~select(.x, Date))%>%reduce(inner_join,by="Date")%>%unlist()%>%as.vector()
+  
+  long_df <-map(returns, ~filter(.x, Date %in% allds))%>%
+    imap(~mutate(.x, Source = .y))%>%
+    list_rbind()%>%arrange(Date)
+  
+  # Define a custom color palette
+  custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#FFD700")
+  
+  fig <- long_df %>%
+    plot_ly(
+      x = ~Return, 
+      y = ~Source, 
+      color = ~Source,
+      colors = custom_colors[1:length(datalist)],
+      frame = ~Date, 
+      type='bar'
+    )%>%
+    layout(xaxis=list(range=c(-0.1,0.1), tickvals=seq(-0.1,0.1, by=0.01)))%>%
+    animation_opts(frame = 2000,redraw = FALSE)
+  fig
