@@ -401,25 +401,25 @@ getPerformance<-function(Pricedata){
   
   # Add a 'Week' column to group by week
   stock_data <- Pricedata %>%
-    mutate(Week = floor_date(Date, unit = "week",week_start = getOption("lubridate.week.start", 5)))
+    mutate(Week = floor_date(Date, unit = "week",week_start = getOption("lubridate.week.start", 1)))
   
   # Summarize weekly OHLC prices
   weekly_stock <- stock_data %>%
     group_by(Week) %>%
     summarize(
-      High = max(High),
       Open = first(Open),
+      High = max(High),
       Low = min(Low),
       Close = last(Close),
       Volume=sum(Volume)
     )
   
   # Print the summarized weekly stock data
-  weekly_stock<-mutate(weekly_stock, Date=as.character(Week), .before='High')%>%select(-Week)
+  weekly_stock<-mutate(weekly_stock, Date=as.character(Week), .before='Open')%>%select(-Week)
   
   # Calculate weekly returns based on closing prices
   weekly_stock <- weekly_stock %>%
-    mutate(Return = (Close / lag(Close)) - 1)%>%
+    mutate(Return = round((Close / lag(Close)) - 1, 4)*100)%>%
     filter(!is.na(Return))
   return(weekly_stock)
 }
@@ -446,7 +446,7 @@ SectorPerformanceChart<-function(datalist){
       frame = ~Date, 
       type='bar'
     )%>%
-    layout(xaxis=list(range=c(-0.1,0.1), tickvals=seq(-0.1,0.1, by=0.01)))%>%
+    layout(xaxis=list(range=c(-10,10), tickvals=seq(-10,10, by=1)))%>%
     animation_opts(frame = 2000,redraw = FALSE)
   fig
 }
