@@ -540,14 +540,14 @@ SectorRetProbability<-function(datalist, specRet=NULL){
     rates=sapply(seq(from=0,to=0.4, by=0.005), function(i){
       y=df%>%filter(abs(ret)>=i)
       mean(y$succ)})
-    df<-data.frame(AbsoluteReturn=seq(from=0,to=0.4, by=0.005), Probability=rates)%>%replace_na(.,replace=list(Probability=0))
+    df<-data.frame(AbsoluteReturn=seq(from=0,to=0.4, by=0.005), Reliability=rates)%>%replace_na(.,replace=list(Reliability=0))
     return(df)
   })
   
   succ_curve=map2(succ_curve, names(succ_curve), ~mutate(.x, Source=.y))%>%bind_rows()
   
   custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#FFD700")
-  succ_curve%>%plot_ly(x=~AbsoluteReturn,y=~Probability,color=~Source,colors=custom_colors[1:length(datalist)],type="scatter", mode="marker")
+  succ_curve%>%plot_ly(x=~AbsoluteReturn,y=~Reliability,color=~Source,colors=custom_colors[1:length(datalist)],type="scatter", mode="marker")
 }
 
 
