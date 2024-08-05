@@ -517,11 +517,11 @@ getSectorProbability<-function(data, specRet=NULL, nam){
   if(is.null(specRet)==FALSE){
     p<-ret_boot<=specRet
     currentP<-mean(colMeans(p))
-    cat(nam, ": ", "Probability for the specified return: ", currentP, "\n")}
+    cat(nam, "------ Return: ", specRet, ", Probability: ", currentP, "\n")}
   else{
     p<-ret_boot<=last(ret)
     currentP<-mean(colMeans(p))
-    cat(nam, ": ", "Probability for the current return: ", currentP, "\n")}
+    cat(nam, "------ Return: ", last(ret), ", Probability: ", currentP, "\n")}
   
   finalres=tibble(ret, probs)%>%
     mutate(action=case_when(ret<0 & probs<0.05 ~ 1, ret>=0 & probs<0.05 ~ -1))%>%
