@@ -502,7 +502,7 @@ SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
   fig
 }
 
-getSectorProbability<-function(data, specRet=NULL, nam=NULL){
+getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   ret=ret$ret
   ret_boot=rep(ret,100)
@@ -535,7 +535,7 @@ getSectorProbability<-function(data, specRet=NULL, nam=NULL){
 SectorRetProbability<-function(datalist, specRet=NULL){
   if(is.null(specRet)==FALSE){
     SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, specRet=specRet, nam=.y))}
-  else{SuccessRate_list<-lapply(datalist,function(d) getSectorProbability(d))}
+  else{SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, nam=.y))}
   
   succ_curve=map(SuccessRate_list, function(df){
     rates=sapply(seq(from=0,to=0.4, by=0.005), function(i){
