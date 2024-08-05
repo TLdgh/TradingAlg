@@ -504,6 +504,7 @@ SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
 
 getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
+  retDate=ret$Date
   ret=ret$ret
   ret_boot=rep(ret,500)
   s=sample(ret_boot,length(ret_boot), replace = FALSE)*runif(length(ret_boot),0.7,1.3)
@@ -522,10 +523,9 @@ getSectorProbability<-function(data, specRet=NULL, nam){
     currentP<-last(probs)
     cat(nam, "------ Return: ", last(ret), ", Probability: ", currentP, "\n")}
   
-  finalres=tibble(ret, probs)%>%
-    mutate(action=case_when(ret<0 & probs<0.05 ~ 1, ret>=0 & probs<0.05 ~ -1))%>%
-    mutate(truth=ifelse(ret>=0, 1, -1))%>%
-    mutate(action=lag(action))%>%
+  finalres=tibble(retDate, ret, probs)%>%
+    mutate(action=case_when(ret<0 & probs<0.05 ~ 1, ret>=0 & probs>0.95 ~ -1))%>%
+    mutate(truth=ifelse(lead(ret)>=0, 1, -1))%>%
     mutate(succ=case_when(action==truth & is.na(action)==FALSE ~ 1,
                           action!=truth & is.na(action)==FALSE ~ 0))%>%na.omit()
   return(finalres)
