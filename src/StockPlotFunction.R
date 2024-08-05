@@ -541,7 +541,7 @@ SectorRetProbability<-function(datalist, specRet=NULL){
     rates=sapply(absret, function(i){
       y=df%>%filter(abs(ret)>=i)
       mean(y$succ)})
-    df<-data.frame(AbsoluteReturn=absret, Reliability=rates)%>%replace_na(.,replace=list(Reliability=0))
+    df<-data.frame(AbsoluteReturn=absret, Reliability=rates)#%>%replace_na(.,replace=list(Reliability=0))
     return(df)
   })
   
