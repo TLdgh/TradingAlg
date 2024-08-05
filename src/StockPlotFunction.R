@@ -502,15 +502,26 @@ SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
   fig
 }
 
-getSectorProbability<-function(data){
+getSectorProbability<-function(data, specRet=NULL, nam=NULL){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   ret=ret$ret
+  ret_boot=rep(ret,100)
+  s=sample(ret_boot,length(ret_boot), replace = FALSE)*runif(length(ret_boot),0.7,1.3)
+  ret_boot=matrix(s, nrow = length(ret))
   
   probs=sapply(ret, function(i){
-    res=sapply(1:100, function(j){sample(ret,length(ret), replace = TRUE)})
-    res=res<=i
-    res=res%>%colSums()/nrow(res)
-    res=mean(res)})
+    p<-ret_boot<=i
+    return(mean(colMeans(p)))
+  })
+  
+  if(is.null(specRet)==FALSE){
+    p<-ret_boot<=specRet
+    currentP<-mean(colMeans(p))
+    cat(nam, ": ", "Probability for the specified return: ", currentP, "\n")}
+  else{
+    p<-ret_boot<=last(ret)
+    currentP<-mean(colMeans(p))
+    cat(nam, ": ", "Probability for the current return: ", currentP, "\n")}
   
   finalres=tibble(ret, probs)%>%
     mutate(action=case_when(ret<0 & probs<0.05 ~ 1, ret>=0 & probs<0.05 ~ -1))%>%
@@ -521,19 +532,23 @@ getSectorProbability<-function(data){
   return(finalres)
 }
 
-SectorRetProbability<-function(datalist){
-  SuccessRate_list<-lapply(datalist,function(d) getSectorProbability(d))
+SectorRetProbability<-function(datalist, specRet=NULL){
+  if(is.null(specRet)==FALSE){
+    SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, specRet=specRet, nam=.y))}
+  else{SuccessRate_list<-lapply(datalist,function(d) getSectorProbability(d))}
+  
   succ_curve=map(SuccessRate_list, function(df){
     rates=sapply(seq(from=0,to=0.4, by=0.005), function(i){
       y=df%>%filter(abs(ret)>=i)
-      mean(y$succ)})  
-    data.frame(AbsoluteReturn=seq(from=0,to=0.4, by=0.005), Probability=rates)%>%replace_na(.,replace=list(Probability=0))
+      mean(y$succ)})
+    df<-data.frame(AbsoluteReturn=seq(from=0,to=0.4, by=0.005), Probability=rates)%>%replace_na(.,replace=list(Probability=0))
+    return(df)
   })
+  
   succ_curve=map2(succ_curve, names(succ_curve), ~mutate(.x, Source=.y))%>%bind_rows()
   
   custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#FFD700")
   succ_curve%>%plot_ly(x=~AbsoluteReturn,y=~Probability,color=~Source,colors=custom_colors[1:length(datalist)],type="scatter", mode="marker")
 }
-
 
 
