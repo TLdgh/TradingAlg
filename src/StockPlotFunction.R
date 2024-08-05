@@ -505,7 +505,7 @@ SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
 getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   ret=ret$ret
-  ret_boot=rep(ret,100)
+  ret_boot=rep(ret,500)
   s=sample(ret_boot,length(ret_boot), replace = FALSE)*runif(length(ret_boot),0.7,1.3)
   ret_boot=matrix(s, nrow = length(ret))
   
@@ -536,11 +536,12 @@ SectorRetProbability<-function(datalist, specRet=NULL){
     SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, specRet=specRet, nam=.y))}
   else{SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, nam=.y))}
   
+  absret=seq(from=0,to=0.5, by=0.001)
   succ_curve=map(SuccessRate_list, function(df){
-    rates=sapply(seq(from=0,to=0.4, by=0.005), function(i){
+    rates=sapply(absret, function(i){
       y=df%>%filter(abs(ret)>=i)
       mean(y$succ)})
-    df<-data.frame(AbsoluteReturn=seq(from=0,to=0.4, by=0.005), Reliability=rates)%>%replace_na(.,replace=list(Reliability=0))
+    df<-data.frame(AbsoluteReturn=absret, Reliability=rates)%>%replace_na(.,replace=list(Reliability=0))
     return(df)
   })
   
