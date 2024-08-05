@@ -81,6 +81,32 @@ SignalPlot(list(NQ1F=NQ1F))
 MultiSignalChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
 
 
+sector_name<-c("XLK_daily", #Tech
+               "XLV_daily", #Health
+               "XLF_daily", #Financial
+               "XLRE_daily",#Real Estate
+               "XLE_daily", #Energy
+               "XLB_daily", #Material
+               "XLY_daily", #Consumer Discretionary
+               "XLI_daily", #Industrial
+               "XLU_daily", #Utility
+               "XLP_daily", #Consumer Staples/Defensive
+               "XLC_daily") #Communication Services
+for (name in sector_name){ 
+  CombData <- read.csv(paste0(getwd(),"/Data/OriginalStockData/US/",name,".csv"), header = T) 
+  CombData <- CombData%>%select(contains(c("Index","Open","High","Low","Close","Volume")))
+  colnames(CombData)<-c("Date","Open","High","Low","Close","Volume")
+  cat("Combined data is imported, please check the combined data!", "\n", "The following data is: ",name, "\n")
+  print(head(CombData))
+  print(tail(CombData))
+  assign(name, CombData, envir = .GlobalEnv)
+}
+list(Tech=XLK_daily, Health=XLV_daily,
+     Financial=XLF_daily,RE=XLRE_daily,
+     Energy=XLE_daily,Materials=XLB_daily,
+     CCyclical=XLY_daily,Industrial=XLI_daily,
+     Utility=XLU_daily,CStaples=XLP_daily, Communications=XLC_daily)%>%SectorPerformanceChart()
+
 #Step 5------------------------------------------
 #MACDPower generates signals for a single stock of 
 #a time scale.

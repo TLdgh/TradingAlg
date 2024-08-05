@@ -424,7 +424,25 @@ getPerformance<-function(Pricedata){
   return(weekly_stock)
 }
 
-SectorPerformanceChart<-function(datalist){
+accumulate_by <- function(dat, var) {
+  var <- lazyeval::f_eval(var, dat)
+  
+  getLevels <- function (x) {
+    if (is.factor(x)) 
+      levels(x)
+    else sort(unique(x))
+  }
+  
+  lvls <- getLevels(var)
+  dats <- lapply(seq_along(lvls), function(x) {
+    cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
+  })
+  bind_rows(dats)
+}
+
+SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
+  if(is.null(StartDate)==FALSE){datalist<-datalist%>%map(~filter(.x, Date>=StartDate))}
+  
   returns<-lapply(datalist,getPerformance)
   
   # Use map to add a Source column to each data frame and then bind them together
@@ -437,16 +455,49 @@ SectorPerformanceChart<-function(datalist){
   # Define a custom color palette
   custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#FFD700")
   
-  fig <- long_df %>%
-    plot_ly(
-      x = ~Return, 
-      y = ~Source, 
-      color = ~Source,
-      colors = custom_colors[1:length(datalist)],
-      frame = ~Date, 
-      type='bar'
-    )%>%
-    layout(xaxis=list(range=c(-10,10), tickvals=seq(-10,10, by=1)))%>%
-    animation_opts(frame = 2000,redraw = FALSE)
+  PauseButton<-list(
+    list(type = "buttons",
+         direction="left",
+         x=0,
+         y=0,
+         showactive = FALSE,
+         buttons = list(list(label = "Pause",method = "animate",args = list(NULL, list(mode = "immediate"))))
+    )
+  )
+  
+  if(showLineChart==FALSE){
+    fig <- long_df %>%
+      plot_ly(
+        x = ~Return, 
+        y = ~Source, 
+        color = ~Source,
+        colors = custom_colors[1:length(datalist)],
+        frame = ~Date, 
+        type='bar'
+      )%>%
+      layout(xaxis=list(range=c(-10,10), tickvals=seq(-10,10, by=1)),
+             updatemenus = PauseButton)%>%
+      animation_opts(frame = 5000,redraw = FALSE)}
+  else{
+    fig<- long_df%>%arrange(Source)%>%accumulate_by(~Date)%>%
+      plot_ly(
+        x = ~as.numeric(as.Date(Date)), 
+        y = ~Return,
+        split = ~Source,
+        colors = custom_colors[1:length(datalist)],
+        frame = ~frame, 
+        type = 'scatter',
+        mode = 'lines', 
+        line = list(simplyfy = F),
+        text = ~Date, hovertemplate = 'Return: %{y}<br>Date: %{text}<extra></extra>'
+      )%>%
+      layout(
+        xaxis = list(title="",showticklabels = F),
+        hovermode = "x unified",
+        updatemenus = PauseButton
+      )%>%
+      animation_opts(frame = 1000, transition = 0, redraw = FALSE)}
+  
+  fig<-fig%>%config(scrollZoom=TRUE)
   fig
 }
