@@ -71,8 +71,8 @@ FitModel<-function(MainClassData,ClassData){
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
-    Reliab_power<-PowerTable%>%filter(Signal>4)%>%nrow()
-    Reliab_error<-ErrorTable%>%filter(Signal<=4)%>%nrow()
+    Reliab_power<-PowerTable%>%filter(Signal>=4)%>%nrow()
+    Reliab_error<-ErrorTable%>%filter(Signal<4)%>%nrow()
     if(Reliab_power/nrow(PowerTable)<0.5 | Reliab_error/nrow(ErrorTable)<0.5){Reliability<-"Unreliable"
     }else{
       Reliability<-"Reliable"
