@@ -67,7 +67,7 @@ FitModel<-function(MainClassData,ClassData){
   FitCandle<-map(ModelResult$Candle, function(x){apply(x,MARGIN = 1 ,function(x){y<-t(x-DataResult$Candle[[1]]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
-  PowerF<-function(x){
+  PowerF<-function(x,NumSignals){
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
@@ -83,7 +83,7 @@ FitModel<-function(MainClassData,ClassData){
     return(y)
   }
   
-  FitResult<-lapply(Fit,PowerF)%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)
+  FitResult<-map(Fit,~PowerF(., NumSignals = NumSignals))%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)
   return(FitResult)
 }
 
