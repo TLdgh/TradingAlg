@@ -35,7 +35,7 @@ CreateClassData<-function(ModelInfo, Test=FALSE){ #this creates the main class t
 
 FitModel<-function(MainClassData,ClassData){
   CreateSignal<-function(x){
-    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","比例背驰","能量强度","面积强度","比例强度"); return(y) })
+    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","能量强度","面积强度"); return(y) })
     MFI<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MFI"]]})); colnames(y)<-c("MFI背驰","MFI强度","量比"); return(y) })
     Str<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["形态背驰"]]})); colnames(y)<-c("形态背驰","形态强度"); return(y) })
     BOLL<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["BOLL信号"]]})); colnames(y)<-c("BOLL方向","BOLL强度"); return(y) })
@@ -46,10 +46,10 @@ FitModel<-function(MainClassData,ClassData){
   ModelResult<-CreateSignal(MainClassData)
   DataResult<-CreateSignal(ClassData)
   
-  FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:3)]-DataResult$MACD[[1]][,-c(1:3)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitMFI<-map(ModelResult$MFI, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$MFI[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitStr<-map(ModelResult$Str, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$Str[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitBOLL<-map(ModelResult$BOLL, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$BOLL[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:2)]-DataResult$MACD[[1]][,-c("能量背驰", "面积背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitMFI<-map(ModelResult$MFI, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$MFI[[1]][,-c("MFI背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitStr<-map(ModelResult$Str, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$Str[[1]][,-c("形态背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitBOLL<-map(ModelResult$BOLL, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$BOLL[[1]][,-c("BOLL强度")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   FitCandle<-map(ModelResult$Candle, function(x){apply(x,MARGIN = 1 ,function(x){y<-t(x-DataResult$Candle[[1]]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
@@ -177,7 +177,7 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
   MainClassData<-CreateClassData(ModelInfo)
   
   CreateSignal<-function(x){
-    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","比例背驰","能量强度","面积强度","比例强度"); return(y) })
+    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","能量强度","面积强度"); return(y) })
     MFI<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MFI"]]})); colnames(y)<-c("MFI背驰","MFI强度","量比"); return(y) })
     Str<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["形态背驰"]]})); colnames(y)<-c("形态背驰","形态强度"); return(y) })
     BOLL<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["BOLL信号"]]})); colnames(y)<-c("BOLL方向","BOLL强度"); return(y) })
@@ -186,16 +186,16 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
     return(Result)}
   
   ModelResult<-CreateSignal(MainClassData)
-  
+  NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
   ToSignal<-function(x){
-    y<-strsplit(substring(x$Index,first=2,last=9), "")
+    y<-strsplit(str_sub(x$Index, start = -NumSignals), "")#The digit part of the string "X1101101" of the Index name. Change it if MACDPower signals are changed. 
     y<-sapply(y, function(x){sum(as.numeric(x))} )
   }
   
   PowerTable<-data.frame(ModelResult$MACD$ReverseTRUE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(.), Power="ReverseTRUE")%>%arrange(desc(Signal))
   ErrorTable<-data.frame(ModelResult$MACD$ReverseFALSE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(.), Power="ReverseTRUE")%>%arrange(desc(Signal))
   
-  DecisionTable<-do.call(rbind,lapply(1:8, function(sig){
+  DecisionTable<-do.call(rbind,lapply(1:NumSignals, function(sig){
     correct<-PowerTable%>%filter(Signal>=sig)%>%nrow()
     incorrect<-ErrorTable%>%filter(Signal>=sig)%>%nrow()
     

@@ -6,57 +6,36 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   A1_interval <- subset(Data_macd,Date>=Period$In1 & Date<=Period$In2)
   A2_interval <- subset(Data_macd,Date>=Period$Out1 & Date<=Period$Out2)
   A3_interval <- subset(Data_macd,Date>=Period$In2 & Date<=Period$Out1)
-  PosNegMACDratio<-subset(Data_macd,Date>=Period$In1 & Date<=Period$Out2)%>%select(MACD)
-  PosNegMACDratio<-sum(abs(PosNegMACDratio%>%filter(MACD>=0)))/sum(abs(PosNegMACDratio%>%filter(MACD<0)))
+  Total_interval<-subset(Data_macd,Date>=Period$In1 & Date<=Period$Out2)
   
-  #the range of time
-  A1_length<-nrow(A1_interval)
-  A2_length<-nrow(A2_interval)
-  A_TimeWeight<-A2_length/A1_length
+  In1Price<-SBPStr$StarData[which(SBPStr$StarData$Date==Period$In1),]$Price
+  In2Price<-SBPStr$StarData[which(SBPStr$StarData$Date==Period$In2),]$Price
+  Out1Price<-SBPStr$StarData[which(SBPStr$StarData$Date==Period$Out1),]$Price
+  Out2Price<-SBPStr$StarData[which(SBPStr$StarData$Date==Period$Out2),]$Price
   
-  #the range of price
-  Bar1length<-abs(SBPStr$StarData[which(SBPStr$StarData$Date==Period$In1),]$Price-SBPStr$StarData[which(SBPStr$StarData$Date==Period$In2),]$Price)    
-  Bar2length<-abs(SBPStr$StarData[which(SBPStr$StarData$Date==Period$Out1),]$Price-SBPStr$StarData[which(SBPStr$StarData$Date==Period$Out2),]$Price)
-  A_PriceWeight<-Bar2length/Bar1length
-  
-  MeanWeight<-mean(A_TimeWeight,A_PriceWeight)
-  
-  if(SBPStr$StarData[which(SBPStr$StarData$Date==Period$In1),]$Price<SBPStr$StarData[which(SBPStr$StarData$Date==Period$In2),]$Price){ #price is going up
+  if(In1Price<In2Price){ #price is going up
     Direction<-1
-    area_pos1 <- A1_interval[which(A1_interval[,3]>0),3]
-    area_pos2 <- A2_interval[which(A2_interval[,3]>0),3]
-    area_pos1<-ifelse(length(area_pos1)>0, mean(area_pos1), 0)
-    area_pos2<-ifelse(length(area_pos2)>0, mean(area_pos2)*MeanWeight, 0)
-    Strength_pos<-ifelse(area_pos1!=0 & 1/PosNegMACDratio>=0.8,max(0,1-area_pos2/area_pos1), 0 )
+    #上涨能量背驰
+    area_pos <- Total_interval[,c("MACD","Date")]%>%filter(., MACD>0)
+    maxat=which(area_pos$MACD==max(area_pos$MACD))
+    Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
+
+    #上涨均线面积背驰
+    EMALine_Pos<-Total_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.>0))%>%mutate(Means=rowMeans(select(., DIFF,DEA)))
+    maxat=which(EMALine_Pos$Means==max(EMALine_Pos$Means))
+    EMALineStrength_Pos<-ifelse(maxat!=nrow(EMALine_Pos), (nrow(EMALine_Pos)-maxat+1)/nrow(EMALine_Pos), 0)
     
-    EMALine_Pos_1<-A1_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.>0))%>%select(DIFF,DEA)
-    EMALine_Pos_2<-A2_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.>0))%>%select(DIFF,DEA)
-    EMALine_Pos_3<-A3_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.>0))%>%select(DIFF,DEA)
-    
-    if(nrow(EMALine_Pos_1)>0){MeanPos1<-mean(rowMeans(EMALine_Pos_1)); EMALine_Pos_1<-sum(rowMeans(EMALine_Pos_1))}else{MeanPos1<-0; EMALine_Pos_1<-0}
-    if(nrow(EMALine_Pos_2)>0){MeanPos2<-mean(rowMeans(EMALine_Pos_2)); EMALine_Pos_2<-sum(rowMeans(EMALine_Pos_2))}else{MeanPos2<-0; EMALine_Pos_2<-0}
-    if(nrow(EMALine_Pos_3)>0){MeanPos3<-mean(rowMeans(EMALine_Pos_3))}else{MeanPos3<-0}
-    
-    Pos_ratio<-ifelse(MeanPos2==min(MeanPos1,MeanPos2,MeanPos3), 1, 1-MeanPos2/max(MeanPos1,MeanPos2,MeanPos3))
-    EMALineStrength_Pos<-ifelse(EMALine_Pos_1!=0, max(0,1-EMALine_Pos_2/EMALine_Pos_1), 0)
   }else{
     Direction<- -1
-    area_neg1 <- A1_interval[which(A1_interval[,3]<=0),3]
-    area_neg2 <- A2_interval[which(A2_interval[,3]<=0),3]
-    area_neg1<-ifelse(length(area_neg1)>0, mean(area_neg1), 0)
-    area_neg2<-ifelse(length(area_neg2)>0, mean(area_neg2)*MeanWeight, 0)
-    Strength_neg<-ifelse(area_neg1!=0 & PosNegMACDratio>=0.8,max(0,1-area_neg2/area_neg1), 0 )
+    #下跌能量背驰
+    area_neg <- Total_interval[,c("MACD","Date")]%>%filter(., MACD<=0)
+    minat=which(area_neg$MACD==min(area_neg$MACD))
+    Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
     
-    EMALine_Neg_1<-A1_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.<=0))%>%select(DIFF,DEA)
-    EMALine_Neg_2<-A2_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.<=0))%>%select(DIFF,DEA)
-    EMALine_Neg_3<-A3_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.<=0))%>%select(DIFF,DEA)
-    
-    if(nrow(EMALine_Neg_1)>0){MeanNeg1<-abs(mean(rowMeans(EMALine_Neg_1))); EMALine_Neg_1<-abs(sum(rowMeans(EMALine_Neg_1)))}else{MeanNeg1<-0; EMALine_Neg_1<-0}
-    if(nrow(EMALine_Neg_2)>0){MeanNeg2<-abs(mean(rowMeans(EMALine_Neg_2))); EMALine_Neg_2<-abs(sum(rowMeans(EMALine_Neg_2)))}else{MeanNeg2<-0; EMALine_Neg_2<-0}
-    if(nrow(EMALine_Neg_3)>0){MeanNeg3<-abs(mean(rowMeans(EMALine_Neg_3)))}else{MeanNeg3<-0}
-    
-    Neg_ratio<-ifelse(MeanNeg2==min(MeanNeg1,MeanNeg2,MeanNeg3), 1, 1-MeanNeg2/max(MeanNeg1,MeanNeg2,MeanNeg3))
-    EMALineStrength_Neg<-ifelse(EMALine_Neg_1!=0, max(0,1-EMALine_Neg_2/EMALine_Neg_1), 0)
+    #下跌均线面积背驰
+    EMALine_Neg<-Total_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.<=0))%>%mutate(Means=rowMeans(select(., DIFF,DEA)))
+    minat=which(EMALine_Neg$Means==min(EMALine_Neg$Means))
+    EMALineStrength_Neg<-ifelse(minat!=nrow(EMALine_Neg), (nrow(EMALine_Neg)-minat+1)/nrow(EMALine_Neg), 0)
   }
   
   
@@ -117,6 +96,12 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####----------------------------Calculate the length divergence----------------------------------###
   ####################################################################################################
+  A_TimeWeight<-nrow(A2_interval)/nrow(A1_interval)
+
+  Bar1length<-abs(In1Price-In2Price)    
+  Bar2length<-abs(Out1Price-Out2Price)
+  A_PriceWeight<-Bar2length/Bar1length
+  
   StrcturalDiv<-mean(c(max(0, 1-A_TimeWeight), max(0, 1-A_PriceWeight)))
   StructuralDivMatrix<-matrix(c(StrcturalDiv>0,StrcturalDiv), nrow=1, ncol=2, dimnames = list("形态背驰", c("背驰","强度")))
   
@@ -180,29 +165,23 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####################################################################################################
   ####---------------------------------------SUMMARY-----------------------------------------------###
   ####################################################################################################
-  MacdMatrix<-matrix(0, nrow = 3, ncol = 2)
+  MacdMatrix<-matrix(0, nrow = 2, ncol = 2)
   colnames(MacdMatrix) <-c("背驰", "强度")
   if(MACDType=="MACD"){
     if(Direction==1){
-      rownames(MacdMatrix)<-c("MACD 上涨能量背驰", "MACD 均线面积背驰", "MACD 均线面积比例")      
+      rownames(MacdMatrix)<-c("MACD 上涨能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 上涨能量背驰","强度"]<-Strength_pos 
       MacdMatrix["MACD 上涨能量背驰","背驰"]<-(Strength_pos>0)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Pos
       MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Pos>0)
-      
-      MacdMatrix["MACD 均线面积比例","强度"]<-Pos_ratio
-      MacdMatrix["MACD 均线面积比例","背驰"]<-(round(Pos_ratio,2)>=0.6)
     }else{
-      rownames(MacdMatrix)<-c("MACD 下跌能量背驰", "MACD 均线面积背驰", "MACD 均线面积比例")      
+      rownames(MacdMatrix)<-c("MACD 下跌能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 下跌能量背驰","强度"]<-Strength_neg
       MacdMatrix["MACD 下跌能量背驰","背驰"]<-(Strength_neg>0)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Neg
       MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Neg>0)
-      
-      MacdMatrix["MACD 均线面积比例","强度"]<-Neg_ratio
-      MacdMatrix["MACD 均线面积比例","背驰"]<-(round(Neg_ratio,2)>=0.6)
     }
   }#else{
   #if(Pricedata[which(Pricedata$Date==as.character(Period$In1)),]$High<Pricedata[which(Pricedata$Date==as.character(Period$Out2)),]$High){
