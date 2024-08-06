@@ -506,32 +506,43 @@ getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   retDate=ret$Date
   ret=ret$ret
-  nboot=100
-  s=sample(ret,length(ret)*nboot, replace = TRUE)*runif(length(ret)*nboot,0.7,1.3)
+  nboot=500
+  s=sample(ret,length(ret)*nboot, replace = TRUE)*runif(length(ret)*nboot,0.9,1.1)
   ret_boot=matrix(s, nrow = length(ret))
   
   probs=sapply(ret, function(i){
     p<-ret_boot<=i
-    return(mean(colMeans(p)))
-  })
+    return(colMeans(p))
+  })%>%t()
   
   if(is.null(specRet)==FALSE){
     p<-ret_boot<=specRet
     currentP<-mean(colMeans(p))
     cat(nam, "------ Return: ", specRet, ", Probability: ", currentP, "\n")}
   else{
-    currentP<-last(probs)
+    currentP<-last(rowMeans(probs))
     cat(nam, "------ Return: ", last(ret), ", Probability: ", currentP, "\n")}
   
-  finalres=tibble(retDate, ret, probs)%>%
-    mutate(action=case_when(ret<0 & probs<0.5 ~ 1,
-                            ret<0 & probs>=0.5 ~ -1,
-                            ret>=0 & probs< 0.5 ~ 1,
-                            ret>=0 & probs>=0.5 ~ -1))%>%
-    mutate(truth=ifelse(lead(ret)>=0, 1, -1))%>%
+  finalres=map2(as_tibble(probs), as_tibble(ret_boot), function(p, r){
+    tibble(retDate, r, p)%>%
+    mutate(action=case_when(r<0 & p<0.5 ~ 1,
+                            r<0 & p>=0.5 ~ -1,
+                            r>=0 & p< 0.5 ~ 1,
+                            r>=0 & p>=0.5 ~ -1))%>%
+    mutate(truth=ifelse(lead(r)>=0, 1, -1))%>%
     mutate(succ=case_when(action==truth & is.na(action)==FALSE ~ 1,
-                          action!=truth & is.na(action)==FALSE ~ 0))%>%na.omit()
-  return(finalres)
+                          action!=truth & is.na(action)==FALSE ~ 0))})
+  
+  finalres<-map(finalres, ~select(.x, c(retDate,succ)))%>%reduce(inner_join, by=c("retDate"))%>%
+    transmute(retDate, ret=ret, succ=rowMeans(select(., starts_with("succ"))))%>%na.omit()
+
+  absret=seq(from=0,to=0.5, by=0.001)
+  succ_curve=sapply(absret, function(i){
+    y=finalres%>%filter(abs(ret)>=i)
+    mean(y$succ)})
+  df<-data.frame(AbsoluteReturn=absret, Reliability=succ_curve)#%>%replace_na(.,replace=list(Reliability=0))
+  
+  return(df)
 }
 
 SectorRetProbability<-function(datalist, specRet=NULL){
@@ -539,16 +550,7 @@ SectorRetProbability<-function(datalist, specRet=NULL){
     SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, specRet=specRet, nam=.y))}
   else{SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, nam=.y))}
   
-  absret=seq(from=0,to=0.5, by=0.001)
-  succ_curve=map(SuccessRate_list, function(df){
-    rates=sapply(absret, function(i){
-      y=df%>%filter(abs(ret)>=i)
-      mean(y$succ)})
-    df<-data.frame(AbsoluteReturn=absret, Reliability=rates)#%>%replace_na(.,replace=list(Reliability=0))
-    return(df)
-  })
-  
-  succ_curve=map2(succ_curve, names(succ_curve), ~mutate(.x, Source=.y))%>%bind_rows()
+  succ_curve=map2(SuccessRate_list, names(datalist), ~mutate(.x, Source=.y))%>%bind_rows()
   
   custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#FFD700")
   succ_curve%>%plot_ly(x=~AbsoluteReturn,y=~Reliability,color=~Source,colors=custom_colors[1:length(datalist)],type="scatter", mode="marker")
