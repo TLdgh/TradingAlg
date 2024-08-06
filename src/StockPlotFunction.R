@@ -524,7 +524,7 @@ getSectorProbability<-function(data, specRet=NULL, nam){
     cat(nam, "------ Return: ", last(ret), ", Probability: ", currentP, "\n")}
   
   finalres=tibble(retDate, ret, probs)%>%
-    mutate(action=case_when(ret<0 & probs<0.05 ~ 1, ret>=0 & probs>0.95 ~ -1))%>%
+    mutate(action=case_when(ret<0 & probs<0.5 ~ 1, ret>=0 & probs>=0.5 ~ -1))%>%
     mutate(truth=ifelse(lead(ret)>=0, 1, -1))%>%
     mutate(succ=case_when(action==truth & is.na(action)==FALSE ~ 1,
                           action!=truth & is.na(action)==FALSE ~ 0))%>%na.omit()
