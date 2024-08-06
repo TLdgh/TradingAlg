@@ -71,34 +71,15 @@ FitModel<-function(MainClassData,ClassData){
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
-    Reliab_power<-PowerTable%>%filter(Signal>=4)%>%nrow()#The true power
-    Reliab_error<-ErrorTable%>%filter(Signal>=4)%>%nrow()#Dividing by nrow(ErrorTable) gives The true Type I error
-    if(Reliab_power/nrow(PowerTable)<0.5 | Reliab_error/nrow(ErrorTable)>=0.5){Reliability<-"Unreliable"
-    }else{
-      Reliability<-"Reliable"
-      
-      #simulated probability of type I and power(equal to 1-II error): I P(signal div | reverse false); II P(no signal div |reverse true); and power P(signal div | reverse true)
-      Index_error<-which(ErrorTable$Rank==1) 
-      ErrorIProbability<-length(which(ErrorTable$Signal<=ErrorTable[Index_error,"Signal"]))/nrow(ErrorTable) #no reverse but signal divergence (incorrect show reverse, more dangerous)
-      Index_error2<-which(ErrorTable$Index==names(ClassData[[1]])) 
-      ErrorIProbability2<-length(which(ErrorTable$Signal<=ErrorTable[Index_error2,"Signal"]))/nrow(ErrorTable) #no reverse but signal divergence (incorrect show reverse, more dangerous)
-      ErrorIProbability<-max(0, ErrorIProbability-ErrorIProbability2)
-      
-      Index_power<-which(PowerTable$Index==ErrorTable[Index_error,"Index"])
-      
-      if(is_empty(Index_power)==TRUE){
-        pivotal<-PowerTable%>%filter(Signal<=ErrorTable[Index_error,]$Signal)%>%slice(which.min(Rank))  
-        Index_power<-which(PowerTable$Value==pivotal$Value & PowerTable$Rank==pivotal$Rank & PowerTable$Signal==pivotal$Signal)
-      }
-      PowerProbability<-length(which(PowerTable$Signal<=PowerTable[Index_power,"Signal"]))/nrow(PowerTable) #TyperII: reverse but no signal divergence (fail to catch reverse)
-      
-      y<-data.frame(ErrorIProbability,PowerProbability, Reliability, TruePower=Reliab_power/nrow(PowerTable), TrueError=Reliab_error/nrow(ErrorTable))
-    }
+    TypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
+    TypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
+    Power<-1-TypeII_error
+
+    y<-data.frame(TypeI_error, TypeII_error, Power)
     return(y)
   }
   
-  FitResult<-lapply(Fit,PowerF)%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)%>%
-    rowwise()%>%arrange(ErrorIProbability) #min because we look for closest similarities
+  FitResult<-lapply(Fit,PowerF)%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)
   return(FitResult)
 }
 
