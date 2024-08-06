@@ -33,18 +33,31 @@ CreateClassData<-function(ModelInfo, Test=FALSE){ #this creates the main class t
 
 
 
+CreateSignal<-function(x){
+  MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","能量强度","面积强度"); return(y) })
+  MFI<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MFI"]]})); colnames(y)<-c("MFI背驰","MFI强度","量比"); return(y) })
+  Str<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["形态背驰"]]})); colnames(y)<-c("形态背驰","形态强度"); return(y) })
+  BOLL<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["BOLL信号"]]})); colnames(y)<-c("BOLL方向","BOLL强度"); return(y) })
+  Candle<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["Other"]]})); colnames(y)<-c("启动K线排名","分型强度"); return(y) })
+  Result<-list(MACD=MACD,MFI=MFI,Str=Str,BOLL=BOLL,Candle=Candle) 
+  return(Result)
+}
+
+
+
+
+ToSignal<-function(x,NumSignals){
+  y<-strsplit(str_sub(x$Index, start = -NumSignals), "")#The digit part of the string "X1101101" of the Index name. Change it if MACDPower signals are changed. 
+  y<-sapply(y, function(x){sum(as.numeric(x))} )
+}
+
+
+
+
 FitModel<-function(MainClassData,ClassData){
-  CreateSignal<-function(x){
-    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","能量强度","面积强度"); return(y) })
-    MFI<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MFI"]]})); colnames(y)<-c("MFI背驰","MFI强度","量比"); return(y) })
-    Str<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["形态背驰"]]})); colnames(y)<-c("形态背驰","形态强度"); return(y) })
-    BOLL<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["BOLL信号"]]})); colnames(y)<-c("BOLL方向","BOLL强度"); return(y) })
-    Candle<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["Other"]]})); colnames(y)<-c("启动K线排名","分型强度"); return(y) })
-    Result<-list(MACD=MACD,MFI=MFI,Str=Str,BOLL=BOLL,Candle=Candle) 
-    return(Result)}
-  
   ModelResult<-CreateSignal(MainClassData)
   DataResult<-CreateSignal(ClassData)
+  NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
   
   #If MACDPower signals are changed, make sure to change the indices below for the part "-c(...)"
   FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:2)]-DataResult$MACD[[1]][,-c(1:2)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
@@ -54,14 +67,9 @@ FitModel<-function(MainClassData,ClassData){
   FitCandle<-map(ModelResult$Candle, function(x){apply(x,MARGIN = 1 ,function(x){y<-t(x-DataResult$Candle[[1]]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
-  ToSignal<-function(x){
-    y<-strsplit(substring(x$Index,first=2,last=9), "")
-    y<-sapply(y, function(x){sum(as.numeric(x))} )
-  }
-  
   PowerF<-function(x){
-    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(.), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
-    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(.), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
+    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
+    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
     Reliab_power<-PowerTable%>%filter(Signal>4)%>%nrow()
     Reliab_error<-ErrorTable%>%filter(Signal<=4)%>%nrow()
@@ -110,6 +118,7 @@ MainBootstrap<-function(DataToBeFit,OriginalData, ModelInfo=NULL){ #create resul
     stop("There is no planet model for the data to be tested! Try with a new original data.")
   }
   SelectedModel<-lapply(ModelID, function(x) (ModelInfo[[x]]))
+  names(SelectedModel)<-names(ModelInfo)[ModelID]
   
   MainClassData<-CreateClassData(SelectedModel) #simulate nboot number of data for each SelectedModel
   ClassData<-CreateClassData(DataInfo, Test = TRUE)
@@ -177,24 +186,12 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
   
   MainClassData<-CreateClassData(ModelInfo)
   
-  CreateSignal<-function(x){
-    MACD<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MACD"]]})); colnames(y)<-c("能量背驰","面积背驰","能量强度","面积强度"); return(y) })
-    MFI<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["MFI"]]})); colnames(y)<-c("MFI背驰","MFI强度","量比"); return(y) })
-    Str<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["形态背驰"]]})); colnames(y)<-c("形态背驰","形态强度"); return(y) })
-    BOLL<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["BOLL信号"]]})); colnames(y)<-c("BOLL方向","BOLL强度"); return(y) })
-    Candle<-lapply(x, function(x){y<-t(sapply(x, function(x){x[["Other"]]})); colnames(y)<-c("启动K线排名","分型强度"); return(y) })
-    Result<-list(MACD=MACD,MFI=MFI,Str=Str,BOLL=BOLL,Candle=Candle) 
-    return(Result)}
   
   ModelResult<-CreateSignal(MainClassData)
   NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
-  ToSignal<-function(x){
-    y<-strsplit(str_sub(x$Index, start = -NumSignals), "")#The digit part of the string "X1101101" of the Index name. Change it if MACDPower signals are changed. 
-    y<-sapply(y, function(x){sum(as.numeric(x))} )
-  }
-  
-  PowerTable<-data.frame(ModelResult$MACD$ReverseTRUE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(.), Power="ReverseTRUE")%>%arrange(desc(Signal))
-  ErrorTable<-data.frame(ModelResult$MACD$ReverseFALSE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(.), Power="ReverseTRUE")%>%arrange(desc(Signal))
+
+  PowerTable<-data.frame(ModelResult$MACD$ReverseTRUE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(., NumSignals = NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal))
+  ErrorTable<-data.frame(ModelResult$MACD$ReverseFALSE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(., NumSignals = NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal))
   
   DecisionTable<-do.call(rbind,lapply(1:NumSignals, function(sig){
     correct<-PowerTable%>%filter(Signal>=sig)%>%nrow()
@@ -203,7 +200,7 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
     Power<-correct/nrow(PowerTable) #If reverse true, how many scenarios I can catch. 1-Power will be how many scenarios I'll miss
     Alpha<-incorrect/nrow(ErrorTable) #If reverse false, how many false signal. More dangerous
     SuccessRate<-correct/(correct+incorrect) #Given a signal (rejection region), one needs to reject if >= this signal. But it can either be correct or incorrect. 
-                                             #This SuccessRate is the number of scenarios in ReverseTrue/ number of scenarios in ReverseFalse 
+    #This SuccessRate is the number of scenarios in ReverseTrue/ number of scenarios in ReverseFalse 
     
     return(data.frame(Alpha,Power,SuccessRate))
   }))%>%mutate(RejectionRegion=1:NumSignals,.before=Alpha)%>%mutate(Diff=Power-Alpha,.before=SuccessRate)%>%arrange(desc(Alpha)) 
