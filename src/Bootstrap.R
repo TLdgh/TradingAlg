@@ -68,8 +68,8 @@ FitModel<-function(MainClassData,ClassData){
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
   PowerF<-function(x){
-    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
-    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=rownames(.),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
+    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
+    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
     Reliab_power<-PowerTable%>%filter(Signal>4)%>%nrow()
     Reliab_error<-ErrorTable%>%filter(Signal<=4)%>%nrow()
@@ -77,7 +77,7 @@ FitModel<-function(MainClassData,ClassData){
     }else{
       Reliability<-"Reliable"
       
-      #simulated probability of type I and power(1-II errors): P(signal div | reverse false) and P(signal div | reverse true)
+      #simulated probability of type I and power(equal to 1-II error): I P(signal div | reverse false); II P(no signal div |reverse true); and power P(signal div | reverse true)
       Index_error<-which(ErrorTable$Rank==1) 
       ErrorIProbability<-length(which(ErrorTable$Signal<=ErrorTable[Index_error,"Signal"]))/nrow(ErrorTable) #no reverse but signal divergence (incorrect show reverse, more dangerous)
       Index_error2<-which(ErrorTable$Index==names(ClassData[[1]])) 
