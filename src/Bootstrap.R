@@ -67,10 +67,9 @@ FitModel<-function(MainClassData,ClassData){
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
   PowerF<-function(x,st){
-    print(st)
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(st+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=st), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(st+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=st), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
-    print(PowerTable)
+
     Pvalue<-(ErrorTable %>% filter(Signal>=ErrorTable[which(ErrorTable$Rank==1),"Signal"]) %>%nrow())/nrow(ErrorTable)
     SampleTypeII_error<-(PowerTable %>% filter(Signal<PowerTable[which(PowerTable$Rank==1),"Signal"]) %>%nrow())/nrow(PowerTable)
     SamplePower<-1-SampleTypeII_error
@@ -90,7 +89,7 @@ FitModel<-function(MainClassData,ClassData){
 
 
 
-
+#The OriginalData must be included in a named list like list=(NQ=NQ)
 MainBootstrap<-function(DataToBeFit,OriginalData, ModelInfo=NULL){ #create results and combine and average them
   if(is.null(ModelInfo)==TRUE){ModelInfo<-do.call(c,lapply(OriginalData, function(x) PickModel(x)))} #contains 1-level sublist of all planets
   DataInfo<-PickModel(DataToBeFit, Test = TRUE) #should contain only 1-level sublist of one planet, should have the same structure as ModelInfo
@@ -109,7 +108,6 @@ MainBootstrap<-function(DataToBeFit,OriginalData, ModelInfo=NULL){ #create resul
   MainClassData<-CreateClassData(SelectedModel) #simulate nboot number of data for each SelectedModel
   ClassData<-CreateClassData(DataInfo, Test = TRUE)
   GlobalResult<-FitModel(MainClassData=MainClassData,ClassData=ClassData)
-  print(DataInfo[[1]])
   return(GlobalResult) #GlobalResult gives the overall averaged result within each Class
 }
 
