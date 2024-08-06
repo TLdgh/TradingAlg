@@ -46,10 +46,11 @@ FitModel<-function(MainClassData,ClassData){
   ModelResult<-CreateSignal(MainClassData)
   DataResult<-CreateSignal(ClassData)
   
-  FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:2)]-DataResult$MACD[[1]][,-c("能量背驰", "面积背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitMFI<-map(ModelResult$MFI, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$MFI[[1]][,-c("MFI背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitStr<-map(ModelResult$Str, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$Str[[1]][,-c("形态背驰")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
-  FitBOLL<-map(ModelResult$BOLL, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$BOLL[[1]][,-c("BOLL强度")]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  #If MACDPower signals are changed, make sure to change the indices below for the part "-c(...)"
+  FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:2)]-DataResult$MACD[[1]][,-c(1:2)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitMFI<-map(ModelResult$MFI, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$MFI[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitStr<-map(ModelResult$Str, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$Str[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
+  FitBOLL<-map(ModelResult$BOLL, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1)]-DataResult$BOLL[[1]][,-c(1)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   FitCandle<-map(ModelResult$Candle, function(x){apply(x,MARGIN = 1 ,function(x){y<-t(x-DataResult$Candle[[1]]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
