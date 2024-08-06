@@ -507,7 +507,7 @@ getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   retDate=ret$Date
   ret=ret$ret
-  nboot=500
+  nboot=1000
   s=sample(ret,length(ret)*nboot, replace = TRUE)*runif(length(ret)*nboot,0.9,1.1)
   ret_boot=matrix(s, nrow = length(ret))
   
