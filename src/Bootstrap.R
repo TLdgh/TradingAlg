@@ -205,12 +205,12 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
                                              #This SuccessRate is the number of scenarios in ReverseTrue/ number of scenarios in ReverseFalse 
     
     return(data.frame(Alpha,Power,SuccessRate))
-  }))%>%mutate(RejectionRegion=1:8,.before=Alpha)%>%mutate(Diff=Power-Alpha,.before=SuccessRate)%>%arrange(desc(Alpha)) 
+  }))%>%mutate(RejectionRegion=1:NumSignals,.before=Alpha)%>%mutate(Diff=Power-Alpha,.before=SuccessRate)%>%arrange(desc(Alpha)) 
   #Given alpha level, choose the max of the Diff is equivalent as minimizing alpha+beta.
   #Smaller alpha can give higher success rate, but also very small power, so will miss most of the chances.
   
   print(DecisionTable)
-  AlphaPower<-data.frame(RejectionRegion=1:8, Alpha=DecisionTable$Alpha, Power=DecisionTable$Power)%>%gather("Type","Value",-1)
+  AlphaPower<-data.frame(RejectionRegion=1:NumSignals, Alpha=DecisionTable$Alpha, Power=DecisionTable$Power)%>%gather("Type","Value",-1)
   ggplot(AlphaPower, aes(RejectionRegion,Value,color=Type))+geom_line()
 }
 

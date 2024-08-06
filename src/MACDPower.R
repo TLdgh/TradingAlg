@@ -171,17 +171,17 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     if(Direction==1){
       rownames(MacdMatrix)<-c("MACD 上涨能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 上涨能量背驰","强度"]<-Strength_pos 
-      MacdMatrix["MACD 上涨能量背驰","背驰"]<-(Strength_pos>0)
+      MacdMatrix["MACD 上涨能量背驰","背驰"]<-(Strength_pos>0.33)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Pos
-      MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Pos>0)
+      MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Pos>0.33)
     }else{
       rownames(MacdMatrix)<-c("MACD 下跌能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 下跌能量背驰","强度"]<-Strength_neg
-      MacdMatrix["MACD 下跌能量背驰","背驰"]<-(Strength_neg>0)
+      MacdMatrix["MACD 下跌能量背驰","背驰"]<-(Strength_neg>0.33)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Neg
-      MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Neg>0)
+      MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Neg>0.33)
     }
   }#else{
   #if(Pricedata[which(Pricedata$Date==as.character(Period$In1)),]$High<Pricedata[which(Pricedata$Date==as.character(Period$Out2)),]$High){
