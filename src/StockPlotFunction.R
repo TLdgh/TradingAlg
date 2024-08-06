@@ -502,6 +502,7 @@ SectorPerformanceChart<-function(datalist, StartDate=NULL, showLineChart=FALSE){
   fig
 }
 
+
 getSectorProbability<-function(data, specRet=NULL, nam){
   ret=data%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="weekly",type="log",col_rename="ret")
   retDate=ret$Date
@@ -525,21 +526,28 @@ getSectorProbability<-function(data, specRet=NULL, nam){
   
   finalres=map2(as_tibble(probs), as_tibble(ret_boot), function(p, r){
     tibble(retDate, r, p)%>%
-    mutate(action=case_when(r<0 & p<0.5 ~ 1,
-                            r<0 & p>=0.5 ~ -1,
-                            r>=0 & p< 0.5 ~ 1,
-                            r>=0 & p>=0.5 ~ -1))%>%
-    mutate(truth=ifelse(lead(r)>=0, 1, -1))%>%
-    mutate(succ=case_when(action==truth & is.na(action)==FALSE ~ 1,
-                          action!=truth & is.na(action)==FALSE ~ 0))})
+      mutate(action=case_when(r<0 & p<0.5 ~ 1,
+                              r<0 & p>=0.5 ~ -1,
+                              r>=0 & p< 0.5 ~ 1,
+                              r>=0 & p>=0.5 ~ -1))%>%
+      mutate(truth=ifelse(lead(r)>=0, 1, -1))%>%
+      mutate(succ=case_when(action==truth & is.na(action)==FALSE ~ 1,
+                            action!=truth & is.na(action)==FALSE ~ 0))})
+  # Function to rename columns
+  rename_columns <- function(df, suffix){
+    df %>%rename_with(~ paste0(., "_", suffix), -contains("Date"))
+  }
   
-  finalres<-map(finalres, ~select(.x, c(retDate,succ)))%>%reduce(inner_join, by=c("retDate"))%>%
+  # Add a suffix to each column name except 'Date'
+  finalres <- map2(finalres, seq_along(finalres), ~ rename_columns(.x, .y))
+  
+  finalres<-map(finalres, ~select(.x, contains(c("retDate","succ"))))%>%reduce(inner_join, by=c("retDate"))%>%
     transmute(retDate, ret=ret, succ=rowMeans(select(., starts_with("succ"))))%>%na.omit()
-
+  
   absret=seq(from=0,to=0.5, by=0.001)
   succ_curve=sapply(absret, function(i){
     y=finalres%>%filter(abs(ret)>=i)
-    mean(y$succ)})
+    mean(ifelse(y$succ>=0.5,1,0))})
   df<-data.frame(AbsoluteReturn=absret, Reliability=succ_curve)#%>%replace_na(.,replace=list(Reliability=0))
   
   return(df)
