@@ -71,9 +71,9 @@ FitModel<-function(MainClassData,ClassData){
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
-    Reliab_power<-PowerTable%>%filter(Signal>=4)%>%nrow()
-    Reliab_error<-ErrorTable%>%filter(Signal<4)%>%nrow()
-    if(Reliab_power/nrow(PowerTable)<0.5 | Reliab_error/nrow(ErrorTable)<0.5){Reliability<-"Unreliable"
+    Reliab_power<-PowerTable%>%filter(Signal>=4)%>%nrow()#The true power
+    Reliab_error<-ErrorTable%>%filter(Signal>=4)%>%nrow()#Dividing by nrow(ErrorTable) gives The true Type I error
+    if(Reliab_power/nrow(PowerTable)<0.5 | Reliab_error/nrow(ErrorTable)>=0.5){Reliability<-"Unreliable"
     }else{
       Reliability<-"Reliable"
       
@@ -92,7 +92,7 @@ FitModel<-function(MainClassData,ClassData){
       }
       PowerProbability<-length(which(PowerTable$Signal<=PowerTable[Index_power,"Signal"]))/nrow(PowerTable) #TyperII: reverse but no signal divergence (fail to catch reverse)
       
-      y<-data.frame(ErrorIProbability,PowerProbability, Reliability, TruePower=Reliab_power/nrow(PowerTable), TrueError=1-Reliab_error/nrow(ErrorTable))
+      y<-data.frame(ErrorIProbability,PowerProbability, Reliability, TruePower=Reliab_power/nrow(PowerTable), TrueError=Reliab_error/nrow(ErrorTable))
     }
     return(y)
   }
