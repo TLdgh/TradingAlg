@@ -71,11 +71,15 @@ FitModel<-function(MainClassData,ClassData){
     PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
     ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
     
-    TypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
-    TypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
-    Power<-1-TypeII_error
+    Pvalue<-(ErrorTable %>% filter(Signal>=ErrorTable[which(ErrorTable$Rank==1),"Signal"]) %>%nrow())/nrow(ErrorTable)
+    SampleTypeII_error<-(PowerTable %>% filter(Signal<PowerTable[which(PowerTable$Rank==1),"Signal"]) %>%nrow())/nrow(PowerTable)
+    SamplePower<-1-SampleTypeII_error
+    
+    TrueTypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
+    TrueTypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
+    TruePower<-1-TypeII_error
 
-    y<-data.frame(TypeI_error, TypeII_error, Power)
+    y<-data.frame(Pvalue, SampleTypeII_error, SamplePower, TrueTypeI_error, TrueTypeII_error, TruePower)
     return(y)
   }
   
