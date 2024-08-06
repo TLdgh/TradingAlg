@@ -57,7 +57,6 @@ ToSignal<-function(x,NumSignals){
 FitModel<-function(MainClassData,ClassData){
   ModelResult<-CreateSignal(MainClassData)
   DataResult<-CreateSignal(ClassData)
-  NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
   
   #If MACDPower signals are changed, make sure to change the indices below for the part "-c(...)"
   FitMACD<-map(ModelResult$MACD, function(x){apply(x,MARGIN = 1 ,function(x){y<-(x[-c(1:2)]-DataResult$MACD[[1]][,-c(1:2)]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
@@ -67,10 +66,11 @@ FitModel<-function(MainClassData,ClassData){
   FitCandle<-map(ModelResult$Candle, function(x){apply(x,MARGIN = 1 ,function(x){y<-t(x-DataResult$Candle[[1]]); y<-t(y)%*%y; return(y) })}) #sum of squares using inner product
   Fit<-tibble(FitMACD=FitMACD,FitMFI=FitMFI,FitStr=FitStr,FitBOLL=FitBOLL,FitCandle=FitCandle) 
   
-  PowerF<-function(x,NumSignals){
-    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
-    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(NumSignals+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=NumSignals), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
-    
+  PowerF<-function(x,st){
+    print(st)
+    PowerTable<-data.frame(Value=x$ReverseTRUE)%>%mutate(Index=str_sub(rownames(.), start = -(st+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=st), Power="ReverseTRUE")%>%arrange(desc(Signal),Rank)
+    ErrorTable<-data.frame(Value=x$ReverseFALSE)%>%mutate(Index=str_sub(rownames(.), start = -(st+1)),Rank=rank(Value, ties.method = "random"))%>%mutate(Signal=ToSignal(x=., NumSignals=st), Power="ReverseFALSE")%>%arrange(desc(Signal),Rank)
+    print(PowerTable)
     Pvalue<-(ErrorTable %>% filter(Signal>=ErrorTable[which(ErrorTable$Rank==1),"Signal"]) %>%nrow())/nrow(ErrorTable)
     SampleTypeII_error<-(PowerTable %>% filter(Signal<PowerTable[which(PowerTable$Rank==1),"Signal"]) %>%nrow())/nrow(PowerTable)
     SamplePower<-1-SampleTypeII_error
@@ -78,12 +78,13 @@ FitModel<-function(MainClassData,ClassData){
     TrueTypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
     TrueTypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
     TruePower<-1-TypeII_error
-
+    
     y<-data.frame(Pvalue, SampleTypeII_error, SamplePower, TrueTypeI_error, TrueTypeII_error, TruePower)
     return(y)
   }
   
-  FitResult<-map(Fit,~PowerF(., NumSignals = NumSignals))%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)
+  NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
+  FitResult<-map(Fit,~PowerF(., st = NumSignals))%>%do.call(rbind,.)%>%mutate(Signal=rownames(.),.before=1)
   return(FitResult)
 }
 
@@ -91,7 +92,7 @@ FitModel<-function(MainClassData,ClassData){
 
 
 MainBootstrap<-function(DataToBeFit,OriginalData, ModelInfo=NULL){ #create results and combine and average them
-  if(is.null(ModelInfo)==TRUE){ModelInfo<-PickModel(OriginalData)} #contains 1-level sublist of all planets
+  if(is.null(ModelInfo)==TRUE){ModelInfo<-do.call(c,lapply(OriginalData, function(x) PickModel(x)))} #contains 1-level sublist of all planets
   DataInfo<-PickModel(DataToBeFit, Test = TRUE) #should contain only 1-level sublist of one planet, should have the same structure as ModelInfo
   DataInfo<-DataInfo[length(DataInfo)] #make sure there's only the most recent one to be tested
   
@@ -174,7 +175,7 @@ Hypothesis<-function(ModelInfo=NULL,Data=NULL){ #If using Data, it must be a lis
   
   ModelResult<-CreateSignal(MainClassData)
   NumSignals=length(c("能量背驰","面积背驰","MFI背驰","形态背驰","BOLL强度","启动K线排名","分型强度"))
-
+  
   PowerTable<-data.frame(ModelResult$MACD$ReverseTRUE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(., NumSignals = NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal))
   ErrorTable<-data.frame(ModelResult$MACD$ReverseFALSE)%>%transmute(Index=rownames(.))%>%mutate(Signal=ToSignal(., NumSignals = NumSignals), Power="ReverseTRUE")%>%arrange(desc(Signal))
   
