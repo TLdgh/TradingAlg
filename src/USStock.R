@@ -39,7 +39,7 @@ twsDisconnect(tws)#to disconnect
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
-StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AAPL","AMD"), interval = c("30F","daily"), RealData=TRUE)
+StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AAPL","MSFT","GOOGL","TSLA"), interval = c("30F","daily"), RealData=TRUE)
 
 StkToBePrepared<-GetStkInfo(tws=tws, STK = c("XLK","XLV","XLF","XLRE","XLE","XLB","XLY","XLI","XLU","XLP","XLC"), 
                             interval = c("daily"), RealData=FALSE)
@@ -106,6 +106,12 @@ list(Tech=XLK_daily, Health=XLV_daily,
      Energy=XLE_daily,Materials=XLB_daily,
      CCyclical=XLY_daily,Industrial=XLI_daily,
      Utility=XLU_daily,CStaples=XLP_daily, Communications=XLC_daily)%>%SectorPerformanceChart()
+
+list(Tech=XLK_daily, Health=XLV_daily,
+     Financial=XLF_daily,RE=XLRE_daily,
+     Energy=XLE_daily,Materials=XLB_daily,
+     CCyclical=XLY_daily,Industrial=XLI_daily,
+     Utility=XLU_daily,CStaples=XLP_daily, Communications=XLC_daily)%>%SectorRetProbability()
 
 #Step 5------------------------------------------
 #MACDPower generates signals for a single stock of 
