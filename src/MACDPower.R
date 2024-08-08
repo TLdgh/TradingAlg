@@ -253,12 +253,12 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     rownames(DivergenceMatrix)<-c("MFI 上涨背驰")      
     DivergenceMatrix["MFI 上涨背驰","强度"]<-(Strength_pos)
     DivergenceMatrix["MFI 上涨背驰","量比"]<-MFRatio
-    DivergenceMatrix["MFI 上涨背驰","背驰"]<-(Strength_pos>0.33)
+    DivergenceMatrix["MFI 上涨背驰","背驰"]<-(Strength_pos>0.33 & MFRatio>0.9)
   }else{
     rownames(DivergenceMatrix)<-c("MFI 下跌背驰")      
     DivergenceMatrix["MFI 下跌背驰","强度"]<-(Strength_neg)
     DivergenceMatrix["MFI 下跌背驰","量比"]<-MFRatio
-    DivergenceMatrix["MFI 下跌背驰","背驰"]<-(Strength_neg>0.33)
+    DivergenceMatrix["MFI 下跌背驰","背驰"]<-(Strength_neg>0.33 & MFRatio>0.9)
   }
   return(DivergenceMatrix)
 }
