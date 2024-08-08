@@ -17,7 +17,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     Direction<-1
     #上涨能量背驰
     area_pos <- Total_interval[,c("MACD","Date")]%>%filter(., MACD>0)
-    maxat=which(area_pos$MACD==max(area_pos$MACD))
+    maxat=last(which(area_pos$MACD==max(area_pos$MACD)))
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
 
     #上涨均线面积背驰
@@ -29,7 +29,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     Direction<- -1
     #下跌能量背驰
     area_neg <- Total_interval[,c("MACD","Date")]%>%filter(., MACD<=0)
-    minat=which(area_neg$MACD==min(area_neg$MACD))
+    minat=last(which(area_neg$MACD==min(area_neg$MACD)))
     Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
     
     #下跌均线面积背驰
@@ -228,9 +228,9 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     
     #上涨能量背驰
     area_pos <- Total_interval[,c("MFI","Date")]%>%filter(., MFI>0)
-    maxat=which(area_pos$MFI==max(area_pos$MFI))
+    maxat=last(which(area_pos$MFI==max(area_pos$MFI)))
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
-    print(maxat)
+
     #量比
     MFRatio<-MFRatio%>%summarise(Ratio=abs(Neg)/Pos)%>%as.numeric()
   }else{
@@ -238,7 +238,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     
     #下跌能量背驰
     area_neg <- Total_interval[,c("MFI","Date")]%>%filter(., MFI<=0)
-    minat=which(area_neg$MFI==min(area_neg$MFI))
+    minat=last(which(area_neg$MFI==min(area_neg$MFI)))
     Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
     
     #量比
