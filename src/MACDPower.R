@@ -21,8 +21,8 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
 
     #上涨均线面积背驰
-    EMALine_Pos<-Total_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.>0))%>%mutate(Means=rowMeans(select(., DIFF,DEA)))
-    maxat=which(EMALine_Pos$Means==max(EMALine_Pos$Means))
+    EMALine_Pos<-Total_interval[,c("DEA","Date")]%>%filter(., DEA>0)
+    maxat=which(EMALine_Pos$DEA==max(EMALine_Pos$DEA))
     EMALineStrength_Pos<-ifelse(maxat!=nrow(EMALine_Pos), (nrow(EMALine_Pos)-maxat+1)/nrow(EMALine_Pos), 0)
     
   }else{
@@ -33,8 +33,8 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
     
     #下跌均线面积背驰
-    EMALine_Neg<-Total_interval[,c("DIFF","DEA","Date")]%>%filter_at(vars(DIFF,DEA), all_vars(.<=0))%>%mutate(Means=rowMeans(select(., DIFF,DEA)))
-    minat=which(EMALine_Neg$Means==min(EMALine_Neg$Means))
+    EMALine_Neg<-Total_interval[,c("DEA","Date")]%>%filter(., DEA<=0)
+    minat=which(EMALine_Neg$DEA==min(EMALine_Neg$DEA))
     EMALineStrength_Neg<-ifelse(minat!=nrow(EMALine_Neg), (nrow(EMALine_Neg)-minat+1)/nrow(EMALine_Neg), 0)
   }
   
@@ -230,7 +230,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     area_pos <- Total_interval[,c("MFI","Date")]%>%filter(., MFI>0)
     maxat=which(area_pos$MFI==max(area_pos$MFI))
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
-    
+    print(maxat)
     #量比
     MFRatio<-MFRatio%>%summarise(Ratio=abs(Neg)/Pos)%>%as.numeric()
   }else{
