@@ -215,43 +215,36 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
 }
 
 
-MFICalculator<-function(Pricedata, Data_mfi, StarData, Period){
-  A1_interval <- subset(Data_mfi,Date>= Period$In1 & Date<=Period$In2)
-  A2_interval <- subset(Data_mfi,Date>= Period$Out1 & Date<=Period$Out2)
+MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
+  Total_interval<-subset(Data_mfi,Date>=Period$In1 & Date<=Period$Out2)
+  Total_interval_MoneyFlow<-subset(Data_MoneyFlow,Date>=Period$In2 & Date<=Period$Out2)
+  MFRatio<-Total_interval_MoneyFlow%>%summarise(Pos=sum(MoneyFlow[MoneyFlow>0]), Neg=sum(MoneyFlow[MoneyFlow<=0]))
   
-  #the range of time
-  A1_length<-nrow(A1_interval)
-  A2_length<-nrow(A2_interval)
-  A_TimeWeight<-A2_length/A1_length
-  
-  #the range of price
-  Bar1length<-abs(StarData[which(StarData$Date==Period$In1),]$Price-StarData[which(StarData$Date==Period$In2),]$Price)  
-  Bar2length<-abs(StarData[which(StarData$Date==Period$Out1),]$Price-StarData[which(StarData$Date==Period$Out2),]$Price)
-  A_PriceWeight<-Bar2length/Bar1length
-  
-  MeanWeight<-mean(c(A_TimeWeight,A_PriceWeight))
-  
-  #the average volume
-  Vol1<-mean(subset(Pricedata,Date>= Period$In1 & Date<=Period$In2)$Volume )
-  Vol2<-mean(subset(Pricedata,Date>= Period$Out1 & Date<=Period$Out2)$Volume )
-  
-  if(StarData[which(StarData$Date==Period$In1),]$Price<StarData[which(StarData$Date==Period$In2),]$Price){ #price is going up
+  In1Price<-StarData[which(StarData$Date==Period$In1),]$Price
+  In2Price<-StarData[which(StarData$Date==Period$In2),]$Price
+
+  if(In1Price<In2Price){ #price is going up
     Direction<-1
     
-    area_pos1 <- A1_interval[which(A1_interval[,2]>0),2]
-    area_pos2 <- A2_interval[which(A2_interval[,2]>0),2]
-    area_pos1<-ifelse(length(area_pos1)>0, mean(area_pos1), 1)
-    area_pos2<-ifelse(length(area_pos2)>0, mean(area_pos2)*MeanWeight, 1)
-    Strength_pos<-ifelse(area_pos1!=0, max(0,1-area_pos2/area_pos1), 0)
+    #上涨能量背驰
+    area_pos <- Total_interval[,c("MFI","Date")]%>%filter(., MFI>0)
+    maxat=which(area_pos$MFI==max(area_pos$MFI))
+    Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
+    
+    #量比
+    MFRatio<-MFRatio%>%summarise(Ratio=abs(Neg)/Pos)%>%as.numeric()
   }else{
     Direction<- -1
-    area_neg1 <- A1_interval[which(A1_interval[,2]<=0),2]
-    area_neg2 <- A2_interval[which(A2_interval[,2]<=0),2]
     
-    area_neg1<-ifelse(length(area_neg1)>0, mean(area_neg1), 1)
-    area_neg2<-ifelse(length(area_neg2)>0, mean(area_neg2)*MeanWeight, 1)
-    Strength_neg<-ifelse(area_neg1!=0, max(0,1-area_neg2/area_neg1), 0)
+    #下跌能量背驰
+    area_neg <- Total_interval[,c("MFI","Date")]%>%filter(., MFI<=0)
+    minat=which(area_neg$MFI==min(area_neg$MFI))
+    Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
+    
+    #量比
+    MFRatio<-MFRatio%>%summarise(Ratio=Pos/abs(Neg))%>%as.numeric()
   }
+
   
   DivergenceMatrix<-matrix(0, nrow = 1, ncol = 3)
   colnames(DivergenceMatrix) <-c("背驰", "强度", "量比")
@@ -259,12 +252,12 @@ MFICalculator<-function(Pricedata, Data_mfi, StarData, Period){
   if(Direction==1){
     rownames(DivergenceMatrix)<-c("MFI 上涨背驰")      
     DivergenceMatrix["MFI 上涨背驰","强度"]<-(Strength_pos)
-    DivergenceMatrix["MFI 上涨背驰","量比"]<-max(0,(Vol1-Vol2)/Vol1)  #decreasing volume when price rising
+    DivergenceMatrix["MFI 上涨背驰","量比"]<-MFRatio
     DivergenceMatrix["MFI 上涨背驰","背驰"]<-(Strength_pos>0)
   }else{
     rownames(DivergenceMatrix)<-c("MFI 下跌背驰")      
     DivergenceMatrix["MFI 下跌背驰","强度"]<-(Strength_neg)
-    DivergenceMatrix["MFI 下跌背驰","量比"]<-max(0,(Vol1-Vol2)/Vol1) #decreasing volume when price dropping
+    DivergenceMatrix["MFI 下跌背驰","量比"]<-MFRatio
     DivergenceMatrix["MFI 下跌背驰","背驰"]<-(Strength_neg>0)
   }
   return(DivergenceMatrix)
@@ -322,10 +315,11 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   return(DivergenceMatrix)
 }
 
-MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_boll=NULL, Data_ema=NULL, ScheduleAlert=FALSE){
+MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_MoneyFlow=NULL, Data_boll=NULL, Data_ema=NULL, ScheduleAlert=FALSE){
   Pdate<-tail(DataToBeTested$Date,1)
   if(is.null(Data_macd)==TRUE){Data_macd<-PricedataMACD(DataToBeTested)}else{Data_macd<-Data_macd%>%filter(Date<=Pdate)}
   if(is.null(Data_mfi)==TRUE){Data_mfi<-PricedataMFI(DataToBeTested)}else{Data_mfi<-Data_mfi%>%filter(Date<=Pdate)}
+  if(is.null(Data_MoneyFlow)==TRUE){Data_MoneyFlow<-PricedataMoneyFlow(DataToBeTested)}else{Data_MoneyFlow<-Data_MoneyFlow%>%filter(Date<=Pdate)}
   if(is.null(Data_boll)==TRUE){Data_boll<-PricedataBOLL(DataToBeTested)}else{Data_boll<-Data_boll%>%filter(Date<=Pdate)}
   if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA10=FuncEMA10(DataToBeTested), EMA60=FuncEMA60(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
   if(is.null(SBPStr)==TRUE){
@@ -367,7 +361,7 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
     MACDensemble<-MACDCalculator(Pricedata=DataToBeTested,Data_macd=Data_macd,MACDType="MACD",Period,SBPStr,ScheduleAlert)
     DivergenceList[["Period"]]<-Period
     DivergenceList[["MACD"]]<-MACDensemble[["DivergenceMatrix"]][["MacdMatrix"]]   #this gives the MACD
-    DivergenceList[["MFI"]]<-MFICalculator(DataToBeTested, Data_mfi=Data_mfi, StarData, Period)         #this gives the MFI
+    DivergenceList[["MFI"]]<-MFICalculator(DataToBeTested, Data_mfi=Data_mfi, Data_MoneyFlow=Data_MoneyFlow, StarData, Period)         #this gives the MFI
     DivergenceList[["EMA"]]<-EMACalculator(DataToBeTested, Data_ema=Data_ema, Data_macd=Data_macd, Period)  
     
     DivergenceList[["形态背驰"]]<-MACDensemble[["StructuralDivMatrix"]]
