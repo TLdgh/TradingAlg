@@ -22,7 +22,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
 
     #上涨均线面积背驰
     EMALine_Pos<-Total_interval[,c("DEA","Date")]%>%filter(., DEA>0)
-    maxat=which(EMALine_Pos$DEA==max(EMALine_Pos$DEA))
+    maxat=last(which(EMALine_Pos$DEA==max(EMALine_Pos$DEA)))
     EMALineStrength_Pos<-ifelse(maxat!=nrow(EMALine_Pos), (nrow(EMALine_Pos)-maxat+1)/nrow(EMALine_Pos), 0)
     
   }else{
@@ -34,7 +34,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     
     #下跌均线面积背驰
     EMALine_Neg<-Total_interval[,c("DEA","Date")]%>%filter(., DEA<=0)
-    minat=which(EMALine_Neg$DEA==min(EMALine_Neg$DEA))
+    minat=last(which(EMALine_Neg$DEA==min(EMALine_Neg$DEA)))
     EMALineStrength_Neg<-ifelse(minat!=nrow(EMALine_Neg), (nrow(EMALine_Neg)-minat+1)/nrow(EMALine_Neg), 0)
   }
   
