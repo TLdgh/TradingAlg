@@ -76,7 +76,7 @@ FitModel<-function(MainClassData,ClassData){
     
     TrueTypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
     TrueTypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
-    TruePower<-1-TypeII_error
+    TruePower<-1-TrueTypeII_error
     
     y<-data.frame(Pvalue, SampleTypeII_error, SamplePower, TrueTypeI_error, TrueTypeII_error, TruePower)
     return(y)
