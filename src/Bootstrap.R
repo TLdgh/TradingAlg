@@ -74,11 +74,11 @@ FitModel<-function(MainClassData,ClassData){
     SampleTypeII_error<-(PowerTable %>% filter(Signal<PowerTable[which(PowerTable$Rank==1),"Signal"]) %>%nrow())/nrow(PowerTable)
     SamplePower<-1-SampleTypeII_error
     
-    TrueTypeI_error<-(ErrorTable%>%filter(Signal>=4)%>%nrow())/nrow(ErrorTable)
-    TrueTypeII_error<-(PowerTable%>%filter(Signal<4)%>%nrow())/nrow(PowerTable)
+    TrueTypeI_error<-(ErrorTable%>%filter(Signal>=5)%>%nrow())/nrow(ErrorTable)
+    TrueTypeII_error<-(PowerTable%>%filter(Signal<5)%>%nrow())/nrow(PowerTable)
     TruePower<-1-TrueTypeII_error
     
-    y<-data.frame(Pvalue, SampleTypeII_error, SamplePower, TrueTypeI_error, TrueTypeII_error, TruePower)
+    y<-data.frame(Pvalue, SamplePower, TrueTypeI_error, TruePower)
     return(y)
   }
   

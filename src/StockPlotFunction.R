@@ -125,8 +125,8 @@ MyMFI <-function(HLC, volume, n=14){
   
   # Calculate Money Flow
   # Calculate positive and negative Money Flow
-  pmf <- ifelse( HLC > priceLag, abs(HLC-priceLag)*volume, 0 )
-  nmf <- ifelse( HLC < priceLag, abs(HLC-priceLag)*volume, 0 )
+  pmf <- ifelse( HLC > priceLag, abs(HLC-priceLag)*volume, 1 )
+  nmf <- ifelse( HLC < priceLag, abs(HLC-priceLag)*volume, 1 )
   
   # Calculate Money Ratio and Money Flow Index
   num <- runSum( pmf, n )

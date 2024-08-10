@@ -22,7 +22,7 @@ source("src/StockInfo.R")
 source("src/ChanLunFunction.R")
 source("src/StockPlotFunction.R")
 source("src/MACDPower.R")
-source("src/SignalPlot.R")
+source("src/Bootstrap.R")
 
 #User must specify the IB port number
 tws <- twsConnect(port = 7496) #to connect with TWS
@@ -39,7 +39,7 @@ twsDisconnect(tws)#to disconnect
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
-StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AAPL","MSFT","GOOGL","TSLA"), interval = c("30F","daily"), RealData=TRUE)
+StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AAPL","MSFT","GOOGL","TSLA"), interval = c("daily"), RealData=FALSE)
 
 StkToBePrepared<-GetStkInfo(tws=tws, STK = c("XLK","XLV","XLF","XLRE","XLE","XLB","XLY","XLI","XLU","XLP","XLC"), 
                             interval = c("daily"), RealData=FALSE)
