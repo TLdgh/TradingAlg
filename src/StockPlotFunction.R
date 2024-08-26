@@ -374,7 +374,7 @@ MultiChart<-function(DataToBeTested){
 }
 
 
-ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UerInput="N"){
+ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UserInput="N"){
   #determine from which candlestick to start
   if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 88))%>%unlist()%>%max()}
   initialInd<-map(Data, ~tail(which(.x$Date<=StartDate), 1))
@@ -400,7 +400,7 @@ ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UerInput="N"){
         
         
         #evaluate based on UserInput or not
-        if(UerInput=="Y"){
+        if(UserInput=="Y"){
           proceed<-readline(prompt="Next bar? Y/N")
           if(proceed=="Y"){print(res);Indices<-map(Indices, ~.x+1);next}else{break}}
         else{
