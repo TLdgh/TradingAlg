@@ -9,6 +9,7 @@ PriceChart<-function(Pricedata, Title){
   Pricedata_EMA60 <- FuncEMA60(Pricedata)
   Pricedata_BOLL<-PricedataBOLL(Pricedata)
   Pricedata_SAR<-PricedataSAR(Pricedata)
+  Pricedata<-Pricedata%>%mutate(Return=log(Close/lag(Close)))
   
   shape <- list( #initiate a rectangular layout shape object, see detail in https://plotly.com/r/horizontal-vertical-shapes/
     type = "rect",
@@ -45,7 +46,10 @@ PriceChart<-function(Pricedata, Title){
   
   
   if(nrow(Finalplanet)==0){
-    plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
+    plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',
+            open=~Open, close=~Close,high=~High, low=~Low,
+            text = ~paste("Return: ", round(Return * 100, 2), "%"),
+            hoverinfo = "text+x+y")%>%
       layout(xaxis = list(rangeslider = list(visible = F)))%>%
       add_lines(x=StarData$Date, y=StarData$Price, name='Bi',type='scatter', mode = 'lines',
                 line=list(color='ivory', dash="dash", width=4), inherit = F)%>%
@@ -64,7 +68,10 @@ PriceChart<-function(Pricedata, Title){
       add_trace(x=Pricedata_SAR$Date, y=Pricedata_SAR$sar, name='SAR', type='scatter', mode='markers',
                 marker = list(color = Pricedata_SAR$SAR_col, size=4),inherit = F)
   }else{
-    plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
+    plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',
+            open=~Open, close=~Close,high=~High, low=~Low,
+            text = ~paste("Return: ", round(Return * 100, 2), "%"),
+            hoverinfo = "text+x+y")%>%
       layout(shapes=lines,annotations=arrows,xaxis = list(rangeslider = list(visible = F)))%>%
       add_lines(x=StarData$Date, y=StarData$Price, name='Bi',type='scatter', mode = 'lines',
                 line=list(color='ivory', dash="dash", width=4), inherit = F)%>%
@@ -183,7 +190,7 @@ FuncEMA10<-function(Pricedata){
   return(EMA10)
 }
 
-StockChart<-function (Pricedata, Title){
+StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
   Pricedata_macd <- PricedataMACD(Pricedata)
   Pricedata_MFI<-PricedataMFI(Pricedata)
   Pricedata_MoneyFlow<-PricedataMoneyFlow(Pricedata)
@@ -192,6 +199,24 @@ StockChart<-function (Pricedata, Title){
   Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
   
   Alldata<-na.omit(Alldata)
+  
+  if(VolatilityCheck==TRUE){
+    DailyReturns=Pricedata%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="daily",type="log")
+    
+    uspec.t <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
+                          mean.model = list(armaOrder = c(1,1), include.mean = TRUE),
+                          distribution.model = "std") # standardized Student t innovations
+    
+    P_pred<-data.frame(Date=Pricedata$Index, TrueP=Pricedata$Close, PredLP=Pricedata$Close, PredHP=Pricedata$Close)
+    
+    for(i in 6400:6442){
+      fit.t <- ugarchfit(spec = uspec.t, data = DailyReturns[1:i,])
+      forc <- ugarchforecast(fit.t, n.ahead = 1)
+      sig_pred<-as.numeric(forc@forecast$sigmaFor)
+      P_pred[i+1,"PredLP"]<-P_pred$TrueP[i]*exp(DailyReturns[i,"daily.returns"]-1.96*sig_pred)
+      P_pred[i+1,"PredHP"]<-P_pred$TrueP[i]*exp(DailyReturns[i,"daily.returns"]+1.96*sig_pred)
+    }
+  }
   
   if(Alldata$MACD[1]>=0){Alldata$MACDdirection[1]<-"green"}else{Alldata$MACDdirection[1] = "red"}
   if(Alldata$MFI[1]>=0){Alldata$MFIdirection[1]<-"green"}else{Alldata$MFIdirection[1] = "red"}

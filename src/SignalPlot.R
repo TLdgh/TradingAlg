@@ -6,10 +6,14 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
   }else{Pricedata<-Pricedata[[Title]][,1:6]}
   
   colnames(Pricedata) <- c("Date", "Open", "High","Low", "Close", "Volume")
-  Pricedata<-Pricedata[order(Pricedata$Date, decreasing = FALSE),]
+  Pricedata<-Pricedata[order(Pricedata$Date, decreasing = FALSE),]%>%mutate(Return=log(Close/lag(Close)))
+  
   
   #plot only the price  
-  priceplot<-plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
+  priceplot<-plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',
+                     open=~Open, close=~Close,high=~High, low=~Low,
+                     text = ~paste("Return: ", round(Return * 100, 2), "%"),
+                     hoverinfo = "text+x+y")%>%
     layout(title=Title,xaxis = list(rangeslider = list(visible = F),showticklabels=FALSE))
   
   #plot the price with the signals  
