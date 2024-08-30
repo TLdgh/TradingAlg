@@ -143,7 +143,7 @@ Pivotalplanet<-NewPivotalplanet
 
 RevOrDiv<-TrendReverse(PriceData=DataToCheck[[i]],whichplanet=Pivotalplanet[i,])
 if (RevOrDiv[1]==1){ #the reversal alert
-  for(j in 1:1){
+  for(j in 1:3){
     beep(1)
     Sys.sleep(1)
   }

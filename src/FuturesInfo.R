@@ -34,7 +34,7 @@ GetFutInfo<-setRefClass(
         
         if(BasicInfo[i,1]=="NQ"){
           FutInfo[[paste0("NQ",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("NQ"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
-                                                          endDateTime=format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20240621",currency="USD",multiplier="20")}
+                                                          endDateTime=format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20240920",currency="USD",multiplier="20")}
         else if(BasicInfo[i,1]=="GC"){
           FutInfo[[paste0("GC",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("GC"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
                                                           endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"),exch="COMEX",expiry="20211229",currency="USD",multiplier="100")}

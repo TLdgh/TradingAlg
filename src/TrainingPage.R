@@ -1,7 +1,7 @@
-Quantity <-c(2)
-T..Price<-c()
+Quantity <-c(2,-1,2,-1,-1,2,-1,-1)
+T..Price<-c(13.05, 15.23, 16,17.4, 16,14.56,15.7,20.35)
 Code<-sapply(Quantity, function(x) ifelse(x>0, "O","C"))     
-data<-data.frame(Symbol="NQ",Quantity,T..Price,Leverage=2, Comm.Fee=0,Code)
+data<-data.frame(Symbol="XLK",Quantity,T..Price,Leverage=100, Comm.Fee=0,Code)
 PnL(data)
 
 
@@ -16,4 +16,9 @@ ChartReplay(Data=list(NQ30FContinuous=NQ30FContinuous, NQ4HContinuous=NQ4HContin
             StartDate = "2020-02-18 02:00:00", PausePeriod = 7)
 
 
-292+422+106+1518
+
+ChartReplay(Data = list(XLK_daily=XLK_daily, XLK_weekly=XLK_weekly), 
+            StartDate = "2004-03-19")
+
+728-430
+
