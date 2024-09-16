@@ -4,10 +4,11 @@ PriceChart<-function(Pricedata, Title){
   Finalplanet <- as.data.frame(PlanetFunction(Bi))
   Finalplanet <- subset(Finalplanet, PlanetHigh!=0)
   LSegment<-LineSegment(Bi)
-  Pricedata_EMA10 <- FuncEMA10(Pricedata)
-  Pricedata_EMA30 <- FuncEMA30(Pricedata)
-  Pricedata_EMA60 <- FuncEMA60(Pricedata)
   Pricedata_BOLL<-PricedataBOLL(Pricedata)
+  Pricedata_EMA5 <- FuncEMA5(Pricedata)
+  Pricedata_EMA20 <- FuncEMA20(Pricedata)
+  Pricedata_EMA30 <- FuncEMA30(Pricedata)
+  Pricedata_EMA60 <- Pricedata_BOLL[, c("Date", "EMA60")]
   Pricedata_SAR<-PricedataSAR(Pricedata)
   Pricedata<-Pricedata%>%mutate(Return=log(Close/lag(Close)))
   
@@ -55,10 +56,12 @@ PriceChart<-function(Pricedata, Title){
                 line=list(color='ivory', dash="dash", width=4), inherit = F)%>%
       add_lines(x=LSegment$Date, y=LSegment$Price, name='LineSegment',type='scatter', mode = 'lines',
                 line=list(color='black', width=2), inherit = F)%>%
-      add_lines(x=Pricedata_EMA10$Date, y=Pricedata_EMA10$EMA10, name='EMA10', type='scatter', mode='lines',
-                line=list(color='#FF8C00', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_EMA5$Date, y=Pricedata_EMA5$EMA5, name='EMA5', type='scatter', mode='lines',
+                line=list(color='yellow', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_EMA20$Date, y=Pricedata_EMA20$EMA20, name='EMA20', type='scatter', mode='lines',
+                line=list(color='blue', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA30$Date, y=Pricedata_EMA30$EMA30, name='EMA30', type='scatter', mode='lines',
-                line=list(color='#4169E1', width=2),inherit = F)%>%
+                line=list(color='orange', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA60$Date, y=Pricedata_EMA60$EMA60, name='EMA60', type='scatter', mode='lines',
                 line=list(color='purple', width=2),inherit = F)%>%
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
@@ -77,10 +80,12 @@ PriceChart<-function(Pricedata, Title){
                 line=list(color='ivory', dash="dash", width=4), inherit = F)%>%
       add_lines(x=LSegment$Date, y=LSegment$Price, name='LineSegment',type='scatter', mode = 'lines',
                 line=list(color='black', width=2), inherit = F)%>%
-      add_lines(x=Pricedata_EMA10$Date, y=Pricedata_EMA10$EMA10, name='EMA10',type='scatter', mode='lines',
-                line=list(color='#FF8C00', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_EMA5$Date, y=Pricedata_EMA5$EMA5, name='EMA5',type='scatter', mode='lines',
+                line=list(color='yellow', width=2),inherit = F)%>%
+      add_lines(x=Pricedata_EMA20$Date, y=Pricedata_EMA20$EMA20, name='EMA20', type='scatter', mode='lines',
+                line=list(color='blue', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA30$Date, y=Pricedata_EMA30$EMA30, name='EMA30', type='scatter', mode='lines',
-                line=list(color='#4169E1', width=2),inherit = F)%>%
+                line=list(color='orange', width=2),inherit = F)%>%
       add_lines(x=Pricedata_EMA60$Date, y=Pricedata_EMA60$EMA60, name='EMA60', type='scatter', mode='lines',
                 line=list(color='purple', width=2),inherit = F)%>%
       add_lines(x=Pricedata_BOLL$Date, y=Pricedata_BOLL$lwB, name='BOLL_lwB', type='scatter', mode='lines',
@@ -162,7 +167,7 @@ PricedataMFI<-function(Pricedata){
 
 PricedataBOLL<-function(Pricedata){
   BOLL<- BBands(Cl(Pricedata), n=60, sd=2, maType = EMA)
-  BOLL<-na.omit(data.frame(Date=Pricedata$Date,PctB=BOLL[,"pctB"], lwB=BOLL[,"dn"], upB=BOLL[,"up"]))
+  BOLL<-na.omit(data.frame(Date=Pricedata$Date,PctB=BOLL[,"pctB"], EMA60=BOLL[,"mavg"], lwB=BOLL[,"dn"], upB=BOLL[,"up"]))
   return(BOLL)
 }
 
@@ -184,10 +189,16 @@ FuncEMA30<-function(Pricedata){
   return(EMA30)
 }
 
-FuncEMA10<-function(Pricedata){
-  EMA10<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=10)
-  EMA10<-na.omit(data.frame(Date=Pricedata$Date,EMA10=EMA10))
-  return(EMA10)
+FuncEMA20<-function(Pricedata){
+  EMA20<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=20)
+  EMA20<-na.omit(data.frame(Date=Pricedata$Date,EMA20=EMA20))
+  return(EMA20)
+}
+
+FuncEMA5<-function(Pricedata){
+  EMA5<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=5)
+  EMA5<-na.omit(data.frame(Date=Pricedata$Date,EMA5=EMA5))
+  return(EMA5)
 }
 
 StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
