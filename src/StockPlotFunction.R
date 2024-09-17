@@ -385,7 +385,7 @@ MultiChart<-function(DataToBeTested){
 }
 
 
-ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UserInput="N"){
+ChartReplay<-function(Data, PausePeriod=3,StartDate=NULL, UserInput="N"){
   #determine from which candlestick to start
   if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 88))%>%unlist()%>%max()}
   initialInd<-map(Data, ~tail(which(.x$Date<=StartDate), 1))
@@ -404,7 +404,7 @@ ChartReplay<-function(Data, Title, PausePeriod=3,StartDate=NULL, UserInput="N"){
         
         if(length(Data)==1){
           newtotdata<-Data[[1]][max(c(1, i-399)):i,]
-          res<-StockChart(newtotdata, Title)}
+          res<-StockChart(newtotdata, Title = names(Data))}
         else{
           newtotdata<-map2(Data, Indices, ~ slice(.x, max(c(1, .y-399)):.y))
           res<-MultiChart(newtotdata)}

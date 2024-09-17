@@ -1,5 +1,5 @@
-Quantity <-c(2,-1,2,-1,-1,2,-1,-1)
-T..Price<-c(13.05, 15.23, 16,17.4, 16,14.56,15.7,20.35)
+Quantity <-c(2, -1, 3, -1,-2,-1)
+T..Price<-c(13.95, 17.34, 21.97,23.05, 21.97,21.29)
 Code<-sapply(Quantity, function(x) ifelse(x>0, "O","C"))     
 data<-data.frame(Symbol="XLK",Quantity,T..Price,Leverage=100, Comm.Fee=0,Code)
 PnL(data)
@@ -7,7 +7,7 @@ PnL(data)
 
 
 #SPY:
-ChartReplay(Data=list(SPY_daily=SPY_daily),Title="SPY_daily",PausePeriod = 4)
+ChartReplay(Data=list(SPY_daily=SPY_daily),PausePeriod = 4)
 
 #NQ:
 ChartReplay(Data=list(NQ30FContinuous=NQ30FContinuous, NQ4HContinuous=NQ4HContinuous, NQContinuous=NQContinuous), PausePeriod = 7)
@@ -20,5 +20,7 @@ ChartReplay(Data=list(NQ30FContinuous=NQ30FContinuous, NQ4HContinuous=NQ4HContin
 ChartReplay(Data = list(XLK_daily=XLK_daily, XLK_weekly=XLK_weekly), 
             StartDate = "2004-03-19")
 
-728-430
+ChartReplay(Data = list(XLK_daily=XLK_daily), 
+            StartDate = "2010-05-26")
+1181
 
