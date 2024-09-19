@@ -271,8 +271,8 @@ EMACalculator<-function(Pricedata, Data_ema, Period){
   
   #check EMA
   A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
-  if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA20, A1_interval[[2]]$EMA60))) |
-     ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA20, A1_interval[[2]]$EMA60))))
+  if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA5, A1_interval[[2]]$EMA20))) |
+     ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA5, A1_interval[[2]]$EMA20))))
   ){
     DivergenceMatrix[1,"Entanglement"]<-1
   }else{
@@ -288,7 +288,7 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
   if(is.null(Data_mfi)==TRUE){Data_mfi<-PricedataMFI(DataToBeTested)}else{Data_mfi<-Data_mfi%>%filter(Date<=Pdate)}
   if(is.null(Data_MoneyFlow)==TRUE){Data_MoneyFlow<-PricedataMoneyFlow(DataToBeTested)}else{Data_MoneyFlow<-Data_MoneyFlow%>%filter(Date<=Pdate)}
   if(is.null(Data_boll)==TRUE){Data_boll<-PricedataBOLL(DataToBeTested)}else{Data_boll<-Data_boll%>%filter(Date<=Pdate)}
-  if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA20=FuncEMA20(DataToBeTested), EMA60=FuncEMA60(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
+  if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA5=FuncEMA5(DataToBeTested), EMA20=FuncEMA20(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
   if(is.null(SBPStr)==TRUE){
     SBPStr<-ChanLunStr(DataToBeTested)
     StarData<-SBPStr$StarData
