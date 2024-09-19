@@ -19,7 +19,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     area_pos <- Total_interval[,c("MACD","Date")]%>%filter(., MACD>0)
     maxat=last(which(area_pos$MACD==max(area_pos$MACD)))
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
-
+    
     #上涨均线面积背驰
     EMALine_Pos<-Total_interval[,c("DEA","Date")]%>%filter(., DEA>0)
     maxat=last(which(EMALine_Pos$DEA==max(EMALine_Pos$DEA)))
@@ -97,7 +97,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   ####----------------------------Calculate the length divergence----------------------------------###
   ####################################################################################################
   A_TimeWeight<-nrow(A2_interval)/nrow(A1_interval)
-
+  
   Bar1length<-abs(In1Price-In2Price)    
   Bar2length<-abs(Out1Price-Out2Price)
   A_PriceWeight<-Bar2length/Bar1length
@@ -222,7 +222,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
   
   In1Price<-StarData[which(StarData$Date==Period$In1),]$Price
   In2Price<-StarData[which(StarData$Date==Period$In2),]$Price
-
+  
   if(In1Price<In2Price){ #price is going up
     Direction<-1
     
@@ -230,7 +230,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     area_pos <- Total_interval[,c("MFI","Date")]%>%filter(., MFI>0)
     maxat=last(which(area_pos$MFI==max(area_pos$MFI)))
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
-
+    
     #量比
     MFRatio<-MFRatio%>%summarise(Ratio=abs(Neg)/Pos)%>%as.numeric()
   }else{
@@ -244,7 +244,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     #量比
     MFRatio<-MFRatio%>%summarise(Ratio=Pos/abs(Neg))%>%as.numeric()
   }
-
+  
   
   DivergenceMatrix<-matrix(0, nrow = 1, ncol = 3)
   colnames(DivergenceMatrix) <-c("背驰", "强度", "量比")
@@ -263,7 +263,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
   return(DivergenceMatrix)
 }
 
-EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
+EMACalculator<-function(Pricedata, Data_ema, Period){
   #initialize
   DivergenceMatrix<-matrix(0, nrow = 1, ncol = 2)
   colnames(DivergenceMatrix) <-c("Entanglement", "macd")
@@ -271,47 +271,14 @@ EMACalculator<-function(Pricedata, Data_ema, Data_macd, Period){
   
   #check EMA
   A1_interval <- map(Data_ema, function(x) subset(x, Date>=Period$In2 & Date<=Period$Out1))
-  if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))) |
-     ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA10, A1_interval[[2]]$EMA60))))
+  if((Direction==-1 & any(mapply(function(x, y){return(x>y)}, A1_interval[[1]]$EMA20, A1_interval[[2]]$EMA60))) |
+     ((Direction==1 & any(mapply(function(x, y){return(x<=y)}, A1_interval[[1]]$EMA20, A1_interval[[2]]$EMA60))))
   ){
     DivergenceMatrix[1,"Entanglement"]<-1
   }else{
     DivergenceMatrix[1,"Entanglement"]<-0}
   
-  #check if any macd bar changes more than 50% within a period
-  Data_macd<-subset(Data_macd,Date>=Period$Out1)%>%
-      mutate(D=c(0,diff(MACD)), Category=paste0(
-        ifelse(MACD > 0, "positive_", "negative_"),
-        consecutive_id(MACD > 0)),
-        Lag=stats::lag(MACD,1)
-      )%>%na.omit()%>%mutate(Pct=D/abs(Lag), DMean=(DIFF+DEA)/2)%>%
-      mutate(x=1:nrow(.))
-    
-    res<-Data_macd%>%filter(Date>=Period$Out2 & Pct>0.5)
-    Div<-(which(Data_macd$DMean==min(Data_macd$DMean))<nrow(Data_macd))
-    numChunk<-Data_macd%>%filter(MACD<0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
-
-  if(as.numeric(rownames(last(Data_macd))) <= as.numeric(rownames(Data_macd[which(Data_macd$Date==Period$Out2),]))+4){#check at most 4 bars after Out2
-    if(Direction==-1 & Pricedata[nrow(Pricedata), "Low"]>Pricedata[which(Pricedata$Date==Period$Out2),"Low"]){
-      Div<-(which(Data_macd$DMean==min(Data_macd$DMean))<nrow(Data_macd))
-      numChunk<-Data_macd%>%filter(MACD<0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
-      
-      if(nrow(res)!=0 & numChunk==1){DivergenceMatrix[1,"macd"]<-1}
-      else if(nrow(res)!=0 & Div==TRUE & numChunk>1){DivergenceMatrix[1,"macd"]<-2}
-      else{DivergenceMatrix[1,"macd"]<-0}
-    }
-    else if(Direction==1 & Pricedata[nrow(Pricedata), "High"]<Pricedata[which(Pricedata$Date==Period$Out2),"High"]){
-      Div<-(which(Data_macd$DMean==max(Data_macd$DMean))<nrow(Data_macd))
-      numChunk<-Data_macd%>%filter(MACD>0)%>%group_by(Category)%>%summarise(PctMean=mean(Pct))%>%nrow()
-      
-      if(nrow(res)!=0 & numChunk==1){DivergenceMatrix[1,"macd"]<-1}
-      else if(nrow(res)!=0 & Div==TRUE & numChunk>1){DivergenceMatrix[1,"macd"]<-2}
-      else{DivergenceMatrix[1,"macd"]<-0}
-    }
-    else{res<-0}
-  }
-  else{DivergenceMatrix[1,"macd"]<-0}
-  
+  DivergenceMatrix[1,"macd"]<-0
   return(DivergenceMatrix)
 }
 
@@ -321,7 +288,7 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
   if(is.null(Data_mfi)==TRUE){Data_mfi<-PricedataMFI(DataToBeTested)}else{Data_mfi<-Data_mfi%>%filter(Date<=Pdate)}
   if(is.null(Data_MoneyFlow)==TRUE){Data_MoneyFlow<-PricedataMoneyFlow(DataToBeTested)}else{Data_MoneyFlow<-Data_MoneyFlow%>%filter(Date<=Pdate)}
   if(is.null(Data_boll)==TRUE){Data_boll<-PricedataBOLL(DataToBeTested)}else{Data_boll<-Data_boll%>%filter(Date<=Pdate)}
-  if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA10=FuncEMA10(DataToBeTested), EMA60=FuncEMA60(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
+  if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA20=FuncEMA20(DataToBeTested), EMA60=FuncEMA60(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
   if(is.null(SBPStr)==TRUE){
     SBPStr<-ChanLunStr(DataToBeTested)
     StarData<-SBPStr$StarData
@@ -362,7 +329,7 @@ MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL,
     DivergenceList[["Period"]]<-Period
     DivergenceList[["MACD"]]<-MACDensemble[["DivergenceMatrix"]][["MacdMatrix"]]   #this gives the MACD
     DivergenceList[["MFI"]]<-MFICalculator(DataToBeTested, Data_mfi=Data_mfi, Data_MoneyFlow=Data_MoneyFlow, StarData, Period)         #this gives the MFI
-    DivergenceList[["EMA"]]<-EMACalculator(DataToBeTested, Data_ema=Data_ema, Data_macd=Data_macd, Period)  
+    DivergenceList[["EMA"]]<-EMACalculator(DataToBeTested, Data_ema=Data_ema, Period)  
     
     DivergenceList[["形态背驰"]]<-MACDensemble[["StructuralDivMatrix"]]
     

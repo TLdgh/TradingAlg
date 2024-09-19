@@ -234,7 +234,14 @@ StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
   if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOLdirection[1] = 'green'}else{Alldata$VOLdirection[1] = 'red'}
   
   for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
-    if(abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<=0.5){Alldata$MACDdirection[i]<-"#8A2BE2"}
+    if(
+      (Alldata$High[i]<Alldata$High[i-1] & # price down
+       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]>Alldata$MACD[i-1]))
+      ) |
+      (Alldata$Low[i]>Alldata$Low[i-1] & # price up
+       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]<Alldata$MACD[i-1]))
+      )
+    ){Alldata$MACDdirection[i]<-"#8A2BE2"}
     else if(Alldata$MACD[i] >= 0){
       if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"green"}
       else{Alldata$MACDdirection[i]<-"palegreen"}}
