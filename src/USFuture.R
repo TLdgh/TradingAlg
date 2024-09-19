@@ -174,16 +174,8 @@ PnL(data)
 #######################################################################################################
 #######################################################################################################
 #Automatic detecting trendreversal:
-#Step1: run the calc on top of this page to get the latest planet information of your data as an initial Pivotalplanet setup.
-DataToAlert<-list(NQ5F)
-Pivotalplanet<-data.frame()
-for (i in 1:length(DataToAlert)) {
-  Pivotalplanet<-tail(ChanLunStr(DataToAlert[[i]])$BiPlanetStr,1)%>%select(PlanetHigh:PlanetEndD)
-}
-write.csv(Pivotalplanet,file=paste0(getwd(),"/CandleStickComb/Pivotalplanet.csv"),row.names = FALSE)
-
-#Step2: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
-#Step3: if you need to get the updated data, run the following:
+#Step1: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
+#Step2: if you need to get the updated data, run the following:
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
 FutToBePrepared$ReadCombData(OutputCombtxt=OutputCombtxt,nam=nam)     #This src load the combined data
