@@ -1,4 +1,4 @@
-SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
+SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE, AddVIX=FALSE){
   Title<-names(Pricedata)
   
   if(Import==TRUE){
@@ -18,16 +18,20 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
   
   #plot the price with the signals  
   if(AddSignal==TRUE){
-    if(is.null(SignalData)==TRUE){
-      Pricedata_macd<-PricedataMACD(Pricedata)
-      #Pricedata_vmacd<-VMACD(Pricedata)
-      Pricedata_MFI<-PricedataMFI(Pricedata)}else{
-        Pricedata_macd<-SignalData$Data_macd
-        Pricedata_MFI<-SignalData$Data_mfi
-      }
+    Pricedata_macd<-PricedataMACD(Pricedata)
+    Pricedata_MFI<-PricedataMFI(Pricedata)
+    
+    if(AddVIX==TRUE){
+      vix=read.csv(paste0(getwd(),"/VIX_History.csv"), header = TRUE)
+      vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
+      vix=select(vix, c("DATE","CLOSE"))
+      colnames(vix)=c("Date","VIX")
+      
+      Pricedata=left_join(Pricedata,vix, by="Date")
+      Pricedata$VIX=na.approx(Pricedata$VIX)
+      Pricedata=Pricedata%>%mutate(VIX_Low=(Close*(1+qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100)), VIX_High=(Close*(1-qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100)))} #note I'm using z_alpha/2
     
     Pricedata<- left_join(Pricedata,Pricedata_macd, by="Date")
-    #Pricedata<- merge(Pricedata,Pricedata_vmacd, by="Date")
     Pricedata<- left_join(Pricedata,Pricedata_MFI, by="Date")
     Pricedata<-na.omit(Pricedata)
     
@@ -39,9 +43,6 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
       }else if(Pricedata$MACD[i]<0){
         if(Pricedata$MACD[i]<Pricedata$MACD[i-1]){Pricedata$MACDdirection[i]<-"red"}else{Pricedata$MACDdirection[i]<-"lightpink"}
       }
-      #if (Pricedata$VMACD[i] >= 0) {
-      #Pricedata$VMACDdirection[i] = "green"
-      #}else{Pricedata$VMACDdirection[i] = "red"}
       
       if (Pricedata$MFI[i] >= 0){
         if(Pricedata$MFI[i]>Pricedata$MFI[i-1]){Pricedata$MFIdirection[i]<-"green"}else{Pricedata$MFIdirection[i]<-"palegreen"}
@@ -50,6 +51,10 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
       }
     }
     priceplot<-plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
+      add_lines(x=Pricedata$Date, y=Pricedata$VIX_Low, name='VIX_Low', type='scatter', mode='lines',
+                line=list(color='black', width=1),inherit = F)%>%
+      add_lines(x=Pricedata$Date, y=Pricedata$VIX_High, name='VIX_High', type='scatter', mode='lines',
+                line=list(color='black', width=1),inherit = F)%>%
       layout(title=Title,xaxis = list(rangeslider = list(visible = F),showticklabels=FALSE))
     
     macdplot<-plot_ly(data=Pricedata, x=~Date)%>%
@@ -57,12 +62,6 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
       add_trace(y=~DEA,name="DEA",type="scatter",mode = 'lines',line=list(color="00BDFF", width=2))%>%
       add_bars(y=~MACD,name="MACD", marker=list(color=~MACDdirection))%>%
       layout(xaxis = list(rangeslider = list(visible = F)))
-    
-    #vmacdplot<- plot_ly(data=Pricedata,x=~Date)%>%
-    #add_trace(y=~VDIFF,name="VDIFF",type="scatter",mode = 'lines',line=list(color="orange", width=2))%>%
-    #add_trace(y=~VDEA,name="VDEA",type="scatter",mode = 'lines',line=list(color="00BDFF", width=2))%>%
-    #add_bars(y=~VMACD,name="VMACD",marker=list(color=~VMACDdirection))%>%
-    #layout(xaxis = list(rangeslider = list(visible = F)))
     
     MFIlines<-function(y, color="black"){list(type="line",x0=0, x1=1, y0=y,y1=y, xref="paper", line=list(color=color))} #this gives the lines in MFI chart
     MFIChart<-plot_ly(data=Pricedata, x=~Date)%>%
@@ -73,9 +72,9 @@ SignalPlot <- function(Pricedata,Import=FALSE, AddSignal=FALSE,SignalData=NULL){
       layout(xaxis=list(anchor="y3",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid'),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'), 
-             yaxis2 = list(side = "left",title = "VMACD",showspikes=TRUE, spikemode='across', 
+             yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
                            spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-             yaxis3 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+             yaxis3 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
                            spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              annotations=list(x=0.5, y=0.95, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="yellow"),showarrow=FALSE),
              hovermode = "x unified", plot_bgcolor="#262625", paper_bgcolor="#262625")%>%config(scrollZoom=TRUE)
