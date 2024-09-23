@@ -107,8 +107,8 @@ PricedataMACD <- function (Pricedata){
 }
 
 
-VIXMACD<-function(Pricedata, VIXfile){
-  vix=read.csv(VIXfile, header = TRUE)
+VIXMACD<-function(Pricedata, vixloc){
+  vix=read.csv(vixloc, header = TRUE)
   vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
   vix=select(vix, c("DATE","CLOSE"))
   colnames(vix)=c("Date","VIX")
@@ -251,7 +251,8 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
   Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
   
   if(is.null(VIXfile)!=TRUE){
-    Alldata<-VIXMACD(Pricedata = Alldata, VIXfile = VIXfile)%>%na.omit()
+    vixloc<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalStockData/US/", VIXfile, "_History.csv")
+    Alldata<-VIXMACD(Pricedata = Alldata, vixloc = vixloc)%>%na.omit()
     Alldata<-Alldata%>%mutate(across(c(vix_MACD), MakeDirection, .names="{col}_Direction"))
   }else{Alldata<-na.omit(Alldata)}
   
