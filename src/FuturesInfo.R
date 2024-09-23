@@ -143,15 +143,14 @@ GetFutInfo<-setRefClass(
     CombineContracts=function(OldF, NewF){
       colnames(OldF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
       colnames(NewF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
-      RollPoint  <- last(OldF$FND)
-      AdjRate <- Cl(filter(NewF, Date==RollPoint))/Cl(filter(OldF, Date==RollPoint))
-      AdjRate<- ifelse(is_empty(AdjRate)==TRUE, 1, AdjRate)
-      OldF<- data.frame("Date"=OldF$Date, round(OldF[,c(2:5)]*AdjRate,5), OldF[,c(6:10)])
+      RollPoint  <- last(OldF$Date) #get the last date of the old contract
+      AdjRate <- Cl(filter(NewF, Date==RollPoint))/Cl(filter(OldF, Date==RollPoint)) #calculate the adjustment ratio between the close prices of OldF and NewF
       
-      VolAdj<-subset(merge(OldF[,c(1,6)], NewF[,c(1,6)], by= "Date"),Date<=RollPoint) #sum the volume of the two contracts that have overlaps before the rollpoint
-      OldF[match(VolAdj$Date,OldF$Date,),]$Volume <- rowSums(VolAdj[,2:3])
-      NewF[which(NewF$Date==RollPoint),]$Volume <- OldF[which(OldF$Date==RollPoint),]$Volume
-      ContinuousFut <- rbind(subset(OldF, Date<RollPoint), subset(NewF, Date>=RollPoint))
+      OldF<- data.frame("Date"=OldF$Date, round(OldF[,c(2:5)]*AdjRate,5), OldF[,c(6:10)]) #Adjust for the old contract
+      
+      VolAdj<-subset(merge(OldF[,c(1,6)], NewF[,c(1,6)], by= "Date"),Date<=RollPoint) #sum the volume of the two contracts that have overlaps on or before the rollpoint
+      OldF[match(VolAdj$Date,OldF$Date,),]$Volume <- rowSums(VolAdj[,2:3]) #update the volume of OldF
+      ContinuousFut <- rbind(subset(OldF, Date<=RollPoint), subset(NewF, Date>RollPoint))
       ContinuousFut$FND <- last(NewF$FND)
       return(ContinuousFut)
     },
