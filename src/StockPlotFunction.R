@@ -242,7 +242,7 @@ MakeDirection<-function(col){
 }
 
 
-StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
+StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
   Pricedata_macd <- PricedataMACD(Pricedata)
   Pricedata_MFI<-PricedataMFI(Pricedata)
   Pricedata_MoneyFlow<-PricedataMoneyFlow(Pricedata)
@@ -250,10 +250,12 @@ StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
   Alldata<- merge(Alldata,Pricedata_MFI, by="Date")
   Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
   
-  Alldata<-VIXMACD(Pricedata = Alldata, VIXfile = "Data/OriginalStockData/US/VIX_History.csv")%>%na.omit()
+  if(is.null(VIXfile)!=TRUE){
+    Alldata<-VIXMACD(Pricedata = Alldata, VIXfile = VIXfile)%>%na.omit()
+    Alldata<-Alldata%>%mutate(across(c(vix_MACD), MakeDirection, .names="{col}_Direction"))
+  }else{Alldata<-na.omit(Alldata)}
   
   #Make Direction data
-  Alldata<-Alldata%>%mutate(across(c(vix_MACD), MakeDirection, .names="{col}_Direction"))
   if(Alldata$MACD[1]>=0){Alldata$MACD_Direction[1]<-"green"}else{Alldata$MACD_Direction[1] = "red"}
   if(Alldata$MFI[1]>=0){Alldata$MFI_Direction[1]<-"green"}else{Alldata$MFI_Direction[1] = "red"}
   if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOL_Direction[1] = 'green'}else{Alldata$VOL_Direction[1] = 'red'}
@@ -316,31 +318,49 @@ StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
     add_bars(y=~MACD,name="MACD", marker=list(color=~MACD_Direction))%>%
     layout(xaxis = list(rangeslider = list(visible = F)))
   
-  vix_MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
-    add_trace(y=~vix_DIFF,name="vix_DIFF",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>%
-    add_trace(y=~vix_DEA,name="vix_DEA",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
-    add_bars(y=~vix_MACD,name="vix_MACD", marker=list(color=~vix_MACD_Direction))%>%
-    layout(xaxis = list(rangeslider = list(visible = F)))
+  if(is.null(VIXfile)!=TRUE){
+    vix_MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
+      add_trace(y=~vix_DIFF,name="vix_DIFF",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>%
+      add_trace(y=~vix_DEA,name="vix_DEA",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
+      add_bars(y=~vix_MACD,name="vix_MACD", marker=list(color=~vix_MACD_Direction))%>%
+      layout(xaxis = list(rangeslider = list(visible = F)))
+  }
   
   MFIlines<-function(y, color="black"){list(type="line",x0=0, x1=1, y0=y,y1=y, xref="paper", line=list(color=color))} #this gives the lines in MFI chart
   MFIChart<-plot_ly(data=Alldata, x=~Date)%>%
     add_bars(y=~MFI,name="MFI", marker=list(color=~MFI_Direction))%>%
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=34), MFIlines(y=-34)))
   
-  p<-subplot(PriceChart(Alldata, Title), MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15, 0.15)) %>%
-    layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
-           yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
-                      spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+  if(is.null(VIXfile)!=TRUE){
+    p<-subplot(PriceChart(Alldata, Title), MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15, 0.15)) %>%
+      layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
+             yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
+                        spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+                           spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             yaxis3 = list(side = "left",title = "vix_MACD",showspikes=TRUE, spikemode='across', 
+                           spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             yaxis4=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis3 = list(side = "left",title = "vix_MACD",showspikes=TRUE, spikemode='across', 
+             yaxis5 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
+                           spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
+             hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
+  }else{
+    p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.3, 0.15)) %>%
+      layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
+             yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
+                        spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+                           spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             yaxis3=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis4=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
-                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis5 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
-                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
-           hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
+             yaxis4 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
+                           spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+             annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
+             hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
+  }
+  
   return(p)
 }
 
