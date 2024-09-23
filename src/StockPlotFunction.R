@@ -463,7 +463,7 @@ MultiChart<-function(DataToBeTested){
 }
 
 
-ChartReplay<-function(Data, PausePeriod=3,StartDate=NULL, UserInput="N"){
+ChartReplay<-function(Data, VIXfile=NULL, PausePeriod=3,StartDate=NULL, UserInput="N"){
   #determine from which candlestick to start
   if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 88))%>%unlist()%>%max()}
   initialInd<-map(Data, ~tail(which(.x$Date<=StartDate), 1))
@@ -484,8 +484,7 @@ ChartReplay<-function(Data, PausePeriod=3,StartDate=NULL, UserInput="N"){
           newtotdata<-Data[[1]][max(c(1, i-399)):i,]
           
           if(is.null(VIXfile)!=TRUE){
-            vixloc<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalStockData/US/", VIXfile, "_History.csv")
-            res<-StockChart(newtotdata, Title = names(Data), VIXfile = vixloc)
+            res<-StockChart(newtotdata, Title = names(Data), VIXfile = VIXfile)
           }
           else{res<-StockChart(newtotdata, Title = names(Data))}
         }
