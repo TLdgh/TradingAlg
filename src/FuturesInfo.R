@@ -34,7 +34,7 @@ GetFutInfo<-setRefClass(
         
         if(BasicInfo[i,1]=="NQ"){
           FutInfo[[paste0("NQ",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("NQ"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
-                                                          endDateTime=format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20240920",currency="USD",multiplier="20")}
+                                                          endDateTime=format(with_tz(Sys.time(),tz=TimeZ),"%Y%m%d %H:%M:%S"),exch="CME",expiry="20241220",currency="USD",multiplier="20")}
         else if(BasicInfo[i,1]=="GC"){
           FutInfo[[paste0("GC",BasicInfo[i,2])]] <- cbind(SecurityType="FUT",Symb=c("GC"),intv=BasicInfo[i,2],barSize=barsize,duration=duration,
                                                           endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"),exch="COMEX",expiry="20211229",currency="USD",multiplier="100")}
@@ -54,7 +54,7 @@ GetFutInfo<-setRefClass(
                    "20210319", "20210618", "20210917", "20211217",
                    "20220318", "20220617", "20220916", "20221216",
                    "20230317", "20230616", "20230915", "20231215",
-                   "20240315","20240621","20240920")
+                   "20240315", "20240621", "20240920", "20241220")
       NQ5FExpD <- NQWExpD
       NQ30FExpD <- NQWExpD
       NQ1HExpD <- NQWExpD
@@ -64,7 +64,7 @@ GetFutInfo<-setRefClass(
                   "20210319", "20210618", "20210917", "20211217",
                   "20220318", "20220617", "20220916", "20221216",
                   "20230317", "20230616", "20230915", "20231215",
-                  "20240315","20240621","20240920") 
+                  "20240315", "20240621", "20240920", "20241220") 
       
       
       for (i in 1:length(FutToBePrepared)){
