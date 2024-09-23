@@ -10,7 +10,8 @@ SignalPlot <- function(Pricedatafile, VIXfile=NULL){
   Pricedata<- left_join(Pricedata,Pricedata_macd, by="Date")
   Pricedata<- left_join(Pricedata,Pricedata_MFI, by="Date")
   
-  vix=read.csv(VIXfile, header = TRUE)
+  vixloc<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalStockData/US/", VIXfile, "_History.csv")
+  vix=read.csv(vixloc, header = TRUE)
   vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
   vix=select(vix, c("DATE","CLOSE"))
   colnames(vix)=c("Date","VIX")
