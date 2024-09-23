@@ -1,5 +1,5 @@
 SignalPlot <- function(Pricedatafile, VIXfile=NULL){
-  Pricedata<-read.csv(Pricedatafile, header = TRUE)
+  Pricedata<-read.csv(Pricedatafile, header = TRUE)%>%select(1:6)
   colnames(Pricedata) <- c("Date", "Open", "High","Low", "Close", "Volume")
   Pricedata<-Pricedata[order(Pricedata$Date, decreasing = FALSE),]%>%mutate(Return=log(Close/lag(Close)))
   
