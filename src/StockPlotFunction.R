@@ -106,6 +106,28 @@ PricedataMACD <- function (Pricedata){
   return(Pricedata_macd)
 }
 
+
+VIXMACD<-function(Pricedata, VIXfile){
+  vix=read.csv(VIXfile, header = TRUE)
+  vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
+  vix=select(vix, c("DATE","CLOSE"))
+  colnames(vix)=c("Date","VIX")
+  Pricedata<- left_join(Pricedata,vix, by="Date")
+  Pricedata$VIX=na.approx(Pricedata$VIX)
+  
+  vix_macd<-as.data.frame(MACD(Pricedata$VIX, nFast = 5, nSlow = 20, nSig = 10, maType = EMA, percent = FALSE))
+  vix_macd$MACD <- (vix_macd$macd - vix_macd$signal)*2
+  vix_macd$Date <- Pricedata[order(Pricedata$Date, decreasing = F),]$Date
+  colnames(vix_macd) <- c("vix_DIFF", "vix_DEA", "vix_MACD", "Date")
+  
+  Pricedata<-left_join(Pricedata, vix_macd, by="Date")
+  #Pricedata<-na.omit(Pricedata)
+  Pricedata<-Pricedata%>%mutate(VIX_Low=(Close*(1+qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100)), 
+                                VIX_High=(Close*(1-qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100))) #note I'm using z_alpha/2
+  
+  return(Pricedata)
+}
+
 MyMFI <-function(HLC, volume, n=14){
   
   # Money Flow Index
@@ -201,6 +223,25 @@ FuncEMA5<-function(Pricedata){
   return(EMA5)
 }
 
+
+#Prepare the direction data
+MakeDirection<-function(col){
+  Direction<-rep(0,length(col))
+  
+  if(col[1]>=0){Direction[1]<-"green"}else{Direction[1]<-"red"}
+  
+  for(i in 2:length(col)){
+    if (col[i] >= 0){
+      if(col[i]>col[i-1]){Direction[i]<-"green"}else{Direction[i]<-"palegreen"}
+    }else if(col[i]<0){
+      if(col[i]<col[i-1]){Direction[i]<-"red"}else{Direction[i]<-"lightpink"}
+    }
+  }
+  
+  return(Direction)
+}
+
+
 StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
   Pricedata_macd <- PricedataMACD(Pricedata)
   Pricedata_MFI<-PricedataMFI(Pricedata)
@@ -209,7 +250,43 @@ StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
   Alldata<- merge(Alldata,Pricedata_MFI, by="Date")
   Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
   
-  Alldata<-na.omit(Alldata)
+  Alldata<-VIXMACD(Pricedata = Alldata, VIXfile = "Data/OriginalStockData/US/VIX_History.csv")%>%na.omit()
+  
+  #Make Direction data
+  Alldata<-Alldata%>%mutate(across(c(vix_MACD), MakeDirection, .names="{col}_Direction"))
+  if(Alldata$MACD[1]>=0){Alldata$MACD_Direction[1]<-"green"}else{Alldata$MACD_Direction[1] = "red"}
+  if(Alldata$MFI[1]>=0){Alldata$MFI_Direction[1]<-"green"}else{Alldata$MFI_Direction[1] = "red"}
+  if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOL_Direction[1] = 'green'}else{Alldata$VOL_Direction[1] = 'red'}
+  
+  for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
+    if(
+      (Alldata$High[i]<Alldata$High[i-1] & # price down
+       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]>Alldata$MACD[i-1]))
+      ) |
+      (Alldata$Low[i]>Alldata$Low[i-1] & # price up
+       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]<Alldata$MACD[i-1]))
+      )
+    ){Alldata$MACD_Direction[i]<-"#8A2BE2"}
+    else if(Alldata$MACD[i] >= 0){
+      if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACD_Direction[i]<-"green"}
+      else{Alldata$MACD_Direction[i]<-"palegreen"}}
+    else if(Alldata$MACD[i]<0){
+      if(Alldata$MACD[i]<Alldata$MACD[i-1]){Alldata$MACD_Direction[i]<-"red"}else{Alldata$MACD_Direction[i]<-"lightpink"}
+    }
+    
+    if(abs(Alldata$MFI[i])/abs(Alldata$MFI[i-1])<=0.5){Alldata$MFI_Direction[i]<-"#8A2BE2"}
+    else if (Alldata$MFI[i] >= 0){
+      if(Alldata$MFI[i]>Alldata$MFI[i-1]){Alldata$MFI_Direction[i]<-"green"}else{Alldata$MFI_Direction[i]<-"palegreen"}
+    }else if(Alldata$MFI[i]<0){
+      if(Alldata$MFI[i]<Alldata$MFI[i-1]){Alldata$MFI_Direction[i]<-"red"}else{Alldata$MFI_Direction[i]<-"lightpink"}
+    }
+    
+    if (Alldata$Volume[i]<2*Alldata$Volume[i-1]){
+      if(Alldata$Close[i] >= Alldata$Close[i-1]){Alldata$VOL_Direction[i] = 'green'}
+      else{Alldata$VOL_Direction[i] = 'red'}}
+    else{Alldata$VOL_Direction[i] = 'gold'}
+  }
+  
   
   if(VolatilityCheck==TRUE){
     DailyReturns=Pricedata%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="daily",type="log")
@@ -229,65 +306,38 @@ StockChart<-function (Pricedata, Title, VolatilityCheck=FALSE){
     }
   }
   
-  if(Alldata$MACD[1]>=0){Alldata$MACDdirection[1]<-"green"}else{Alldata$MACDdirection[1] = "red"}
-  if(Alldata$MFI[1]>=0){Alldata$MFIdirection[1]<-"green"}else{Alldata$MFIdirection[1] = "red"}
-  if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$VOLdirection[1] = 'green'}else{Alldata$VOLdirection[1] = 'red'}
   
-  for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
-    if(
-      (Alldata$High[i]<Alldata$High[i-1] & # price down
-       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]>Alldata$MACD[i-1]))
-      ) |
-      (Alldata$Low[i]>Alldata$Low[i-1] & # price up
-       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]<Alldata$MACD[i-1]))
-      )
-    ){Alldata$MACDdirection[i]<-"#8A2BE2"}
-    else if(Alldata$MACD[i] >= 0){
-      if(Alldata$MACD[i]>Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"green"}
-      else{Alldata$MACDdirection[i]<-"palegreen"}}
-    else if(Alldata$MACD[i]<0){
-      if(Alldata$MACD[i]<Alldata$MACD[i-1]){Alldata$MACDdirection[i]<-"red"}else{Alldata$MACDdirection[i]<-"lightpink"}
-    }
-    
-    if(abs(Alldata$MFI[i])/abs(Alldata$MFI[i-1])<=0.5){Alldata$MFIdirection[i]<-"#8A2BE2"}
-    else if (Alldata$MFI[i] >= 0){
-      if(Alldata$MFI[i]>Alldata$MFI[i-1]){Alldata$MFIdirection[i]<-"green"}else{Alldata$MFIdirection[i]<-"palegreen"}
-    }else if(Alldata$MFI[i]<0){
-      if(Alldata$MFI[i]<Alldata$MFI[i-1]){Alldata$MFIdirection[i]<-"red"}else{Alldata$MFIdirection[i]<-"lightpink"}
-    }
-    
-    if (Alldata$Volume[i]<2*Alldata$Volume[i-1]){
-      if(Alldata$Close[i] >= Alldata$Close[i-1]){Alldata$VOLdirection[i] = 'green'}
-      else{Alldata$VOLdirection[i] = 'red'}
-    }
-    else{Alldata$VOLdirection[i] = 'gold'}
-    
-  }
-  
-  
-  MoneyFlowChart<-plot_ly(data=Alldata, x=~Date, y=~MoneyFlow, type='bar', marker=list(color = ~VOLdirection))%>%
+  MoneyFlowChart<-plot_ly(data=Alldata, x=~Date, y=~MoneyFlow, type='bar', marker=list(color = ~VOL_Direction))%>%
     layout(xaxis=list(showticklabels=FALSE))
   
   MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
     add_trace(y=~DIFF,name="DIFF",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>%
     add_trace(y=~DEA,name="DEA",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
-    add_bars(y=~MACD,name="MACD", marker=list(color=~MACDdirection))%>%
+    add_bars(y=~MACD,name="MACD", marker=list(color=~MACD_Direction))%>%
+    layout(xaxis = list(rangeslider = list(visible = F)))
+  
+  vix_MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
+    add_trace(y=~vix_DIFF,name="vix_DIFF",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>%
+    add_trace(y=~vix_DEA,name="vix_DEA",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
+    add_bars(y=~vix_MACD,name="vix_MACD", marker=list(color=~vix_MACD_Direction))%>%
     layout(xaxis = list(rangeslider = list(visible = F)))
   
   MFIlines<-function(y, color="black"){list(type="line",x0=0, x1=1, y0=y,y1=y, xref="paper", line=list(color=color))} #this gives the lines in MFI chart
   MFIChart<-plot_ly(data=Alldata, x=~Date)%>%
-    add_bars(y=~MFI,name="MFI", marker=list(color=~MFIdirection))%>%
+    add_bars(y=~MFI,name="MFI", marker=list(color=~MFI_Direction))%>%
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=34), MFIlines(y=-34)))
   
-  p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.3, 0.15)) %>%
-    layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
+  p<-subplot(PriceChart(Alldata, Title), MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15, 0.15)) %>%
+    layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
            yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
            yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis3=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
+           yaxis3 = list(side = "left",title = "vix_MACD",showspikes=TRUE, spikemode='across', 
+                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+           yaxis4=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
                        spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis4 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
+           yaxis5 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
            annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
            hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
