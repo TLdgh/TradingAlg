@@ -143,15 +143,16 @@ GetFutInfo<-setRefClass(
     CombineContracts=function(OldF, NewF){
       colnames(OldF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
       colnames(NewF) <- c("Date", "Open", "High","Low", "Close", "Volume", "WAP", "GAPS", "Count", "FND")
-      RollPoint  <- unique(OldF$FND)
+      RollPoint  <- last(OldF$FND)
       AdjRate <- Cl(filter(NewF, Date==RollPoint))/Cl(filter(OldF, Date==RollPoint))
+      AdjRate<- ifelse(is_empty(AdjRate)==TRUE, 1, AdjRate)
       OldF<- data.frame("Date"=OldF$Date, round(OldF[,c(2:5)]*AdjRate,5), OldF[,c(6:10)])
       
       VolAdj<-subset(merge(OldF[,c(1,6)], NewF[,c(1,6)], by= "Date"),Date<=RollPoint) #sum the volume of the two contracts that have overlaps before the rollpoint
       OldF[match(VolAdj$Date,OldF$Date,),]$Volume <- rowSums(VolAdj[,2:3])
       NewF[which(NewF$Date==RollPoint),]$Volume <- OldF[which(OldF$Date==RollPoint),]$Volume
-      ContinuousFut <- rbind(filter(OldF, as.POSIXct(Date,tz=TimeZ) < as.POSIXct(RollPoint,tz=TimeZ)), filter(NewF, as.POSIXct(Date, tz=TimeZ) >= as.POSIXct(RollPoint,tz=TimeZ)))
-      ContinuousFut$FND <- unique(NewF$FND)
+      ContinuousFut <- rbind(subset(OldF, Date<RollPoint), subset(NewF, Date>=RollPoint))
+      ContinuousFut$FND <- last(NewF$FND)
       return(ContinuousFut)
     },
     
