@@ -70,6 +70,6 @@ if (Results$Signal==1){for(i in 1:3){beep(1); Sys.sleep(1)}}
 if (Results$Profit==1){for(i in 1:3){beep(2); Sys.sleep(1)}}
 
 #the reversal alert signal alertbeep(3)
-if (Results$Alert==1){beep(3); Sys.sleep(2)}
+if (Results$Alert==1){beep(3); Sys.sleep(4)}
 
 
