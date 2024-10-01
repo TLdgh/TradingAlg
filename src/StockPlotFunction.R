@@ -176,8 +176,9 @@ MyMFI <-function(HLC, volume, n=14){
 }
 
 PricedataMoneyFlow<-function(Pricedata){
-  x<-transmute(Pricedata, MF=(Close-lag(Close))*Volume)
-  MF<-na.omit(data.frame(Date=Pricedata$Date,MoneyFlow=x$MF))
+  MF<-Pricedata%>%transmute(Date, CV=Close*Volume,FL=case_when(Close>lag(Close) ~ 1, Close<lag(Close) ~ -1, Close==lag(Close) ~ 0)*Close*Volume)%>% #Determines fund inflow or outflow
+    mutate(across(c(FL,CV), ~rollsum(., k = 5, fill = NA, align = "right"), .names = "net_{col}"))%>% #determines net moneyflow
+    transmute(Date, MoneyFlow=net_FL/net_CV)%>%mutate(MoneyFlow_EMA=EMA(MoneyFlow, n=3))%>%na.omit() #standardize by net_CV and get EMA
   return(MF)
 }
 
@@ -284,10 +285,13 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
       if(Alldata$MFI[i]<Alldata$MFI[i-1]){Alldata$MFI_Direction[i]<-"red"}else{Alldata$MFI_Direction[i]<-"lightpink"}
     }
     
-    if (Alldata$Volume[i]<2*Alldata$Volume[i-1]){
-      if(Alldata$Close[i] >= Alldata$Close[i-1]){Alldata$VOL_Direction[i] = 'green'}
-      else{Alldata$VOL_Direction[i] = 'red'}}
-    else{Alldata$VOL_Direction[i] = 'gold'}
+    if(Alldata$MoneyFlow_EMA[i] >= 0){
+      if(Alldata$MoneyFlow_EMA[i]>Alldata$MoneyFlow_EMA[i-1]){Alldata$VOL_Direction[i]<-"green"}
+      else{Alldata$VOL_Direction[i]<-"palegreen"}}
+    else if(Alldata$MoneyFlow_EMA[i]<0){
+      if(Alldata$MoneyFlow_EMA[i]<Alldata$MoneyFlow_EMA[i-1]){Alldata$VOL_Direction[i]<-"red"}else{Alldata$VOL_Direction[i]<-"lightpink"}
+    }
+    
   }
   
   
@@ -310,7 +314,9 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
   }
   
   
-  MoneyFlowChart<-plot_ly(data=Alldata, x=~Date, y=~MoneyFlow, type='bar', marker=list(color = ~VOL_Direction))%>%
+  MoneyFlowChart<-plot_ly(data=Alldata, x=~Date)%>%
+    add_trace(y=~MoneyFlow,name="MoneyFlow",type="scatter",mode = 'lines', line=list(color="orange", width=2))%>% 
+    add_bars(y=~MoneyFlow_EMA, name="MoneyFlow_EMA", marker=list(color = ~VOL_Direction))%>%
     layout(xaxis=list(showticklabels=FALSE))
   
   MACDChart<-plot_ly(data=Alldata, x=~Date)%>%
