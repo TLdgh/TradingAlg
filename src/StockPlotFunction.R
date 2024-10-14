@@ -287,10 +287,12 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
     
     if(Alldata$MoneyFlow_EMA[i] >= 0){
       if(Alldata$MoneyFlow_EMA[i]>Alldata$MoneyFlow_EMA[i-1]){Alldata$VOL_Direction[i]<-"green"}
-      else{Alldata$VOL_Direction[i]<-"palegreen"}}
+      else{Alldata$VOL_Direction[i]<-"palegreen"}
+    }
     else if(Alldata$MoneyFlow_EMA[i]<0){
       if(Alldata$MoneyFlow_EMA[i]<Alldata$MoneyFlow_EMA[i-1]){Alldata$VOL_Direction[i]<-"red"}else{Alldata$VOL_Direction[i]<-"lightpink"}
     }
+    if((Alldata$MoneyFlow[i]-Alldata$MoneyFlow[i-1])/abs(Alldata$MoneyFlow[i-1])>1){Alldata$VOL_Direction[i]<-"#8A2BE2"}
     
   }
   
@@ -354,7 +356,7 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE){
              annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
              hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   }else{
-    p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.3, 0.15)) %>%
+    p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.55, 0.15, 0.15, 0.15)) %>%
       layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),

@@ -39,7 +39,7 @@ twsDisconnect(tws)#to disconnect
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
-StkToBePrepared<-GetStkInfo(tws=tws, STK = c("AMD","AAPL","MSFT","TSLA"), interval = c("30F","daily"), RealData=TRUE)
+StkToBePrepared<-GetStkInfo(tws=tws, STK = c("SPY","QQQ"), interval = c("daily"), RealData=TRUE)
 
 StkToBePrepared<-GetStkInfo(tws=tws, STK = c("XLK","XLV","XLF","XLRE","XLE","XLB","XLY","XLI","XLU","XLP","XLC"), 
                             interval = c("daily"), RealData=TRUE)
@@ -70,6 +70,9 @@ StockChart(AAPL_daily, Title = "AAPL_daily")
 
 StockChart(MSFT30F, Title = "MSFT30F")
 StockChart(MSFT_daily, Title = "MSFT_daily")
+
+StockChart(SPY_daily, Title="SPY", VIXfile = "VIX")
+StockChart(QQQ_daily, Title="QQQ", VIXfile = "VXN")
 
 MultiChart(list(GOOGL_daily=subset(GOOGL_daily, Date>"2020-01-01"),GOOGL30F=subset(GOOGL30F, Date>"2024-04-01 09:00:00")))
 MultiChart(list(AMD_daily=subset(AMD_daily, Date>"2020-01-01"),AMD30F=subset(AMD30F,Date>="2024-04-01 09:00:00")))
