@@ -201,26 +201,26 @@ PricedataSAR<-function(Pricedata){
 }
 
 FuncEMA60<-function(Pricedata){
-  EMA60<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=60)
-  EMA60<-na.omit(data.frame(Date=Pricedata$Date,EMA60=EMA60))
+  EMA60<-Pricedata%>%arrange(Date)%>%mutate(EMA60=EMA(Close,60))%>%
+    na.omit()%>%select(Date, EMA60)
   return(EMA60)
 }
 
 FuncEMA30<-function(Pricedata){
-  EMA30<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=30)
-  EMA30<-na.omit(data.frame(Date=Pricedata$Date,EMA30=EMA30))
+  EMA30<-Pricedata%>%arrange(Date)%>%mutate(EMA30=EMA(Close,30))%>%
+    na.omit()%>%select(Date, EMA30)
   return(EMA30)
 }
 
 FuncEMA20<-function(Pricedata){
-  EMA20<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=20)
-  EMA20<-na.omit(data.frame(Date=Pricedata$Date,EMA20=EMA20))
+  EMA20<-Pricedata%>%arrange(Date)%>%mutate(EMA20=EMA(Close,20))%>%
+    na.omit()%>%select(Date, EMA20)
   return(EMA20)
 }
 
 FuncEMA5<-function(Pricedata){
-  EMA5<-EMA(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), n=5)
-  EMA5<-na.omit(data.frame(Date=Pricedata$Date,EMA5=EMA5))
+  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EMA(Close,5))%>%
+    na.omit()%>%select(Date, EMA5)
   return(EMA5)
 }
 
