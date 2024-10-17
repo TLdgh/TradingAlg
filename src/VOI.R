@@ -1,5 +1,5 @@
 library(readxl)
-VOIfn<-read.table("CMEVOI/RawData/Filename.txt", sep = "") #make sure in the Filename.txt there is a new blank space line after the final row, this way read.table won't give an error
+VOIfn<-read.table("CMEVOI/RawData/Filename-all.txt", sep = "") #make sure in the Filename.txt there is a new blank space line after the final row, this way read.table won't give an error
 VOIfn<-merge("CMEVOI/RawData/", VOIfn)
 VOIfn<-cbind(paste(VOIfn[,1], VOIfn[,2], sep = ""), VOIfn[,2])
 
@@ -9,29 +9,33 @@ for (val in Instrument){
   VOI<-data.frame()
   
   for (i in 1:nrow(VOIfn)){
-    Exfile <- read_xlsx(VOIfn[i,1], sheet = "CME Group Vol and OI by Product", .name_repair = "minimal",col_names = FALSE, skip =2)
-    
-    ColNum<-c(grep("Total.+Volume", Exfile), grep("Open.+Interest", Exfile) )
-    
-    if (val=="NQ") {
-      RowNum<-which(apply(Exfile, 1, function(x) any(x=="E-MINI NASDAQ 100 FUTURE")))
-      Exfile <- as.data.frame(Exfile[RowNum,ColNum])
-
-    }else if(val=="CAD"){
-      RowNum<-which(apply(Exfile, 1, function(x) any(x=="CANADIAN DOLLAR FUTURE")))
-      Exfile <- as.data.frame(Exfile[RowNum,ColNum])
+    if(str_sub(VOIfn[i,1], -4)=="xlsx"){
+      Exfile <- read_xlsx(VOIfn[i,1], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
+    }else if(str_sub(VOIfn[i,1], -3)=="xls"){
+      Exfile <- read_xls(VOIfn[i,1], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
     }
     
-    VOI<-rbind(VOI,cbind(as.Date(as.character(parse_number(VOIfn[i,2])), format="%Y%m%d"),as.numeric(Exfile)) ) #VOI data must have most recent data on the bottom, i.e. time ascending.
+    colnames(Exfile)<-paste0("V",c(1:ncol(Exfile)))
+    Exfile <- Exfile %>%filter(rowSums(is.na(.)) < ncol(.))
+    Exfile <- Exfile %>%select(where(~ !all(is.na(.))))
+    colnames(Exfile)<-c("Description","Exchange","Commodity","ProductDescription","FutureOption","CMEGlobexVolume","PitVolume","ExPitVolume","OTCVolume","Volume","MTDADV","OpenInterest")
+    Exfile<-Exfile[(which(Exfile$Description=="Description")+1):nrow(Exfile),] 
+    Exfile<-Exfile%>%mutate(across(c("CMEGlobexVolume","PitVolume","ExPitVolume","OTCVolume","Volume","MTDADV","OpenInterest"), as.numeric))
+    
+
+    if (val=="NQ") {
+      Exfile <- Exfile%>%filter(Commodity %in% c("NQ", "MNQ") & FutureOption=="F")%>%select(c(Volume,OpenInterest))%>%summarise(across(everything(),sum))%>%mutate(Date=ymd(parse_number(VOIfn[i,2])), .before=Volume)
+    }
+    
+    VOI<-rbind(VOI,Exfile) #VOI data must have most recent data on the bottom, i.e. time ascending.
   }
   
-  colnames(VOI)<-c("Date", "Volume", "OpenInterest")
   VOI$Date<-as.character(VOI$Date)
   
   if (val=="NQ"){
-    write.csv(VOI,file=paste0(getwd(), "CMEVOI/NQ_DailyVOI.csv"), row.names = F)
+    write.csv(VOI,file=paste0(getwd(), "/CMEVOI/NQ_DailyVOI.csv"), row.names = F)
   }else if(val=="CAD"){
-    write.csv(VOI,file=paste0(getwd(), "CMEVOI/CAD_DailyVOI.csv"), row.names = F)
+    write.csv(VOI,file=paste0(getwd(), "/CMEVOI/CAD_DailyVOI.csv"), row.names = F)
   }
 }
 
