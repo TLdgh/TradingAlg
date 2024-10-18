@@ -1,11 +1,13 @@
-SectorHist<-function(df,title){
-  bin_size<-(max(df$Change)-min(df$Change))/50 #divide into 50 equal-length intervals.
+SectorHist<-function(df,title,numplot){
+  minchange=min(df$Change)
+  maxchange=max(df$Change)
+  bin_size<-(maxchange-minchange)/50 #divide into 50 equal-length intervals.
   
   negative_change <- subset(df, Change < 0)
   positive_change <- subset(df, Change >= 0)
   
-  Nbin_minchange=ceiling(abs(min(df$Change)/bin_size))
-  Nbin_maxchange=ceiling(abs(max(df$Change)/bin_size))
+  Nbin_minchange=ceiling(abs(minchange/bin_size))
+  Nbin_maxchange=ceiling(abs(maxchange/bin_size))
   
   # Create the distribution plot based on the percentage change of the price
   p<-plot_ly() %>%
@@ -14,28 +16,28 @@ SectorHist<-function(df,title){
     layout(barmode = 'overlay',
            xaxis=list(tickformat=".2%"),
            annotations = list(list(
-             x = 0.5,
-             y=0.95,
-             xref = 'paper',
-             yref = 'paper',
+             x = 0,
+             y=1,
+             xref = paste0('x',numplot),
+             yref = "paper",
              text = title,
              showarrow = FALSE,
              font = list(size = 12)
            ),
            list(
-             x = 0.15,
+             x = minchange,
              y=0.8,
-             xref = 'paper',
-             yref = 'paper',
+             xref = paste0('x',numplot),
+             yref = "paper",
              text = paste0(round(nrow(negative_change)/nrow(df)*100,2),"%"),
              showarrow = FALSE,
              font = list(size = 24,color="red")
            ),
            list(
-             x = 0.9,
+             x = maxchange,
              y=0.8,
-             xref = 'paper',
-             yref = 'paper',
+             xref = paste0('x',numplot),
+             yref = "paper",
              text = paste0(round(nrow(positive_change)/nrow(df)*100,2),"%"),
              showarrow = FALSE,
              font = list(size = 24,color="green")
@@ -46,11 +48,11 @@ SectorHist<-function(df,title){
 }
 
 SectorData=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241017.csv")
-plotlist<-list(all=SectorHist(df=SectorData, title="All"))
+plotlist<-list(all=SectorHist(df=SectorData, title="All", numplot=1))
 
 for (s in seq_along(unique(SectorData$Sector))){
   nam<-unique(SectorData$Sector)[s]
-  plotlist[[nam]] <- SectorHist(df=subset(SectorData, Sector==nam), title=nam)
+  plotlist[[nam]] <- SectorHist(df=subset(SectorData, Sector==nam), title=nam, numplot=s+1)
 }
 
 subplot(plotlist, nrows = 4,shareX = FALSE, shareY = FALSE)
