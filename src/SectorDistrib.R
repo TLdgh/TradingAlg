@@ -47,14 +47,51 @@ SectorHist<-function(df,title,numplot){
   return(p)
 }
 
-SectorData=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241017.csv")
-plotlist<-list(all=SectorHist(df=SectorData, title="All", numplot=1))
 
-for (s in seq_along(unique(SectorData$Sector))){
-  nam<-unique(SectorData$Sector)[s]
-  plotlist[[nam]] <- SectorHist(df=subset(SectorData, Sector==nam), title=nam, numplot=s+1)
+
+WinningEffect<-function(data1,data2){
+  D1D2=lapply(unique(data1$Sector), function(s){
+    map(list(data1,data2), function(d){
+      filter(d,Sector==s)%>%mutate(Market.Cap=Market.Cap/sum(Market.Cap))%>%select(Ticker,Sector,Market.Cap,Change)}
+    )%>%
+      reduce(., inner_join, by="Ticker")
+  })
+  
+  Winner_D1D2<-D1D2%>%map(~filter(.x, Change.x>0 & Change.y>0))
+  
+  
+  finalres=map2(Winner_D1D2, D1D2, .f=~{
+    res=data.frame(
+      Sector=unique(.x$Sector.x),
+      PctTwoGains=nrow(.x)/nrow(.y),
+      D2Perf=.y%>%summarise(Return=sum(Change.y*Market.Cap.y, na.rm = TRUE))%>%as.numeric()
+    )
+    return(res)}
+  )%>%bind_rows()%>%arrange(desc(D2Perf))
+  
+  return(finalres)
 }
 
+
+
+
+
+
+
+data_old=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241017.csv")
+data_new=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241018.csv")
+
+
+#衡量赚钱效应
+WinningEffect(data_old,data_new)
+
+
+#板块涨跌分布
+plotlist<-list(all=SectorHist(df=data_new, title="All", numplot=1))
+for (s in seq_along(unique(data_new$Sector))){
+  nam<-unique(data_new$Sector)[s]
+  plotlist[[nam]] <- SectorHist(df=subset(data_new, Sector==nam), title=nam, numplot=s+1)
+}
 subplot(plotlist, nrows = 4,shareX = FALSE, shareY = FALSE)
 
 
