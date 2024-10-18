@@ -1,3 +1,6 @@
+#Local venv
+SectorVenv
+
 # History files
 .Rhistory
 .Rapp.history
