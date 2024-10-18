@@ -3,8 +3,8 @@ SectorHist<-function(df,title,numplot){
   maxchange=max(df$Change)
   bin_size<-(maxchange-minchange)/50 #divide into 50 equal-length intervals.
   
-  negative_change <- subset(df, Change < 0)
-  positive_change <- subset(df, Change >= 0)
+  negative_change <- subset(df, Change <= 0)
+  positive_change <- subset(df, Change > 0)
   
   Nbin_minchange=ceiling(abs(minchange/bin_size))
   Nbin_maxchange=ceiling(abs(maxchange/bin_size))
@@ -52,19 +52,19 @@ SectorHist<-function(df,title,numplot){
 WinningEffect<-function(data1,data2){
   D1D2=lapply(unique(data1$Sector), function(s){
     map(list(data1,data2), function(d){
-      filter(d,Sector==s)%>%mutate(Market.Cap=Market.Cap/sum(Market.Cap))%>%select(Ticker,Sector,Market.Cap,Change)}
+      filter(d,Sector==s)%>%mutate(WeightCap=Market.Cap/sum(Market.Cap))%>%select(Ticker,Sector,WeightCap,Change)}
     )%>%
       reduce(., inner_join, by="Ticker")
   })
   
-  Winner_D1D2<-D1D2%>%map(~filter(.x, Change.x>0 & Change.y>0))
+  Winner_D1D2<-D1D2%>%map(~filter(.x, Change.x>0 & Change.y>0)) #Change.x is the D1 change, Change.y is D2
   
   
-  finalres=map2(Winner_D1D2, D1D2, .f=~{
+  finalres=map2(Winner_D1D2, D1D2, .f=function(d1, d2){
     res=data.frame(
-      Sector=unique(.x$Sector.x),
-      PctTwoGains=nrow(.x)/nrow(.y),
-      D2Perf=.y%>%summarise(Return=sum(Change.y*Market.Cap.y, na.rm = TRUE))%>%as.numeric()
+      Sector=unique(d1$Sector.x),
+      PctTwoGains=nrow(d1)/nrow(d2), 
+      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日涨停今日表现
     )
     return(res)}
   )%>%bind_rows()%>%arrange(desc(D2Perf))
