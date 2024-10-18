@@ -1,5 +1,7 @@
 from finvizfinance.screener.overview import Overview
 import pandas as pd
+from datetime import date
+import os
 
 def SectorScreener():
   foverview = Overview()
@@ -15,7 +17,11 @@ def SectorScreener():
     df_list.append(df)
   
   res=pd.concat(df_list, axis=0, ignore_index=True)
-  res.to_csv("/Users/tengli/R/TradingAlg/SectorVenv/Data/file.csv", index=False)
+  
+  current_directory = os.getcwd()
+  current_date = date.today()
+  current_date = str(current_date).replace("-", "")
+  res.to_csv(current_directory+"/Data/OriginalStockData/US/SectorDistribution/distribution_"+current_date+".csv", index=False)
 
 if __name__=="__main__":
   SectorScreener()
