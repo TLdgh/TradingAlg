@@ -64,8 +64,8 @@ WinningEffect<-function(data1,data2){
   finalres=pmap(list(Winner_D2, Winner_D1D2, D1D2), .f=function(d1, d2, d3){
     res=data.frame(
       Sector=unique(d2$Sector.y),
-      PctOneGain=nrow(d1)/nrow(d3), 
-      PctTwoGains=nrow(d2)/nrow(d3), 
+      PctOneGain=nrow(d1)/nrow(d3), #今日上涨数比例
+      PctTwoGains=nrow(d2)/nrow(d3), #2日连续上涨数比例
       D2Perf=d2%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日上涨今日表现市值加权平均涨幅
     )
     return(res)}
