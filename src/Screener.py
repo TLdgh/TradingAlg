@@ -14,6 +14,7 @@ def SectorScreener():
     filters_dict = {'Sector':s, 'Country': "USA", 'Price':'Over $5','Average Volume':'Over 100K'}
     foverview.set_filter(filters_dict=filters_dict)
     df = foverview.screener_view()
+    df = df.dropna(subset=["Market Cap"])
     df_list.append(df)
   
   res=pd.concat(df_list, axis=0, ignore_index=True)

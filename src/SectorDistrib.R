@@ -64,7 +64,7 @@ WinningEffect<-function(data1,data2){
     res=data.frame(
       Sector=unique(d1$Sector.x),
       PctTwoGains=nrow(d1)/nrow(d2), 
-      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日涨停今日表现
+      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日涨停今日表现市值加权平均涨幅
     )
     return(res)}
   )%>%bind_rows()%>%arrange(desc(D2Perf))
