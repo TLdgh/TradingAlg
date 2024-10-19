@@ -9,14 +9,14 @@ SectorHist<-function(df,title,numplot){
   Nbin_minchange=ceiling(abs(minchange/bin_size))
   Nbin_maxchange=ceiling(abs(maxchange/bin_size))
   
-  # Create the distribution plot based on the percentage change of the price
+  # Create the distribution plot based on the percentage change of the price, this gives the market breadth.
   p<-plot_ly() %>%
     add_histogram(data = negative_change, x = ~Change, marker = list(color = 'red', line=list(color="black", width=1)), name = 'Negative', xbins=list(start = (0-Nbin_minchange*bin_size), end = 0, size = bin_size)) %>%
     add_histogram(data = positive_change, x = ~Change, marker = list(color = 'green', line=list(color="black", width=1)), name = 'Positive',xbins=list(start = 0, end = (0+Nbin_maxchange*bin_size), size = bin_size)) %>%
     layout(barmode = 'overlay',
            xaxis=list(tickformat=".2%"),
            annotations = list(list(
-             x = 0,
+             x = (minchange+maxchange)/2,
              y=1,
              xref = paste0('x',numplot),
              yref = "paper",
@@ -48,7 +48,7 @@ SectorHist<-function(df,title,numplot){
 }
 
 
-
+#连续两天上涨的股票分析，如果数量很多且平均涨幅很大，表明板块赚钱效应很好
 WinningEffect<-function(data1,data2){
   D1D2=lapply(unique(data1$Sector), function(s){
     map(list(data1,data2), function(d){
@@ -64,7 +64,7 @@ WinningEffect<-function(data1,data2){
     res=data.frame(
       Sector=unique(d1$Sector.x),
       PctTwoGains=nrow(d1)/nrow(d2), 
-      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日涨停今日表现市值加权平均涨幅
+      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日上涨今日表现市值加权平均涨幅
     )
     return(res)}
   )%>%bind_rows()%>%arrange(desc(D2Perf))
