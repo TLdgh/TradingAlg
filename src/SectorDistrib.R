@@ -54,7 +54,7 @@ WinningEffect<-function(data1,data2){
     map(list(data1,data2), function(d){
       filter(d,Sector==s)%>%mutate(WeightCap=Market.Cap/sum(Market.Cap))%>%select(Ticker,Sector,WeightCap,Change)}
     )%>%
-      reduce(., inner_join, by="Ticker")
+      reduce(., right_join, by="Ticker")
   })
   
   Winner_D1D2<-D1D2%>%map(~filter(.x, Change.x>0 & Change.y>0)) #Change.x is the D1 change, Change.y is D2
