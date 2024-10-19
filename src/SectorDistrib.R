@@ -50,7 +50,7 @@ SectorHist<-function(df,title,numplot){
 
 #连续两天上涨的股票分析，如果数量很多且平均涨幅很大，表明板块赚钱效应很好
 WinningEffect<-function(data1,data2){
-  D1D2=lapply(unique(data1$Sector), function(s){
+  D1D2=lapply(unique(data2$Sector), function(s){
     map(list(data1,data2), function(d){
       filter(d,Sector==s)%>%mutate(WeightCap=Market.Cap/sum(Market.Cap))%>%select(Ticker,Sector,WeightCap,Change)}
     )%>%
@@ -58,18 +58,22 @@ WinningEffect<-function(data1,data2){
   })
   
   Winner_D1D2<-D1D2%>%map(~filter(.x, Change.x>0 & Change.y>0)) #Change.x is the D1 change, Change.y is D2
+  Winner_D2<-D1D2%>%map(~filter(.x, Change.y>0)) #Change.y is D2
   
   
-  finalres=map2(Winner_D1D2, D1D2, .f=function(d1, d2){
+  finalres=pmap(list(Winner_D2, Winner_D1D2, D1D2), .f=function(d1, d2, d3){
     res=data.frame(
-      Sector=unique(d1$Sector.x),
-      PctTwoGains=nrow(d1)/nrow(d2), 
-      D2Perf=d1%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日上涨今日表现市值加权平均涨幅
+      Sector=unique(d2$Sector.y),
+      PctOneGain=nrow(d1)/nrow(d3), 
+      PctTwoGains=nrow(d2)/nrow(d3), 
+      D2Perf=d2%>%summarise(res=sum(Change.y*WeightCap.y, na.rm = TRUE))%>%as.numeric()#昨日上涨今日表现市值加权平均涨幅
     )
     return(res)}
-  )%>%bind_rows()%>%arrange(desc(D2Perf))
+  )%>%bind_rows()
   
-  return(finalres)
+  finallist=list(By_PctTwoGains=finalres%>%arrange(desc(PctTwoGains)), By_D2Perf=finalres%>%arrange(desc(D2Perf)))
+  
+  return(finallist)
 }
 
 
