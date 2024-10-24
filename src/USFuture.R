@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30F","1H"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F","30F","1H","Continuous","WContinuous"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -61,7 +61,7 @@ StockChart(NQ1F, Title = "NQ1F")
 
 StockChart(NQ30S, Title = "NQ30S")
 
-StockChart(NQContinuous, Title = "NQContinuous")
+StockChart(NQContinuous, Title = "NQContinuous",VIXfile = "VXN",VOIdata = VOI)
 
 MultiChart(list(NQ5F=NQ5F,NQ1F=NQ1F))
 
@@ -179,7 +179,7 @@ PnL(data)
 OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
 FutToBePrepared$ReadCombData(OutputCombtxt=OutputCombtxt,nam=nam)     #This src load the combined data
-StockChart(NQ5F, Title = "NQ5F") 
-#MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
+#StockChart(NQ5F, Title = "NQ5F") 
+MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 
 

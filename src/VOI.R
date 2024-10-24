@@ -1,5 +1,5 @@
 library(readxl)
-VOIfn<-read.table("CMEVOI/RawData/Filename-all.txt", sep = "") #make sure in the Filename.txt there is a new blank space line after the final row, this way read.table won't give an error
+VOIfn<-read.table("CMEVOI/RawData/Filename.txt", sep = "") #make sure in the Filename.txt there is a new blank space line after the final row, this way read.table won't give an error
 VOIfn<-merge("CMEVOI/RawData/", VOIfn)
 VOIfn<-cbind(paste(VOIfn[,1], VOIfn[,2], sep = ""), VOIfn[,2])
 
