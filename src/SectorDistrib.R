@@ -82,8 +82,8 @@ WinningEffect<-function(data1,data2){
 
 
 
-data_old=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241017.csv")
-data_new=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241018.csv")
+data_old=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241022.csv")
+data_new=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241023.csv")
 
 
 #衡量赚钱效应
@@ -99,3 +99,24 @@ for (s in seq_along(unique(data_new$Sector))){
 subplot(plotlist, nrows = 4,shareX = FALSE, shareY = FALSE)
 
 
+
+
+#generate distribution manually
+subfile=read.csv("Data/OriginalStockData/US/SectorDistribution/template.csv")
+for(d in CommDates[-1]){
+  res=lapply(All, function(stock){
+    file_path=paste0(getwd(),"/Data/OriginalStockData/US/", stock,"_daily.csv")
+    file=read.csv(file_path,header = TRUE)
+    ind=which(file$Index==d)
+    if(is_empty(ind)==TRUE){print(stock);stop("correct data.")}
+    Price=file[ind, 5]
+    PrePrice=file[ind-1, 5]
+    Change=(Price-PrePrice)/PrePrice
+    return(data.frame(Ticker=stock, Price, Change))
+  })%>%bind_rows()
+  
+  res[which(res$Ticker %in% c("BRK B", "BF B")), "Ticker"]=c("BRK-B", "BF-B")
+  res=left_join(subfile, res, by="Ticker")
+  
+  write.csv(res, file = paste0("Data/OriginalStockData/US/SectorDistribution/distributionSUB_",gsub("-","",d),".csv"))
+}
