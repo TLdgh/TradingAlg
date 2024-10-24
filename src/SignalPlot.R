@@ -1,4 +1,4 @@
-SignalPlot <- function(Pricedatafile, VIXfile=NULL){
+SignalPlot <- function(Pricedatafile, VIXfile=NULL, VOIdata=NUL){
   Pricedata<-read.csv(Pricedatafile, header = TRUE)%>%select(1:6)
   colnames(Pricedata) <- c("Date", "Open", "High","Low", "Close", "Volume")
   Pricedata<-Pricedata[order(Pricedata$Date, decreasing = FALSE),]%>%mutate(Return=log(Close/lag(Close)))
@@ -15,7 +15,7 @@ SignalPlot <- function(Pricedatafile, VIXfile=NULL){
   vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
   vix=select(vix, c("DATE","CLOSE"))
   colnames(vix)=c("Date","VIX")
-  Pricedata<- left_join(Pricedata,vix, by="Date")
+  Pricedata<- inner_join(Pricedata,vix, by="Date")
   Pricedata$VIX=na.approx(Pricedata$VIX)
   
   vix_macd<-as.data.frame(MACD(Pricedata$VIX, nFast = 12, nSlow = 26, nSig = 9, maType = EMA, percent = FALSE))
@@ -30,6 +30,43 @@ SignalPlot <- function(Pricedatafile, VIXfile=NULL){
   
   
   Pricedata<-Pricedata%>%mutate(across(c(MACD,MFI,vix_MACD), MakeDirection, .names="{col}_Direction"))
+  
+  if(is.null(VOIdata)!=TRUE){
+    x=ts(VOIdata$OpenInterest, frequency =63)
+    stl_decomposition<-stl(x,s.window = "periodic")
+    
+    y=VOIdata%>%select(Date,OpenInterest)%>%mutate(mt=stl_decomposition$time.series[,2], st=stl_decomposition$time.series[,1], et=stl_decomposition$time.series[,3])
+    y=y%>%mutate(mt2=OpenInterest-st)
+    Pricedata<-inner_join(Pricedata, y, by="Date")
+    
+    if(Pricedata$Close[1] >= Pricedata$Open[1]){Pricedata$OI_Direction[1] = 'green'}else{Pricedata$OI_Direction[1] = 'red'}
+    for (i in 2:nrow(Pricedata)){       ##Color column for MACD, VMACD, MFI and Volume direction
+      if(Pricedata$Close[i] >= Pricedata$Close[i-1] &
+         Pricedata$OpenInterest[i] >= Pricedata$OpenInterest[i-1]){Pricedata$OI_Direction[i]<-"green"}
+      else if(Pricedata$Close[i] >= Pricedata$Close[i-1] &
+              Pricedata$OpenInterest[i] < Pricedata$OpenInterest[i-1]){Pricedata$OI_Direction[i]<-"palegreen"}
+      else if(Pricedata$Close[i] < Pricedata$Close[i-1] &
+              Pricedata$OpenInterest[i] >= Pricedata$OpenInterest[i-1]){Pricedata$OI_Direction[i]<-"red"}
+      else if(Pricedata$Close[i] < Pricedata$Close[i-1] &
+              Pricedata$OpenInterest[i] < Pricedata$OpenInterest[i-1]){Pricedata$OI_Direction[i]<-"lightpink"}
+    }
+    
+    OIChart<-plot_ly(data=Pricedata, x=~Date)%>%
+      add_bars(y=~mt2,name="OpenInterest", marker=list(color=~OI_Direction),
+               customdata=~case_when(
+                 OI_Direction == "green" ~ "多头增仓",
+                 OI_Direction == "palegreen" ~ "空头减仓",
+                 OI_Direction == "red" ~ "空头增仓",
+                 OI_Direction == "lightpink" ~ "多头减仓"
+               ),
+               hovertemplate = paste(
+                 'Open Interest: %{y}<br>',
+                 'OI Direction: %{customdata}', # Shows OI_Direction in hover text
+                 '<extra></extra>' # Removes the trace label in the hover box
+               ), hoverinfo = "none")%>%  
+      add_trace(y=~mt,name="OI_Trend",type="scatter",mode = 'lines', line=list(color="blue", width=2))%>%
+      layout(xaxis = list(rangeslider = list(visible = F)))
+  }
   
   priceplot<-plot_ly(data=Pricedata, x=~Date,  name = 'Price', type='candlestick',open=~Open, close=~Close,high=~High, low=~Low)%>%
     add_lines(x=Pricedata$Date, y=Pricedata$VIX_Low, name='VIX_Low', type='scatter', mode='lines',
@@ -55,15 +92,17 @@ SignalPlot <- function(Pricedatafile, VIXfile=NULL){
     add_bars(y=~MFI,name="MFI", marker=list(color=~MFI_Direction))%>%
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=30), MFIlines(y=-30)))
   
-  allplot<-subplot(priceplot, macdplot, vix_macdplot, MFIChart, nrows=4, shareX = TRUE, heights = c(0.4,0.2,0.2,0.2)) %>%
+  allplot<-subplot(priceplot, OIChart, macdplot, vix_macdplot, MFIChart, nrows=5, shareX = TRUE, heights = c(0.4, 0.21, 0.13, 0.13, 0.13)) %>%
     layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid'),
            yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                       spikesnap='cursor',spikethickness=0.5, spikedash='solid'), 
-           yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
+           yaxis2=list(side = "left", title = "OpenInterest",showspikes=TRUE, spikemode='across', 
+                      spikesnap='cursor',spikethickness=0.5, spikedash='solid'), 
+           yaxis3 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis3 = list(side = "left",title = "vix_MACD",showspikes=TRUE, spikemode='across', 
+           yaxis4 = list(side = "left",title = "vix_MACD",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
-           yaxis4 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
+           yaxis5 = list(side = "left",title = "MFI",showspikes=TRUE, spikemode='across', 
                          spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
            hovermode = "x unified", plot_bgcolor="#262625", paper_bgcolor="#262625")%>%config(scrollZoom=TRUE)
   
