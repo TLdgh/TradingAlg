@@ -112,7 +112,7 @@ VIXMACD<-function(Pricedata, vixloc){
   vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
   vix=select(vix, c("DATE","CLOSE"))
   colnames(vix)=c("Date","VIX")
-  Pricedata<- left_join(Pricedata,vix, by="Date")
+  Pricedata<- inner_join(Pricedata,vix, by="Date")
   Pricedata$VIX=na.approx(Pricedata$VIX)
   
   vix_macd<-as.data.frame(MACD(Pricedata$VIX, nFast = 5, nSlow = 20, nSig = 10, maType = EMA, percent = FALSE))
@@ -120,10 +120,9 @@ VIXMACD<-function(Pricedata, vixloc){
   vix_macd$Date <- Pricedata[order(Pricedata$Date, decreasing = F),]$Date
   colnames(vix_macd) <- c("vix_DIFF", "vix_DEA", "vix_MACD", "Date")
   
-  Pricedata<-left_join(Pricedata, vix_macd, by="Date")
+  Pricedata<-inner_join(Pricedata, vix_macd, by="Date")
   #Pricedata<-na.omit(Pricedata)
-  Pricedata<-Pricedata%>%mutate(VIX_Low=(Close*(1+qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100)), 
-                                VIX_High=(Close*(1-qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100))) #note I'm using z_alpha/2
+  #Pricedata<-Pricedata%>%mutate(VIX_Low=(Close*(1+qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100)), VIX_High=(Close*(1-qnorm((1-0.686)/2)*VIX*sqrt(1/252)/100))) #note I'm using z_alpha/2
   
   return(Pricedata)
 }
