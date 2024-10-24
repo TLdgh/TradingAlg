@@ -36,7 +36,7 @@ Healthcare<-c("LLY","UNH","JNJ","ABBV","MRK","TMO","ABT","ISRG","DHR","AMGN","PF
               "ALGN","RVTY","UHS","VTRS","TFX","TECH","CTLT","INCY","CRL","SOLV","HSIC","DVA")
 
 
-Financials<-c("BRK.b","JPM","V","MA","BAC","WFC","SPGI","GS","AXP","MS","PGR","BLK","BX","C",
+Financials<-c("BRK B","JPM","V","MA","BAC","WFC","SPGI","GS","AXP","MS","PGR","BLK","BX","C",
               "FI","CB","MMC","SCHW","ICE","KKR","PYPL","CME","AON","USB","MCO","PNC","AJG",
               "COF","TRV","TFC","AFL","BK","ALL","AMP","AIG","MET","FIS","MSCI","PRU","ACGL",
               "DFS","HIG","MTB","NDAQ","FITB","WTW","STT","GPN","TROW","RJF","BRO","CPAY",
@@ -51,7 +51,7 @@ Energy<-c("XOM","CVX","COP","WMB","EOG","SLB","OKE","PSX","MPC","KMI","VLO","HES
 ConsumerStaples<-c("PG","COST","WMT","KO","PEP","PM","MDLZ","CL","MO","TGT","KMB",
                    "KVUE","KDP","GIS","MNST","STZ","KR","SYY","KHC","HSY","ADM","CHD",
                    "K","EL","MKC","CLX","DG","TSN","CAG","DLTR","SJM","BG","LW","TAP",
-                   "CPB","HRL","BF.b","WBA")
+                   "CPB","HRL","BF B","WBA")
 
 
 ConsumerDiscre<-c("AMZN","TSLA","HD","MCD","LOW","BKNG","TJX","SBUX","NKE","CMG","ORLY",
@@ -67,7 +67,6 @@ CommunicationSvcs<-c("META","GOOGL","NFLX","TMUS","DIS","CMCSA","T","TTWO",
 
 
 All<-c(RE,Technology,Utilities,Materials,Industrials,Healthcare,Financials,Energy,ConsumerStaples,ConsumerDiscre,CommunicationSvcs)
-All<-All[!All %in% c("WELL","CEG","FCX","BALL","SW","GEV","BRK.b","BF.b")]
 
 for(stock in All){
   tryCatch(
@@ -75,13 +74,30 @@ for(stock in All){
       file_path=paste0(getwd(),"/Data/OriginalStockData/US/", stock,"_daily.csv")
       
       if(file.exists(file_path)==FALSE){
-        NDurations<-5 
+        NDurations<-1 
         Sdata<-list()
         endDateTime<-format(Sys.time(),"%Y%m%d %H:%M:%S")
         
         for(i in 1:NDurations){
           Contract<-twsEquity(symbol=stock, exch = "SMART", currency = "USD")
           SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize="1 day", duration="1 Y", useRTH='1', whatToShow='TRADES') 
+          Sdata[[NDurations+1-i]]<-SdataNew
+          endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
+          Sys.sleep(round(22*runif(1,min = 1, max = 1.2)))
+        }  
+        
+        Sdata<-do.call(rbind, Sdata)
+        write.zoo(Sdata, sep=",", file=file_path)
+        cat("stock ", stock, "is finished.", "\n")
+      }
+      else{
+        NDurations<-1 
+        Sdata<-list()
+        endDateTime<-format(Sys.time(),"%Y%m%d %H:%M:%S")
+        
+        for(i in 1:NDurations){
+          Contract<-twsEquity(symbol=stock, exch = "SMART", currency = "USD")
+          SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize="1 day", duration="1 M", useRTH='1', whatToShow='TRADES') 
           Sdata[[NDurations+1-i]]<-SdataNew
           endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
           Sys.sleep(round(22*runif(1,min = 1, max = 1.2)))
