@@ -72,41 +72,22 @@ for(stock in All){
   tryCatch(
     expr={
       file_path=paste0(getwd(),"/Data/OriginalStockData/US/", stock,"_daily.csv")
+      NDurations<-1 
+      Sdata<-list()
+      endDateTime<-format(Sys.time(),"%Y%m%d %H:%M:%S")
       
-      if(file.exists(file_path)==FALSE){
-        NDurations<-1 
-        Sdata<-list()
-        endDateTime<-format(Sys.time(),"%Y%m%d %H:%M:%S")
-        
-        for(i in 1:NDurations){
-          Contract<-twsEquity(symbol=stock, exch = "SMART", currency = "USD")
-          SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize="1 day", duration="1 Y", useRTH='1', whatToShow='TRADES') 
-          Sdata[[NDurations+1-i]]<-SdataNew
-          endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
-          Sys.sleep(round(22*runif(1,min = 1, max = 1.2)))
-        }  
-        
-        Sdata<-do.call(rbind, Sdata)
-        write.zoo(Sdata, sep=",", file=file_path)
-        cat("stock ", stock, "is finished.", "\n")
-      }
-      else{
-        NDurations<-1 
-        Sdata<-list()
-        endDateTime<-format(Sys.time(),"%Y%m%d %H:%M:%S")
-        
-        for(i in 1:NDurations){
-          Contract<-twsEquity(symbol=stock, exch = "SMART", currency = "USD")
-          SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize="1 day", duration="1 M", useRTH='1', whatToShow='TRADES') 
-          Sdata[[NDurations+1-i]]<-SdataNew
-          endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
-          Sys.sleep(round(22*runif(1,min = 1, max = 1.2)))
-        }  
-        
-        Sdata<-do.call(rbind, Sdata)
-        write.zoo(Sdata, sep=",", file=file_path)
-        cat("stock ", stock, "is finished.", "\n")
-      }
+      for(i in 1:NDurations){
+        Contract<-twsEquity(symbol=stock, exch = "SMART", currency = "USD")
+        SdataNew<-reqHistoricalData(conn=tws, Contract=Contract, endDateTime=endDateTime, barSize="1 day", duration="1 Y", useRTH='1', whatToShow='TRADES') 
+        Sdata[[NDurations+1-i]]<-SdataNew
+        endDateTime<-format(as.POSIXct(index(SdataNew[1,]),tz="America/Toronto"),"%Y%m%d %H:%M:%S")
+        Sys.sleep(round(22*runif(1,min = 1, max = 1.2)))
+      }  
+      
+      Sdata<-do.call(rbind, Sdata)
+      write.zoo(Sdata, sep=",", file=file_path)
+      cat("stock ", stock, "is finished.", "\n")
+      
     },
     warning=function(w){
       # Handling the warning: Skip this iteration
@@ -116,7 +97,7 @@ for(stock in All){
   )
   next # Skip to the next iteration
 }
-close(file("warning_log.txt", open = "a"))
+close(file("InitializeStock_log.txt", open = "a"))
 
 
 
