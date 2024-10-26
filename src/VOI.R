@@ -1,18 +1,18 @@
 library(readxl)
-VOIfn<-read.table("CMEVOI/RawData/Filename.txt", sep = "") #make sure in the Filename.txt there is a new blank space line after the final row, this way read.table won't give an error
-VOIfn<-merge("CMEVOI/RawData/", VOIfn)
-VOIfn<-cbind(paste(VOIfn[,1], VOIfn[,2], sep = ""), VOIfn[,2])
+xlsx_files <- list.files(path = "CMEVOI/RawData", pattern = "\\.xlsx$", full.names = TRUE)
+VOIfn<-data.frame(path=xlsx_files, filename=str_extract(xlsx_files, "daily.*?\\.xlsx"), filedate=ymd(parse_number(xlsx_files)))
 
 Instrument<-c("NQ")   #"NQ","CAD"
 
 for (val in Instrument){
-  VOI<-data.frame()
+  VOI<-read.csv(paste0("CMEVOI/", val, "_DailyVOI.csv"))
+  FilesToAdd<-which(!VOIfn$filedate %in% VOI$Date)
   
-  for (i in 1:nrow(VOIfn)){
+  for (i in FilesToAdd){
     if(str_sub(VOIfn[i,1], -4)=="xlsx"){
-      Exfile <- read_xlsx(VOIfn[i,1], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
+      Exfile <- read_xlsx(VOIfn[i,"path"], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
     }else if(str_sub(VOIfn[i,1], -3)=="xls"){
-      Exfile <- read_xls(VOIfn[i,1], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
+      Exfile <- read_xls(VOIfn[i,"path"], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
     }
     
     colnames(Exfile)<-paste0("V",c(1:ncol(Exfile)))
@@ -23,20 +23,16 @@ for (val in Instrument){
     Exfile<-Exfile%>%mutate(across(c("CMEGlobexVolume","PitVolume","ExPitVolume","OTCVolume","Volume","MTDADV","OpenInterest"), as.numeric))
     
 
-    if (val=="NQ") {
-      Exfile <- Exfile%>%filter(Commodity %in% c("NQ", "MNQ") & FutureOption=="F")%>%select(c(Volume,OpenInterest))%>%summarise(across(everything(),sum))%>%mutate(Date=ymd(parse_number(VOIfn[i,2])), .before=Volume)
+    if (val=="NQ"){
+      Exfile <- Exfile%>%filter(Commodity %in% c("NQ", "MNQ") & FutureOption=="F")%>%select(c(Volume,OpenInterest))%>%summarise(across(everything(),sum))%>%mutate(Date=as.character(VOIfn$filedate[i]), .before=Volume)
     }
     
     VOI<-rbind(VOI,Exfile) #VOI data must have most recent data on the bottom, i.e. time ascending.
   }
   
-  VOI$Date<-as.character(VOI$Date)
-  
-  if (val=="NQ"){
-    write.csv(VOI,file=paste0(getwd(), "/CMEVOI/NQ_DailyVOI.csv"), row.names = F)
-  }else if(val=="CAD"){
-    write.csv(VOI,file=paste0(getwd(), "/CMEVOI/CAD_DailyVOI.csv"), row.names = F)
-  }
+  VOI=VOI%>%arrange(Date)
+
+  write.csv(VOI,file=paste0("CMEVOI/", val, "_DailyVOI.csv"), row.names = F)
 }
 
 
