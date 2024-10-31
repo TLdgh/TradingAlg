@@ -67,7 +67,17 @@ GetStkInfo<-setRefClass(
         }
         
         cat("The following data is: ", nam[i], "\n")
-        .self$DownloadData(nam[i], InputFileLoc_Stk, OutputFileLoc_Stk, SecurityType=.self$StkToBePrepared[[i]][1,"SecurityType"],GlobalMarket=.self$StkToBePrepared[[i]][1,"GlobalMarket"])
+        
+        Stk_data<-read.csv(file = InputFileLoc_Stk, header = T)
+        Stk_data<-Stk_data[,1:6]
+        colnames(Stk_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
+        Stk_data <- Stk_data[order(Stk_data$Date, decreasing = TRUE),]
+        print(head(Stk_data))
+        print(tail(Stk_data))
+        write.csv(Stk_data, file = OutputFileLoc_Stk, row.names = FALSE)
+        
+        .self$DownloadData(nam[i], fileloc=OutputFileLoc_Stk)
+        
         if(i<length(.self$StkToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
         .self$RawDataLocation[nam[i]]<-InputFileLoc_Stk
       }
@@ -142,37 +152,9 @@ GetStkInfo<-setRefClass(
     
     
     
-    DownloadData=function(nam, InputFileLoc_Stk, OutputFileLoc_Stk, SecurityType="STK", GlobalMarket="US"){
-      if(SecurityType == "STK" & GlobalMarket %in% c("US", "China")){
-        Stk_data<-read.csv(file = InputFileLoc_Stk, header = T)
-        Stk_data<-Stk_data[,1:6]
-        colnames(Stk_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
-        Stk_data <- Stk_data[order(Stk_data$Date, decreasing = TRUE),]
-        print(head(Stk_data))
-        print(tail(Stk_data))
-        
-        write.csv(Stk_data, file = OutputFileLoc_Stk, row.names = FALSE)
-      }
-      else if(SecurityType == "FOREX"){
-        if(intv=="daily"){fx_DWM <- tq_get(Symb, get="alphavantage", av_fun="FX_DAILY", outputsize=OutputSize)
-        }else if(intv=="weekly"){
-          fx_DWM <- tq_get(Symb, get="alphavantage", av_fun="FX_WEEKLY", outputsize=OutputSize)
-        }else if(intv=="monthly"){
-          fx_DWM <- tq_get(Symb, get="alphavantage", av_fun="FX_MONTHLY", outputsize=OutputSize)
-        }else{
-          fx_DWM <- tq_get(Symb, get="alphavantage", av_fun="FX_INTRADAY", interval=intv, outputsize=OutputSize)
-        }
-        
-        fx_DWM <- cbind(as.data.frame(subset(fx_DWM,select=-c(symbol))), Volume=c(0))
-        colnames(fx_DWM) <- c("Date", "Open", "High","Low", "Close","Volume")
-        fx_DWM<-fx_DWM[order(fx_DWM$Date, decreasing = TRUE),]
-        print(head(fx_DWM))
-        print(tail(fx_DWM))
-        
-        write.csv(fx_DWM, file =InputFileLoc_Stk, row.names = FALSE)
-        countlimit<-countlimit+1
-        if(countlimit%%5==0){print("Please wait for 1 minute.");Sys.sleep(60);countlimit<-0}
-      }
+    DownloadData=function(nam, fileloc){
+      df <- read.csv(fileloc, header = T)%>%arrange(Date)
+      assign(nam, df, envir = .GlobalEnv)
     },
     
     

@@ -11,7 +11,7 @@ GetFutInfo<-setRefClass(
       .self$FutToBePrepared<-.self$populateFutInfo(BasicInfo)
       
       #Prepare Futures contract information
-      .self$InputCombtxt<-character()
+      .self$InputCombtxt<-character() #this is the input location of the data for candlestick combination app
       .self$OutputCombtxt<-character()
       .self$RawDataLocation<-list()
       .self$nam<-character()
@@ -90,7 +90,17 @@ GetFutInfo<-setRefClass(
           }
         }
         cat("The following data is: ", nam[i], "\n")
-        .self$DownloadData(nam[i], InputFileLoc_Fut, OutputFileLoc_Fut)
+        
+        Fut_data<-read.csv(file = InputFileLoc_Fut, header = T)
+        Fut_data<-Fut_data[,1:6]
+        colnames(Fut_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
+        Fut_data <- Fut_data[order(Fut_data$Date, decreasing = TRUE),]
+        print(head(Fut_data))
+        print(tail(Fut_data))
+        write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
+        
+        .self$DownloadData(nam = nam[i], fileloc=OutputFileLoc_Fut)
+        
         if(i<length(FutToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
         .self$RawDataLocation[nam[i]]<-InputFileLoc_Fut
       }
@@ -108,9 +118,12 @@ GetFutInfo<-setRefClass(
             .self$OutputCombtxt[i]<-paste0(getwd(),"/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv")  #this gives the location of the combined data files
             .self$nam[i]<-paste0(FutToBePrepared[[i]][1,"Symb"],"4HContinuous")
           }
+          
           .self$RawDataLocation[nam[i]]<-paste0("/Users/tengli/R/TradingAlg","/Data/OriginalFuturesData/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv")
           write.csv(.self$FutNewBarSize(DataFile=RawDataLocation[[i]], intv="1H", barSize = 4), file=NewBarOutputfile, row.names = FALSE)
           .self$InputCombtxt[i]<-NewBarOutputfile#this gives the input location of data files for candlestick combination app
+          
+          .self$DownloadData(nam = nam[i], fileloc=NewBarOutputfile)
         }
       }
       
@@ -262,14 +275,9 @@ GetFutInfo<-setRefClass(
     
     
     
-    DownloadData=function(nam, InputFileLoc_Fut, OutputFileLoc_Fut){
-      Fut_data<-read.csv(file = InputFileLoc_Fut, header = T)
-      Fut_data<-Fut_data[,1:6]
-      colnames(Fut_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
-      Fut_data <- Fut_data[order(Fut_data$Date, decreasing = TRUE),]
-      print(head(Fut_data))
-      print(tail(Fut_data))
-      write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
+    DownloadData=function(nam, fileloc){
+      df <- read.csv(fileloc, header = T)%>%arrange(Date)
+      assign(nam, df, envir = .GlobalEnv)
     },
     
     
@@ -321,7 +329,7 @@ GetFutInfo<-setRefClass(
     
     
     
-    ReadCombData=function(OutputCombtxt=.self$OutputCombtxt, nam=.self$nam){  #This script read and load the combined data
+    ReadCombData=function(OutputCombtxt=.self$OutputCombtxt, nam=.self$nam){  #This script read and load the original data
       for (i in 1:length(OutputCombtxt)) { 
         CombData <- read.csv(OutputCombtxt[i], header = T) 
         CombData <- CombData[order(CombData$Date, decreasing = FALSE),]
