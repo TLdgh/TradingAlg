@@ -110,16 +110,16 @@ GetFutInfo<-setRefClass(
       if(length(Exist1H)!=0){
         for(i in Exist1H){
           if(FutToBePrepared[[i]][1,"barSize"]!="Continuous"){
-            NewBarOutputfile<-paste0(getwd(),"/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4H.csv") #Save the new bar data at this location
-            .self$OutputCombtxt[i]<-paste0(getwd(),"/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HComb.csv")  #this gives the location of the combined data files
+            NewBarOutputfile<-paste0("/Users/tengli/R/TradingAlg/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4H.csv") #Save the new bar data at this location
+            .self$OutputCombtxt[i]<-paste0("/Users/tengli/R/TradingAlg/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HComb.csv")  #this gives the location of the combined data files
             .self$nam[i]<-paste0(FutToBePrepared[[i]][1,"Symb"],"4H")
           }else{
-            NewBarOutputfile<-paste0(getwd(),"/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuous.csv") #Save the new bar data at this location
-            .self$OutputCombtxt[i]<-paste0(getwd(),"/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv")  #this gives the location of the combined data files
+            NewBarOutputfile<-paste0("/Users/tengli/R/TradingAlg/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuous.csv") #Save the new bar data at this location
+            .self$OutputCombtxt[i]<-paste0("/Users/tengli/R/TradingAlg/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv")  #this gives the location of the combined data files
             .self$nam[i]<-paste0(FutToBePrepared[[i]][1,"Symb"],"4HContinuous")
           }
           
-          .self$RawDataLocation[nam[i]]<-paste0("/Users/tengli/R/TradingAlg","/Data/OriginalFuturesData/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv")
+          .self$RawDataLocation[nam[i]]<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalFuturesData/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv")
           write.csv(.self$FutNewBarSize(DataFile=RawDataLocation[[i]], intv="1H", barSize = 4), file=NewBarOutputfile, row.names = FALSE)
           .self$InputCombtxt[i]<-NewBarOutputfile#this gives the input location of data files for candlestick combination app
           
@@ -127,7 +127,8 @@ GetFutInfo<-setRefClass(
         }
       }
       
-      write.table(InputCombtxt,paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/InputLoc.txt"),sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+      write.table(.self$InputCombtxt,"/Users/tengli/R/TradingAlg/CandleStickComb/InputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+      
     },
     
     

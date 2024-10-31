@@ -39,29 +39,27 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30F","1H"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
 
 #Step 3------------------------------------------
 #This src load the combined data
-FutToBePrepared$ReadCombData() 
+#FutToBePrepared$ReadCombData() 
 
 
 #Step 4------------------------------------------
 #StockChart plots a single stock.
 #MultiChart plots multiple charts.
 
-StockChart(NQ30F, Title = "NQ30F")
+StockChart(NQ30F)
 
-StockChart(NQ5F, Title = "NQ5F")
+StockChart(NQ5F)
 
-StockChart(NQ1F, Title = "NQ1F")
+StockChart(NQ1F)
 
-StockChart(NQ30S, Title = "NQ30S")
-
-StockChart(NQContinuous, Title = "NQContinuous",VIXfile = "VXN",VOIdata = VOI)
+StockChart(NQContinuous,VIXfile = "VXN",VOIdata = VOI)
 
 MultiChart(list(NQ5F=NQ5F,NQ1F=NQ1F))
 
@@ -178,8 +176,7 @@ PnL(data)
 #Step2: if you need to get the updated data, run the following:
 InputLoc<-readLines(paste0(getwd(),"/CandleStickComb/InputLoc.txt"))
 nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
-FutToBePrepared$DownloadData(nam=nam, fileloc = InputLoc, LoadData = TRUE)     #This src load the combined data
-StockChart(NQ5F, Title = "NQ5F") 
-#MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
-
-
+for (i in 1:length(InputLoc)){
+  FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
+}
+MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
