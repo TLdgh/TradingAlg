@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F","30F","1H"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -176,9 +176,9 @@ PnL(data)
 #Automatic detecting trendreversal:
 #Step1: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
 #Step2: if you need to get the updated data, run the following:
-OutputCombtxt<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
-nam<-gsub(pattern=".*[/](.+)Comb.CSV.*",replacement = "\\1", x=OutputCombtxt)
-FutToBePrepared$ReadCombData(OutputCombtxt=OutputCombtxt,nam=nam)     #This src load the combined data
+InputLoc<-readLines(paste0(getwd(),"/CandleStickComb/InputLoc.txt"))
+nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
+FutToBePrepared$DownloadData(nam=nam, fileloc = InputLoc, LoadData = TRUE)     #This src load the combined data
 StockChart(NQ5F, Title = "NQ5F") 
 #MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
 

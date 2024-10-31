@@ -2,9 +2,9 @@ GetFutInfo<-setRefClass(
   "FutToBePrepared",
   fields = list(FutToBePrepared="list", FUT="character", interval="character",
                 InputCombtxt="character",OutputCombtxt="character",RawDataLocation="list",nam="character",
-                tws="environment", RealData="logical", TimeZ="character"),
+                tws="environment", RealData="logical", LoadData="logical", TimeZ="character"),
   methods = list(
-    initialize=function(FUT,interval,tws,RealData = FALSE){
+    initialize=function(FUT,interval,tws,RealData = FALSE,LoadData=TRUE){
       #Create the FutToBePrepared attribute
       BasicInfo<-merge(FUT,interval)
       .self$TimeZ<-"America/Toronto"
@@ -15,7 +15,7 @@ GetFutInfo<-setRefClass(
       .self$OutputCombtxt<-character()
       .self$RawDataLocation<-list()
       .self$nam<-character()
-      .self$PrepFutures(tws, RealData)
+      .self$PrepFutures(tws, RealData, LoadData)
     },
     
     
@@ -47,7 +47,7 @@ GetFutInfo<-setRefClass(
     
     
     
-    PrepFutures=function(tws, RealData){
+    PrepFutures=function(tws, RealData, LoadData){
       #this is the expiry date of the available contracts, can be found in IB Description
       #To initialize the file for the updated expiration date, copy paste a csv and save the file name to the new expiration date
       NQWExpD <- c("20200320", "20200619", "20200918", "20201218", 
@@ -99,7 +99,7 @@ GetFutInfo<-setRefClass(
         print(tail(Fut_data))
         write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
         
-        .self$DownloadData(nam = nam[i], fileloc=OutputFileLoc_Fut)
+        .self$DownloadData(nam = nam[i], fileloc=OutputFileLoc_Fut, LoadData= LoadData)
         
         if(i<length(FutToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
         .self$RawDataLocation[nam[i]]<-InputFileLoc_Fut
@@ -123,7 +123,7 @@ GetFutInfo<-setRefClass(
           write.csv(.self$FutNewBarSize(DataFile=RawDataLocation[[i]], intv="1H", barSize = 4), file=NewBarOutputfile, row.names = FALSE)
           .self$InputCombtxt[i]<-NewBarOutputfile#this gives the input location of data files for candlestick combination app
           
-          .self$DownloadData(nam = nam[i], fileloc=NewBarOutputfile)
+          .self$DownloadData(nam = nam[i], fileloc=NewBarOutputfile, LoadData=LoadData)
         }
       }
       
@@ -275,9 +275,9 @@ GetFutInfo<-setRefClass(
     
     
     
-    DownloadData=function(nam, fileloc){
-      df <- read.csv(fileloc, header = T)%>%arrange(Date)
-      assign(nam, df, envir = .GlobalEnv)
+    DownloadData=function(nam, fileloc, LoadData){
+      if(LoadData){df <- read.csv(fileloc, header = T)%>%arrange(Date)
+      assign(nam, df, envir = .GlobalEnv)}
     },
     
     
