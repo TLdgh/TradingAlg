@@ -1,5 +1,6 @@
 PriceChart<-function(Pricedata, Title){
-  StarData <- StarFunction(Pricedata)
+  PricedataComb=read.csv(paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv"))%>%arrange(Date)
+  StarData <- StarFunction(PricedataComb)%>%subset(Date>=first(Pricedata$Date))
   Bi<-BiFunction(StarData)
   Finalplanet <- as.data.frame(PlanetFunction(Bi))
   Finalplanet <- subset(Finalplanet, PlanetHigh!=0)
@@ -112,8 +113,9 @@ VIXMACD<-function(Pricedata, vixloc){
   vix$DATE=as.character(as.Date(vix$DATE, format="%m/%d/%Y"))
   vix=select(vix, c("DATE","CLOSE"))
   colnames(vix)=c("Date","VIX")
-  Pricedata<- inner_join(Pricedata,vix, by="Date")
-  Pricedata$VIX=na.approx(Pricedata$VIX)
+  Pricedata<- left_join(Pricedata,vix, by="Date")
+  Pricedata<- Pricedata%>%mutate(VIX=na.approx(VIX, na.rm=FALSE))
+  if(is.na(last(Pricedata$VIX))==TRUE){Pricedata$VIX[nrow(Pricedata)]<-Pricedata$VIX[nrow(Pricedata)-1]}
   
   vix_macd<-as.data.frame(MACD(Pricedata$VIX, nFast = 5, nSlow = 20, nSig = 10, maType = EMA, percent = FALSE))
   vix_macd$MACD <- (vix_macd$macd - vix_macd$signal)*2
@@ -242,13 +244,13 @@ MakeDirection<-function(col){
 }
 
 
-StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOIdata=NULL){
-  Pricedata_macd <- PricedataMACD(Pricedata)
-  Pricedata_MFI<-PricedataMFI(Pricedata)
-  Pricedata_MoneyFlow<-PricedataMoneyFlow(Pricedata)
-  Alldata<- merge(Pricedata,Pricedata_macd, by="Date")
-  Alldata<- merge(Alldata,Pricedata_MFI, by="Date")
-  Alldata<- merge(Alldata,Pricedata_MoneyFlow, by="Date")
+StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE, VOIdata=NULL){
+  if(is.null(Title)==TRUE){Title<-deparse(substitute(Pricedata))}
+  Alldata=Pricedata%>%arrange(Date)
+  
+  Alldata<- merge(Alldata,PricedataMACD(Alldata), by="Date")
+  Alldata<- merge(Alldata,PricedataMFI(Alldata), by="Date")
+  Alldata<- merge(Alldata,PricedataMoneyFlow(Alldata), by="Date")
   
   if(is.null(VIXfile)!=TRUE){
     vixloc<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalStockData/US/", VIXfile, "_History.csv")
@@ -257,12 +259,16 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOI
   }else{Alldata<-na.omit(Alldata)}
   
   if(is.null(VOIdata)!=TRUE){
-    x=ts(VOIdata$OpenInterest, frequency =63)
+    Alldata<-left_join(Alldata, VOIdata%>%select(c(Date, OpenInterest)), by="Date")
+    Alldata<- Alldata%>%mutate(OpenInterest=na.approx(OpenInterest, na.rm=FALSE))
+    if(is.na(last(Alldata$OpenInterest))==TRUE){Alldata$OpenInterest[nrow(Alldata)]<-Alldata$OpenInterest[nrow(Alldata)-1]}
+    
+    x=ts(Alldata$OpenInterest, frequency =63)
     stl_decomposition<-stl(x,s.window = "periodic")
-
-    y=VOIdata%>%select(Date,OpenInterest)%>%mutate(mt=stl_decomposition$time.series[,2], st=stl_decomposition$time.series[,1], et=stl_decomposition$time.series[,3])
-    y=y%>%mutate(mt2=OpenInterest-st)
-    Alldata<-inner_join(Alldata, y, by="Date")
+    
+    Alldata<-Alldata%>%
+      mutate(mt=stl_decomposition$time.series[,2], st=stl_decomposition$time.series[,1], et=stl_decomposition$time.series[,3])%>%
+      mutate(mt2=OpenInterest-st)
     
     if(Alldata$Close[1] >= Alldata$Open[1]){Alldata$OI_Direction[1] = 'green'}else{Alldata$OI_Direction[1] = 'red'}
     for (i in 2:nrow(Alldata)){       ##Color column for MACD, VMACD, MFI and Volume direction
@@ -335,13 +341,13 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOI
   
   
   if(VolatilityCheck==TRUE){
-    DailyReturns=Pricedata%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="daily",type="log")
+    DailyReturns=Alldata%>%mutate(Date=as.Date(Date))%>%tq_transmute(select=Close, mutate_fun=periodReturn,period="daily",type="log")
     
     uspec.t <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
                           mean.model = list(armaOrder = c(1,1), include.mean = TRUE),
                           distribution.model = "std") # standardized Student t innovations
     
-    P_pred<-data.frame(Date=Pricedata$Index, TrueP=Pricedata$Close, PredLP=Pricedata$Close, PredHP=Pricedata$Close)
+    P_pred<-data.frame(Date=Alldata$Index, TrueP=Alldata$Close, PredLP=Alldata$Close, PredHP=Alldata$Close)
     
     for(i in 6400:6442){
       fit.t <- ugarchfit(spec = uspec.t, data = DailyReturns[1:i,])
@@ -398,7 +404,7 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOI
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              yaxis2=list(side = "left", title = "OpenInterest",showspikes=TRUE, spikemode='across', 
-                        spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
+                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              yaxis3 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
                            spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              yaxis4=list(side = "left", title = "MoneyFlow",showspikes=TRUE, spikemode='across', 
@@ -409,7 +415,7 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOI
              hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   }else if(is.null(VOIdata)!=TRUE & is.null(VIXfile)!=TRUE){
     p<-subplot(PriceChart(Alldata, Title), OIChart, MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=6, shareX=TRUE, heights = c(0.4, 0.2, 0.1, 0.1, 0.1, 0.1)) %>%
-      layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
+      layout(xaxis=list(anchor="y6",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              yaxis2=list(side = "left", title = "OpenInterest",showspikes=TRUE, spikemode='across', 
@@ -427,7 +433,7 @@ StockChart<-function (Pricedata, Title, VIXfile=NULL, VolatilityCheck=FALSE, VOI
   }
   else{
     p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
-      layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
+      layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
              yaxis2 = list(side = "left",title = "MACD",showspikes=TRUE, spikemode='across', 
