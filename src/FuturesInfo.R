@@ -128,6 +128,7 @@ GetFutInfo<-setRefClass(
       }
       
       write.table(.self$InputCombtxt,"/Users/tengli/R/TradingAlg/CandleStickComb/InputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
+      write.table(.self$OutputCombtxt,"/Users/tengli/R/TradingAlg/CandleStickComb/OutputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
       
     },
     
@@ -332,8 +333,7 @@ GetFutInfo<-setRefClass(
     
     ReadCombData=function(OutputCombtxt=.self$OutputCombtxt, nam=.self$nam){  #This script read and load the original data
       for (i in 1:length(OutputCombtxt)) { 
-        CombData <- read.csv(OutputCombtxt[i], header = T) 
-        CombData <- CombData[order(CombData$Date, decreasing = FALSE),]
+        CombData <- read.csv(OutputCombtxt[i], header = T)%>%arrange(Date) 
         cat("Combined data is imported, please check the combined data!", "\n", "The following data is: ",nam[i], "\n")
         print(head(CombData))
         print(tail(CombData))
