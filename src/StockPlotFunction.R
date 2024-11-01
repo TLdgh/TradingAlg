@@ -311,7 +311,9 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
        ((Alldata$MACD[i]<0 & Alldata$MACD[i]<Alldata$MACD[i-1] & Alldata$DEA[i]>0) | 
         (Alldata$MACD[i]>0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/max(1,abs(Alldata$MACD[i-1]))<0.5) | #the max is to avoid dividing by 0
         (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
-      ) |
+      )
+    ){Alldata$MACD_Direction[i]<-"yellow"}
+    else if(      
       (Alldata$High[i]>Alldata$High[i-1] & Alldata$Low[i]>Alldata$Low[i-1] & (Alldata$Close[i]>Alldata$Open[i]) & (Alldata$Open[i]+Alldata$Close[i])>=(Alldata$High[i]+Alldata$Low[i])*0.999 & # price up and strong
        ((Alldata$MACD[i]>0 & Alldata$MACD[i]>Alldata$MACD[i-1] & Alldata$DEA[i]<0) | (Alldata$MACD[i]<0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/max(1,abs(Alldata$MACD[i-1]))<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
       )
