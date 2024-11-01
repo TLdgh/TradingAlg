@@ -1,6 +1,6 @@
 PriceChart<-function(Pricedata, Title){
-  PricedataComb=read.csv(paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv"))%>%arrange(Date)
-  StarData <- StarFunction(PricedataComb)%>%subset(Date>=first(Pricedata$Date))
+  PricedataComb=read.csv(paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv"))%>%arrange(Date)%>%subset(Date>=first(Pricedata$Date) & Date<=last(Pricedata$Date))
+  StarData <- StarFunction(PricedataComb)
   Bi<-BiFunction(StarData)
   Finalplanet <- as.data.frame(PlanetFunction(Bi))
   Finalplanet <- subset(Finalplanet, PlanetHigh!=0)
@@ -308,10 +308,12 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
   for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
     if(
       (Alldata$High[i]<Alldata$High[i-1] & Alldata$Low[i]<Alldata$Low[i-1] & (Alldata$Close[i]<Alldata$Open[i]) & (Alldata$Open[i]+Alldata$Close[i])*0.999<=(Alldata$High[i]+Alldata$Low[i]) & # price down and strong
-       ((Alldata$MACD[i]<0 & Alldata$MACD[i]<Alldata$MACD[i-1] & Alldata$DEA[i]>0) | (Alldata$MACD[i]>0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
+       ((Alldata$MACD[i]<0 & Alldata$MACD[i]<Alldata$MACD[i-1] & Alldata$DEA[i]>0) | 
+        (Alldata$MACD[i]>0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/max(1,abs(Alldata$MACD[i-1]))<0.5) | #the max is to avoid dividing by 0
+        (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
       ) |
       (Alldata$High[i]>Alldata$High[i-1] & Alldata$Low[i]>Alldata$Low[i-1] & (Alldata$Close[i]>Alldata$Open[i]) & (Alldata$Open[i]+Alldata$Close[i])>=(Alldata$High[i]+Alldata$Low[i])*0.999 & # price up and strong
-       ((Alldata$MACD[i]>0 & Alldata$MACD[i]>Alldata$MACD[i-1] & Alldata$DEA[i]<0) | (Alldata$MACD[i]<0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
+       ((Alldata$MACD[i]>0 & Alldata$MACD[i]>Alldata$MACD[i-1] & Alldata$DEA[i]<0) | (Alldata$MACD[i]<0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/max(1,abs(Alldata$MACD[i-1]))<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
       )
     ){Alldata$MACD_Direction[i]<-"#8A2BE2"}
     else if(Alldata$MACD[i] >= 0){
@@ -321,7 +323,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
       if(Alldata$MACD[i]<Alldata$MACD[i-1]){Alldata$MACD_Direction[i]<-"red"}else{Alldata$MACD_Direction[i]<-"lightpink"}
     }
     
-    if(abs(Alldata$MFI[i])/abs(Alldata$MFI[i-1])<=0.5){Alldata$MFI_Direction[i]<-"#8A2BE2"}
+    if(abs(Alldata$MFI[i])/max(1,abs(Alldata$MFI[i-1]))<=0.5){Alldata$MFI_Direction[i]<-"#8A2BE2"} #the max is to avoid dividing by 0
     else if (Alldata$MFI[i] >= 0){
       if(Alldata$MFI[i]>Alldata$MFI[i-1]){Alldata$MFI_Direction[i]<-"green"}else{Alldata$MFI_Direction[i]<-"palegreen"}
     }else if(Alldata$MFI[i]<0){
@@ -335,7 +337,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
     else if(Alldata$MoneyFlow_EMA[i]<0){
       if(Alldata$MoneyFlow_EMA[i]<Alldata$MoneyFlow_EMA[i-1]){Alldata$VOL_Direction[i]<-"red"}else{Alldata$VOL_Direction[i]<-"lightpink"}
     }
-    if((Alldata$MoneyFlow[i]-Alldata$MoneyFlow[i-1])/abs(Alldata$MoneyFlow[i-1])>1){Alldata$VOL_Direction[i]<-"#8A2BE2"}
+    if((Alldata$MoneyFlow[i]-Alldata$MoneyFlow[i-1])/max(1,abs(Alldata$MoneyFlow[i-1]))>1){Alldata$VOL_Direction[i]<-"#8A2BE2"}
     
   }
   

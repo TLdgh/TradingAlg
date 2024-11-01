@@ -34,12 +34,11 @@ source("src/FuturesInfo.R")
 source("src/ChanLunFunction.R")
 source("src/StockPlotFunction.R")
 source("src/MACDPower.R")
-source("src/SignalPlot.R")
 source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30F","1H"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("30FContinuous","5FContinuous"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -97,12 +96,6 @@ FPVCOTChart(COTContinuous, COT)
 #a time scale.
 #CoDivergence generates signals for a single stock
 #with multiple time scales.
-
-source("src/SignalPlot.R") #everytime we run a function from a different src, we must run this command
-FutToBePrepared<-GetFutInfo(FUT=c("NQ"),interval=c("Continuous"))
-source("src/PrepFutures.R")
-SignalPlot(list(NQContinuous=NQContinuous), AddSignal=TRUE)
-MultiSignalChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
 
 MACDPower(DataToBeTested=NQ1F, BarOverride=FALSE)
 MACDPower(DataToBeTested=NQ5F)
