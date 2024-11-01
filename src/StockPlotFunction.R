@@ -307,11 +307,11 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
   
   for (i in 2:nrow(Alldata)) {       ##Color column for MACD, VMACD, MFI and Volume direction
     if(
-      (Alldata$High[i]<Alldata$High[i-1] & # price down
-       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]>Alldata$MACD[i-1]))
+      (Alldata$High[i]<Alldata$High[i-1] & Alldata$Low[i]<Alldata$Low[i-1] & (Alldata$Close[i]<Alldata$Open[i]) & (Alldata$Open[i]+Alldata$Close[i])*0.999<=(Alldata$High[i]+Alldata$Low[i]) & # price down and strong
+       ((Alldata$MACD[i]<0 & Alldata$MACD[i]<Alldata$MACD[i-1] & Alldata$DEA[i]>0) | (Alldata$MACD[i]>0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
       ) |
-      (Alldata$Low[i]>Alldata$Low[i-1] & # price up
-       ((Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & Alldata$MACD[i]<Alldata$MACD[i-1]))
+      (Alldata$High[i]>Alldata$High[i-1] & Alldata$Low[i]>Alldata$Low[i-1] & (Alldata$Close[i]>Alldata$Open[i]) & (Alldata$Open[i]+Alldata$Close[i])>=(Alldata$High[i]+Alldata$Low[i])*0.999 & # price up and strong
+       ((Alldata$MACD[i]>0 & Alldata$MACD[i]>Alldata$MACD[i-1] & Alldata$DEA[i]<0) | (Alldata$MACD[i]<0 & Alldata$MACD[i]*Alldata$MACD[i-1]>0 & abs(Alldata$MACD[i])/abs(Alldata$MACD[i-1])<0.5) | (Alldata$MACD[i]*Alldata$MACD[i-1]<0 & abs(Alldata$MACD[i])>abs(Alldata$MACD[i-1])))
       )
     ){Alldata$MACD_Direction[i]<-"#8A2BE2"}
     else if(Alldata$MACD[i] >= 0){
