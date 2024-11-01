@@ -179,4 +179,4 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
   FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
 }
-MultiChart(list(NQ30F=NQ30F, NQ5F=NQ5F))
+MultiChart(list(NQ5F=NQ5F,NQ30F=NQ30F,NQ4H=NQ4H))
