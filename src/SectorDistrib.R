@@ -82,8 +82,8 @@ WinningEffect<-function(data1,data2){
 
 
 
-data_old=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241029.csv")
-data_new=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241030.csv")
+data_old=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241031.csv")
+data_new=read.csv("Data/OriginalStockData/US/SectorDistribution/distribution_20241101.csv")
 
 
 #衡量赚钱效应
