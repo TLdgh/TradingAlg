@@ -100,7 +100,7 @@ PriceChart<-function(Pricedata, Title){
 
 
 PricedataMACD <- function (Pricedata){
-  Pricedata_macd <- as.data.frame(MACD(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), nFast = 5, nSlow = 20, nSig = 10, maType = EMA, percent = FALSE))
+  Pricedata_macd <- as.data.frame(MACD(Cl(Pricedata[order(Pricedata$Date, decreasing = F),]), nFast = 10, nSlow = 20, nSig = 7, maType = EMA, percent = FALSE))
   Pricedata_macd$MACD <- (Pricedata_macd$macd - Pricedata_macd$signal)*2
   Pricedata_macd$Date <- Pricedata[order(Pricedata$Date, decreasing = F),]$Date
   colnames(Pricedata_macd) <- c("DIFF", "DEA", "MACD", "Date")
@@ -551,7 +551,7 @@ MultiChart<-function(DataToBeTested){
 }
 
 
-ChartReplay<-function(Data, VIXfile=NULL, PausePeriod=3,StartDate=NULL, UserInput="N"){
+ChartReplay<-function(Data, VIXfile=NULL, PausePeriod=3,StartDate=NULL, UserInput=FALSE){
   #determine from which candlestick to start
   if(is.null(StartDate)==TRUE){StartDate<-map(Data, ~head(.x$Date, 88))%>%unlist()%>%max()}
   initialInd<-map(Data, ~tail(which(.x$Date<=StartDate), 1))
@@ -565,6 +565,30 @@ ChartReplay<-function(Data, VIXfile=NULL, PausePeriod=3,StartDate=NULL, UserInpu
       expr = {
         #Check if there's an error, if not proceed, else goes to error function
         i<-Indices%>%unlist()%>%max()
+        
+        if (UserInput){
+          proceed <- readline(prompt = "How many bars?")
+          
+          # Attempt to convert to integer and catch any non-integer inputs
+          proceed <- tryCatch({
+            as.integer(proceed)
+          }, warning = function(w){
+            cat("Please enter a valid integer.\n")
+            NA
+          }, error = function(e){
+            cat("Please enter a valid integer.\n")
+            NA
+          })
+          
+          # Check if conversion was successful (i.e., proceed is not NA)
+          if (!is.na(proceed)){
+            i <- i + proceed
+          }else{
+            cat("Exiting due to invalid input.\n")
+            break
+          }
+        }
+        
         maindate<-mainData[i, "Date"]
         Indices <-map(Data, ~tail(which(.x$Date<=maindate), 1))
         
@@ -580,14 +604,8 @@ ChartReplay<-function(Data, VIXfile=NULL, PausePeriod=3,StartDate=NULL, UserInpu
           newtotdata<-map2(Data, Indices, ~ slice(.x, max(c(1, .y-399)):.y))
           res<-MultiChart(newtotdata)}
         
-        
-        #evaluate based on UserInput or not
-        if(UserInput=="Y"){
-          proceed<-readline(prompt="Next bar? Y/N")
-          if(proceed=="Y"){print(res);Indices<-map(Indices, ~.x+1);next}else{break}}
-        else{
-          cat("Chart is ready! ", paste0(names(Indices), ":", Indices), sep="")
-          cat("\n");print(res);Indices<-map(Indices, ~.x+1);Sys.sleep(PausePeriod)}
+        cat("Chart is ready! ", paste0(names(Indices), ":", Indices), sep="")
+        cat("\n");print(res);Indices<-map(Indices, ~.x+1);Sys.sleep(PausePeriod)
       },
       
       #The error handling part
