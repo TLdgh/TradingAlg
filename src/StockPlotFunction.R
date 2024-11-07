@@ -1,5 +1,7 @@
 PriceChart<-function(Pricedata, Title){
-  PricedataComb=read.csv(paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv"))%>%arrange(Date)%>%subset(Date>=first(Pricedata$Date) & Date<=last(Pricedata$Date))
+  if(substr(Title, 1,2)=="NQ"){combfile_path=paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv")}
+  else if(str_sub(Title,-5)=="daily"){combfile_path=paste0(getwd(),"/CandleStickComb/US/",Title, "Comb.csv")}
+  PricedataComb=read.csv(combfile_path)%>%arrange(Date)%>%subset(Date>=first(Pricedata$Date) & Date<=last(Pricedata$Date))
   StarData <- StarFunction(PricedataComb)
   Bi<-BiFunction(StarData)
   Finalplanet <- as.data.frame(PlanetFunction(Bi))
