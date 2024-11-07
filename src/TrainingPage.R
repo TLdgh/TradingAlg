@@ -10,9 +10,15 @@ PnL(data)
 ChartReplay(Data=list(SPY_daily=SPY_daily),StartDate = "2002-04-04",PausePeriod = 7)
 
 #NQ:
-ChartReplay(Data=list(NQ30FContinuous=NQ30FContinuous, NQ4HContinuous=NQ4HContinuous, NQContinuous=NQContinuous), PausePeriod = 7)
+ChartReplay(Data=list(NQ5FContinuous=NQ5FContinuous, 
+                      NQ30FContinuous=NQ30FContinuous), 
+            StartDate = "2020-10-05 05:00:00", UserInput = TRUE)
 
-ChartReplay(Data=list(NQ5FContinuous=NQ5FContinuous, NQ30FContinuous=NQ30FContinuous), StartDate = "2019-12-11 09:00:00", PausePeriod = 7)
+ChartReplay(Data=list(NQ5FContinuous=NQ5FContinuous, 
+                      NQ30FContinuous=NQ30FContinuous, 
+                      NQ4HContinuous=NQ4HContinuous), 
+            StartDate = "2020-01-03 08:40:00",UserInput = TRUE)
+
 
 
 ChartReplay(Data = list(XLK_daily=XLK_daily, XLK_weekly=XLK_weekly), 

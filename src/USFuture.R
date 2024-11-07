@@ -22,6 +22,7 @@
 library(tidyverse)
 library(tidyquant)
 library(plotly)
+library(readxl)
 library(IBrokers)
 
 #User must specify the IB port number

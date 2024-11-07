@@ -364,4 +364,43 @@ GetFutInfo<-setRefClass(
   )
 )
 
+GetOpenInterest<-function(){
+  xlsx_files <- list.files(path = "CMEVOI/RawData", pattern = "\\.xlsx$", full.names = TRUE)
+  VOIfn<-data.frame(path=xlsx_files, filename=str_extract(xlsx_files, "daily.*?\\.xlsx"), filedate=ymd(parse_number(xlsx_files)))
+  
+  Instrument<-c("NQ")   #"NQ","CAD"
+  
+  for (val in Instrument){
+    VOI<-read.csv(paste0("CMEVOI/", val, "_DailyVOI.csv"))
+    FilesToAdd<-which(!VOIfn$filedate %in% VOI$Date)
+    
+    for (i in FilesToAdd){
+      if(str_sub(VOIfn[i,1], -4)=="xlsx"){
+        Exfile <- read_xlsx(VOIfn[i,"path"], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
+      }else if(str_sub(VOIfn[i,1], -3)=="xls"){
+        Exfile <- read_xls(VOIfn[i,"path"], sheet = "CME Group Vol and OI by Product",.name_repair = "minimal")
+      }
+      
+      colnames(Exfile)<-paste0("V",c(1:ncol(Exfile)))
+      Exfile <- Exfile %>%filter(rowSums(is.na(.)) < ncol(.))
+      Exfile <- Exfile %>%select(where(~ !all(is.na(.))))
+      colnames(Exfile)<-c("Description","Exchange","Commodity","ProductDescription","FutureOption","CMEGlobexVolume","PitVolume","ExPitVolume","OTCVolume","Volume","MTDADV","OpenInterest")
+      Exfile<-Exfile[(which(Exfile$Description=="Description")+1):nrow(Exfile),] 
+      Exfile<-Exfile%>%mutate(across(c("CMEGlobexVolume","PitVolume","ExPitVolume","OTCVolume","Volume","MTDADV","OpenInterest"), as.numeric))
+      
+      
+      if (val=="NQ"){
+        Exfile <- Exfile%>%filter(Commodity %in% c("NQ", "MNQ") & FutureOption=="F")%>%select(c(Volume,OpenInterest))%>%summarise(across(everything(),sum))%>%mutate(Date=as.character(VOIfn$filedate[i]), .before=Volume)
+      }
+      
+      VOI<-rbind(VOI,Exfile) #VOI data must have most recent data on the bottom, i.e. time ascending.
+    }
+    
+    VOI=VOI%>%arrange(Date)
+    
+    write.csv(VOI,file=paste0("CMEVOI/", val, "_DailyVOI.csv"), row.names = F)
+  }
+  
+}
+
 
