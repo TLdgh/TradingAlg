@@ -39,7 +39,7 @@ twsDisconnect(tws)#to disconnect
 #Once the user has downloaded the initial data,
 #the user can use the following to update:
 
-StkToBePrepared<-GetStkInfo(tws=tws, STK = c("SPY","QQQ","GOOGL","AAPL","MSFT"), interval = c("daily"), RealData=TRUE)
+StkToBePrepared<-GetStkInfo(tws=tws, STK = c("GOOGL","AAPL","MSFT"), interval = c("daily"), RealData=TRUE)
 
 StkToBePrepared<-GetStkInfo(tws=tws, STK = c("XLK","XLV","XLF","XLRE","XLE","XLB","XLY","XLI","XLU","XLP","XLC"), 
                             interval = c("daily"), RealData=FALSE)
