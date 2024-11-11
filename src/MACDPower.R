@@ -1,3 +1,53 @@
+split_interval<-function(interval){
+  res=interval%>%mutate(group=cumsum(MACD * lag(MACD, default = first(MACD))<=0))%>%
+    group_by(group)%>%group_split()
+  return(res)
+}
+
+checkdiv<-function(intervals, dir){
+  if(dir==-1){
+    
+    A1df=split_interval(intervals$l1)%>%keep(~nrow(.x)>5 && all(.x$MACD<=0))%>%
+      map(~filter(.x, DIFF<=0 & DEA<=0))
+    A2df=split_interval(intervals$l2)%>%keep(~nrow(.x)>5 && all(.x$MACD<=0))%>%
+      map(~filter(.x, DIFF<=0 & DEA<=0))
+    
+    if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
+    if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
+    
+    minDEA=df%>%map(~min(.x$DEA))%>%unlist()
+    #print(minDEA)
+    last_df=df[[length(df)]]$MACD
+    second_last_df=df[[length(df)-1]]$MACD
+    compareMACD=length(which(last_df>min(second_last_df)))/length(last_df)
+    #print(compareMACD)
+    if(length(compareMACD)!=0){
+      return(mean(c(last(minDEA)>minDEA[length(minDEA)-1], compareMACD>=0.7)))
+    }else{return(0)}
+    
+  }
+  else{
+    
+    A1df=split_interval(intervals$l1)%>%keep(~nrow(.x)>5 && all(.x$MACD>0))%>%
+      map(~filter(.x, DIFF>0 & DEA>0))
+    A2df=split_interval(intervals$l2)%>%keep(~nrow(.x)>5 && all(.x$MACD>0))%>%
+      map(~filter(.x, DIFF>0 & DEA>0))
+    
+    if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
+    if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
+    
+    maxDEA=df%>%map(~max(.x$DEA))%>%unlist()
+    last_df=df[[length(df)]]$MACD
+    second_last_df=df[[length(df)-1]]$MACD
+    compareMACD=length(which(last_df<=max(second_last_df)))/length(last_df)
+    if(length(compareMACD)!=0){
+      return(mean(c(last(maxDEA)<maxDEA[length(maxDEA)-1], compareMACD>=0.7)))
+    }else{return(0)}
+    
+  }
+  
+}
+
 MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, ScheduleAlert=FALSE){
   ####################################################################################################
   ####----Get the MACD area and reduction factor for the planet in order to consider divergence----###
@@ -16,9 +66,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   if(In1Price<In2Price){ #price is going up
     Direction<-1
     #上涨能量背驰
-    area_pos <- Total_interval[,c("MACD","Date")]%>%filter(., MACD>0)
-    maxat=last(which(area_pos$MACD==max(area_pos$MACD)))
-    Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
+    Strength_pos<-checkdiv(intervals =list(l1=A1_interval, l2=A2_interval), dir = Direction)
     
     #上涨均线面积背驰
     EMALine_Pos<-Total_interval[,c("DEA","Date")]%>%filter(., DEA>0)
@@ -28,9 +76,7 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
   }else{
     Direction<- -1
     #下跌能量背驰
-    area_neg <- Total_interval[,c("MACD","Date")]%>%filter(., MACD<=0)
-    minat=last(which(area_neg$MACD==min(area_neg$MACD)))
-    Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
+    Strength_neg<-checkdiv(intervals =list(l1=A1_interval, l2=A2_interval), dir = Direction)
     
     #下跌均线面积背驰
     EMALine_Neg<-Total_interval[,c("DEA","Date")]%>%filter(., DEA<=0)
@@ -171,14 +217,14 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
     if(Direction==1){
       rownames(MacdMatrix)<-c("MACD 上涨能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 上涨能量背驰","强度"]<-Strength_pos 
-      MacdMatrix["MACD 上涨能量背驰","背驰"]<-(Strength_pos>0.33)
+      MacdMatrix["MACD 上涨能量背驰","背驰"]<-(Strength_pos>0)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Pos
       MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Pos>0.33)
     }else{
       rownames(MacdMatrix)<-c("MACD 下跌能量背驰", "MACD 均线面积背驰")      
       MacdMatrix["MACD 下跌能量背驰","强度"]<-Strength_neg
-      MacdMatrix["MACD 下跌能量背驰","背驰"]<-(Strength_neg>0.33)
+      MacdMatrix["MACD 下跌能量背驰","背驰"]<-(Strength_neg>0)
       
       MacdMatrix["MACD 均线面积背驰","强度"]<-EMALineStrength_Neg
       MacdMatrix["MACD 均线面积背驰","背驰"]<-(EMALineStrength_Neg>0.33)
@@ -282,15 +328,20 @@ EMACalculator<-function(Pricedata, Data_ema, Period){
   return(DivergenceMatrix)
 }
 
-MACDPower<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_MoneyFlow=NULL, Data_boll=NULL, Data_ema=NULL, ScheduleAlert=FALSE){
+MACDPower<-function(DataToBeTested, Title, Period=NULL, BarOverride=FALSE, SBPStr=NULL, Data_macd=NULL, Data_mfi=NULL, Data_MoneyFlow=NULL, Data_boll=NULL, Data_ema=NULL, ScheduleAlert=FALSE){
   Pdate<-tail(DataToBeTested$Date,1)
   if(is.null(Data_macd)==TRUE){Data_macd<-PricedataMACD(DataToBeTested)}else{Data_macd<-Data_macd%>%filter(Date<=Pdate)}
   if(is.null(Data_mfi)==TRUE){Data_mfi<-PricedataMFI(DataToBeTested)}else{Data_mfi<-Data_mfi%>%filter(Date<=Pdate)}
   if(is.null(Data_MoneyFlow)==TRUE){Data_MoneyFlow<-PricedataMoneyFlow(DataToBeTested)}else{Data_MoneyFlow<-Data_MoneyFlow%>%filter(Date<=Pdate)}
   if(is.null(Data_boll)==TRUE){Data_boll<-PricedataBOLL(DataToBeTested)}else{Data_boll<-Data_boll%>%filter(Date<=Pdate)}
   if(is.null(Data_ema)==TRUE){Data_ema<-list(EMA5=FuncEMA5(DataToBeTested), EMA20=FuncEMA20(DataToBeTested))}else{Data_ema<-Data_ema%>%filter(Date<=Pdate)}
+  
+  
   if(is.null(SBPStr)==TRUE){
-    SBPStr<-ChanLunStr(DataToBeTested)
+    if(substr(Title, 1,2)=="NQ"){combfile_path=paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv")}
+    else if(str_sub(Title,-5)=="daily"){combfile_path=paste0(getwd(),"/CandleStickComb/US/",Title, "Comb.csv")}
+    PricedataComb=read.csv(combfile_path)%>%arrange(Date)%>%subset(Date>=first(DataToBeTested$Date) & Date<=last(DataToBeTested$Date))
+    SBPStr<-ChanLunStr(PricedataComb)
     StarData<-SBPStr$StarData
     Bi<-SBPStr$Bi
     BiPlanetStr<-SBPStr$BiPlanetStr
