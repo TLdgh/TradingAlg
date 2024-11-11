@@ -399,6 +399,8 @@ GetOpenInterest<-function(){
     VOI=VOI%>%arrange(Date)
     
     write.csv(VOI,file=paste0("CMEVOI/", val, "_DailyVOI.csv"), row.names = F)
+    
+    assign(paste0(val, "_DailyVOI"), VOI, envir = .GlobalEnv)
   }
   
 }

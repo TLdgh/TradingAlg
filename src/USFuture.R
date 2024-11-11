@@ -59,7 +59,7 @@ StockChart(NQ5F)
 
 StockChart(NQ1F)
 
-StockChart(NQContinuous,VIXfile = "VXN",VOIdata = VOI)
+StockChart(NQContinuous,VIXfile = "VXN",VOIdata = NQ_DailyVOI)
 
 MultiChart(list(NQ5F=NQ5F,NQ1F=NQ1F))
 
