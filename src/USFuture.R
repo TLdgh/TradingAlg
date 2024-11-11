@@ -98,11 +98,11 @@ FPVCOTChart(COTContinuous, COT)
 #CoDivergence generates signals for a single stock
 #with multiple time scales.
 
-MACDPower(DataToBeTested=NQ1F, BarOverride=FALSE)
-MACDPower(DataToBeTested=NQ5F)
-MACDPower(DataToBeTested=NQ30F)
-MACDPower(DataToBeTested=NQ4H)
-MACDPower(DataToBeTested=NQContinuous, BarOverride=FALSE)
+MACDPower(DataToBeTested=NQ1F, Title = "NQ1F")
+MACDPower(DataToBeTested=NQ5F, Title = "NQ5F")
+MACDPower(DataToBeTested=NQ30F, Title = "NQ30F")
+MACDPower(DataToBeTested=NQ4H, Title = "NQ4H")
+MACDPower(DataToBeTested=NQContinuous, Title = "NQContinuous")
 MACDPower(DataToBeTested=subset(NQ30F, Date<="2023-05-23 02:30:00"))
 
 MACDPower(DataToBeTested=GC30F, BarOverride=FALSE)

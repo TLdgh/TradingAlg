@@ -204,25 +204,25 @@ PricedataSAR<-function(Pricedata){
 }
 
 FuncEMA60<-function(Pricedata){
-  EMA60<-Pricedata%>%arrange(Date)%>%mutate(EMA60=EMA(Close,60))%>%
+  EMA60<-Pricedata%>%arrange(Date)%>%mutate(EMA60=EVWMA(price =  Close, volume = Volume, n=60))%>%
     na.omit()%>%select(Date, EMA60)
   return(EMA60)
 }
 
 FuncEMA30<-function(Pricedata){
-  EMA30<-Pricedata%>%arrange(Date)%>%mutate(EMA30=EMA(Close,30))%>%
+  EMA30<-Pricedata%>%arrange(Date)%>%mutate(EMA30=EVWMA(price =  Close, volume = Volume, n=30))%>%
     na.omit()%>%select(Date, EMA30)
   return(EMA30)
 }
 
 FuncEMA20<-function(Pricedata){
-  EMA20<-Pricedata%>%arrange(Date)%>%mutate(EMA20=EMA(Close,20))%>%
+  EMA20<-Pricedata%>%arrange(Date)%>%mutate(EMA20=EVWMA(price =  Close, volume = Volume, n=20))%>%
     na.omit()%>%select(Date, EMA20)
   return(EMA20)
 }
 
 FuncEMA5<-function(Pricedata){
-  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EMA(Close,5))%>%
+  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EVWMA(price =  Close, volume = Volume, n=5))%>%
     na.omit()%>%select(Date, EMA5)
   return(EMA5)
 }
