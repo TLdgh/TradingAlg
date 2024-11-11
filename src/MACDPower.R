@@ -7,10 +7,14 @@ split_interval<-function(interval){
 checkdiv<-function(intervals, dir){
   if(dir==-1){
     
-    A1df=split_interval(intervals$l1)%>%keep(~nrow(.x)>5 && all(.x$MACD<=0))%>%
-      map(~filter(.x, DIFF<=0 & DEA<=0))
-    A2df=split_interval(intervals$l2)%>%keep(~nrow(.x)>5 && all(.x$MACD<=0))%>%
-      map(~filter(.x, DIFF<=0 & DEA<=0))
+    A1df=split_interval(intervals$l1)%>%
+      map(~filter(.x, DIFF<=0 & DEA<=0))%>%
+      keep(~nrow(.x)>5 && all(.x$MACD<=0))
+      
+    A2df=split_interval(intervals$l2)%>%
+      map(~filter(.x, DIFF<=0 & DEA<=0))%>%
+      keep(~nrow(.x)>5 && all(.x$MACD<=0))
+      
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
     if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
@@ -28,10 +32,14 @@ checkdiv<-function(intervals, dir){
   }
   else{
     
-    A1df=split_interval(intervals$l1)%>%keep(~nrow(.x)>5 && all(.x$MACD>0))%>%
-      map(~filter(.x, DIFF>0 & DEA>0))
-    A2df=split_interval(intervals$l2)%>%keep(~nrow(.x)>5 && all(.x$MACD>0))%>%
-      map(~filter(.x, DIFF>0 & DEA>0))
+    A1df=split_interval(intervals$l1)%>%
+      map(~filter(.x, DIFF>0 & DEA>0))%>%
+      keep(~nrow(.x)>5 && all(.x$MACD>0))
+      
+    A2df=split_interval(intervals$l2)%>%
+      map(~filter(.x, DIFF>0 & DEA>0))%>%
+      keep(~nrow(.x)>5 && all(.x$MACD>0))
+      
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
     if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
