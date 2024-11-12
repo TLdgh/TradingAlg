@@ -11,7 +11,7 @@ PriceChart<-function(Pricedata, Title){
   Pricedata_EMA5 <- FuncEMA5(Pricedata)
   Pricedata_EMA20 <- FuncEMA20(Pricedata)
   Pricedata_EMA30 <- FuncEMA30(Pricedata)
-  Pricedata_EMA60 <- Pricedata_BOLL[, c("Date", "EMA60")]
+  Pricedata_EMA60 <- FuncEMA60(Pricedata)
   Pricedata_SAR<-PricedataSAR(Pricedata)
   Pricedata<-Pricedata%>%mutate(Return=log(Close/lag(Close)))
   
@@ -204,25 +204,25 @@ PricedataSAR<-function(Pricedata){
 }
 
 FuncEMA60<-function(Pricedata){
-  EMA60<-Pricedata%>%arrange(Date)%>%mutate(EMA60=EVWMA(price =  Close, volume = Volume, n=60))%>%
+  EMA60<-Pricedata%>%arrange(Date)%>%mutate(EMA60=EVWMA(price=Close, volume=Volume, n=60))%>%
     na.omit()%>%select(Date, EMA60)
   return(EMA60)
 }
 
 FuncEMA30<-function(Pricedata){
-  EMA30<-Pricedata%>%arrange(Date)%>%mutate(EMA30=EVWMA(price =  Close, volume = Volume, n=30))%>%
+  EMA30<-Pricedata%>%arrange(Date)%>%mutate(EMA30=EVWMA(price=Close, volume=Volume, n=30))%>%
     na.omit()%>%select(Date, EMA30)
   return(EMA30)
 }
 
 FuncEMA20<-function(Pricedata){
-  EMA20<-Pricedata%>%arrange(Date)%>%mutate(EMA20=EVWMA(price =  Close, volume = Volume, n=20))%>%
+  EMA20<-Pricedata%>%arrange(Date)%>%mutate(EMA20=EVWMA(price=Close, volume=Volume, n=20))%>%
     na.omit()%>%select(Date, EMA20)
   return(EMA20)
 }
 
 FuncEMA5<-function(Pricedata){
-  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EVWMA(price =  Close, volume = Volume, n=5))%>%
+  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EVWMA(price=Close, volume=Volume, n=5))%>%
     na.omit()%>%select(Date, EMA5)
   return(EMA5)
 }
