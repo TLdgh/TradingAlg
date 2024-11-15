@@ -183,4 +183,4 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=OutputLoc)
 for (i in 1:length(OutputLoc)){
   FutToBePrepared$ReadCombData(OutputCombtxt = OutputLoc[i] , nam=nam[i])     #This src load the combined data
 }
-MultiChart(list(NQ5F=NQ5FComb,NQ30F=NQ30FComb,NQ4H=NQ4HComb))
+MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))

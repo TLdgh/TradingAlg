@@ -60,3 +60,5 @@ Data
 CFTC_OI
 CMEVOI
 CandleStickComb
+*.xlsx
+*.csv
