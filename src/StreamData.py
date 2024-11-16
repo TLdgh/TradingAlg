@@ -16,14 +16,28 @@ class TestApp(EClient, EWrapper):
         self.symb=None
         self.done = False  # Flag to indicate when to stop the application
 
+
     def set_symbol(self, symb):
         self.symb = symb
         self.csv_filepath=f"HistoricalData_{symb}.csv"
 
+
     def generate_reqId(self):
         self.current_reqId += 1
         return self.current_reqId
-    
+
+
+    def _initialize_csv(self, fieldnames):
+        #Initialize the CSV file and writer if not already set.
+        if os.path.exists(self.csv_filepath):
+            self.csv_file = open(self.csv_filepath, mode="a", newline="")
+            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=fieldnames)
+        else:
+            self.csv_file = open(self.csv_filepath, mode="a", newline="")
+            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=fieldnames)
+            self.csv_writer.writeheader()
+
+
     def start(self):
         if self.symb is None:
             raise ValueError("Symbol is not set. Please use set_symbol() before starting.")
@@ -35,11 +49,11 @@ class TestApp(EClient, EWrapper):
         nq_contract.exchange = "CME"    # Exchange for NQ futures (CME GLOBEX)
         nq_contract.currency = "USD"       # Currency for the contract
         nq_contract.lastTradeDateOrContractMonth = "20241220"  # Expiration year/month (example: Dec 2023)
-
+        
         time_z=pytz.timezone("US/Central")
         current_time=datetime.now(time_z)
         current_time=current_time.strftime("%Y%m%d %H:%M:%S US/Central")
-
+        
         # Request contract details for NQ contract
         reqId = self.generate_reqId()
         self.reqContractDetails(reqId=reqId, contract=nq_contract)
@@ -56,16 +70,19 @@ class TestApp(EClient, EWrapper):
         self.reqMktData(reqId=reqId, contract=nq_contract, genericTickList="",snapshot=False, regulatorySnapshot=False, mktDataOptions=[])
         '''
         
-        self.reqTickByTickData(reqId=reqId, contract=nq_contract, tickType="AllLast", numberOfTicks=10, ignoreSize=False)
+        self.reqTickByTickData(reqId=reqId, contract=nq_contract, tickType="AllLast", numberOfTicks=0, ignoreSize=False)
         print(f"Tick by Tick data request sent for {self.symb} with reqId={reqId}")
-        
+
+
     def stop(self):
         self.done=True
         self.disconnect()
-        
+
+
     def error(self, reqId, errorCode, errorString):
         print("Error. Id: " , reqId, " Code: " , errorCode , " Error Message: " , errorString)      
-        
+
+
     def contractDetails(self, reqId, contract_info):
         print(f"Contract Details for Request ID {reqId}:\n")
         print(f"Symbol: {contract_info.contract.symbol}\n")
@@ -73,10 +90,11 @@ class TestApp(EClient, EWrapper):
         print(f"Currency: {contract_info.contract.currency}\n")
         print(f"Minimum Tick: {contract_info.minTick}\n")
         print(f"Multiplier: {contract_info.contract.multiplier}\n")
-
+        
         attrs=vars(contract_info)
         print("\n".join(f"{name}: {value}" for name, value in attrs.items()))
-        
+
+
     # This callback method will handle the historical data once received
     def historicalData(self, reqId: int, bar: BarData):
         originaldate=bar.date
@@ -90,18 +108,12 @@ class TestApp(EClient, EWrapper):
         bar_dict = bar.__dict__.copy()  # Make a copy to avoid mutating the original
         bar_dict['date'] = reformatted_date
         
-        
-        # Open file or initiate it
-        if os.path.exists(self.csv_filepath):
-            self.csv_file=open(self.csv_filepath, mode="a", newline="")
-            self.csv_writer=csv.DictWriter(self.csv_file, fieldnames=bar_dict.keys())
-        else:
-            self.csv_file=open(self.csv_filepath, mode="w", newline="")
-            self.csv_writer=csv.DictWriter(self.csv_file, fieldnames=bar_dict.keys())
-            self.csv_writer.writeheader()
+        # Initialize the CSV writer if not already done
+        self._initialize_csv(fieldnames=bar_dict.keys())
         
         # Write the new row
         self.csv_writer.writerow(bar_dict)
+
 
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         if self.csv_file:
@@ -110,14 +122,17 @@ class TestApp(EClient, EWrapper):
             print(f"Historical Data End for Request ID {reqId}: Start Date: {start}, End Date: {end}")
             
             #self.disconnect()
-            
+
+
     # Callback for handling market data
     def tickPrice(self, reqId, tickType, price, attrib):
         print(f"reqId: {reqId}, tickType: {TickTypeEnum.to_str(tickType)}, price: {price}, attrib: {attrib}")
 
+
     def tickSize(self, reqId, tickType, size):
         print(f"reqId: {reqId}, tickType: {TickTypeEnum.to_str(tickType)}, size: {size}")
-    
+
+
     # Store the market data in a CSV file
     def store_market_data(self, reqId, data_type, value):
         # Prepare data dictionary to be written to CSV
@@ -139,29 +154,68 @@ class TestApp(EClient, EWrapper):
         
         # Write the data row
         self.csv_writer.writerow(data_dict)
-    
+
+
     def tickByTickAllLast(self, reqId: int, tickType: int, time: int, price: float,
                           size: Decimal, tickAtrribLast: TickAttribLast, exchange: str,
                           specialConditions: str):
         super().tickByTickAllLast(reqId, tickType, time, price, size, tickAtrribLast,exchange, specialConditions)
         
         formatted_time = datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')  # Adjusted reference
-
+        
         print(
             f"ReqId: {reqId} | Time: {formatted_time} | Price: {price:.4f} | "
             f"Size: {size:.0f} | Exchange: {exchange} | Spec Cond: {specialConditions} | "
             f"PastLimit: {tickAtrribLast.pastLimit} | Unreported: {tickAtrribLast.unreported}"
         )
+        
+        # Data dictionary to be stored
+        data = {
+            "ReqId": reqId,
+            "Timestamp": formatted_time,
+            "Price": round(price, 4),
+            "Size": int(size),
+            "Exchange": exchange,
+            "SpecialConditions": specialConditions,
+            "PastLimit": tickAtrribLast.pastLimit,
+            "Unreported": tickAtrribLast.unreported,
+        }
+        
+        # Initialize the CSV writer if not already done
+        self._initialize_csv(fieldnames=data.keys())
+        
+        # Write data to CSV
+        self.csv_writer.writerow(data)
+        print(f"Data written to CSV for ReqId {reqId}: {data}")
+
 
     def historicalTicksLast(self, reqId: int, ticks, done: bool):
         print(f"Historical Ticks Last Data for ReqId {reqId}:")
         
+        # Fieldnames for the CSV
+        fieldnames = ["ReqId", "Timestamp", "Price", "Size"]
+        
+        # Initialize the CSV writer if not already done
+        self._initialize_csv(fieldnames=fieldnames)
+        
+        # Process each tick and write to CSV
         for tick in ticks:
-            formatted_time = datetime.fromtimestamp(tick.time).strftime('%Y-%m-%d %H:%M:%S')  # Adjusted reference
-            print(f"Live Tick | ReqId: {reqId} | Time: {formatted_time} | Price: {tick.price:.2f} | Size: {tick.size}")
+            formatted_time = datetime.fromtimestamp(tick.time).strftime('%Y-%m-%d %H:%M:%S')
+            data = {
+                "ReqId": reqId,
+                "Timestamp": formatted_time,
+                "Price": round(tick.price, 2),
+                "Size": tick.size,
+            }
+            self.csv_writer.writerow(data)
         
         if done:
             print(f"Historical tick data for ReqId {reqId} is complete.")
+
+
+
+
+
 
 
 # Create the application instance
