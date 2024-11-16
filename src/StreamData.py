@@ -1,7 +1,9 @@
 from ibapi.client import *
 from ibapi.wrapper import *
+from ibapi.ticktype import TickTypeEnum
 from datetime import datetime
-import threading, time, pytz, csv, os
+from decimal import Decimal
+import threading, pytz, csv, os
 
 class TestApp(EClient, EWrapper):
     def __init__(self):
@@ -41,12 +43,21 @@ class TestApp(EClient, EWrapper):
         # Request contract details for NQ contract
         reqId = self.generate_reqId()
         self.reqContractDetails(reqId=reqId, contract=nq_contract)
-
+        print(f"Contract detail is obtained with reqId: {reqId}")
+        
+        '''
         # Request the historical data
         self.reqHistoricalData(reqId=reqId, contract=nq_contract,endDateTime=current_time, 
                         durationStr="2 W", barSizeSetting="30 mins", 
                         whatToShow="TRADES", useRTH=0,formatDate=1,keepUpToDate=False,chartOptions=[])
-        print(f"current reqId is: {reqId}")
+        print(f"Historical Data is obtained with reqId: {reqId}")
+        
+        self.reqMarketDataType(1)
+        self.reqMktData(reqId=reqId, contract=nq_contract, genericTickList="",snapshot=False, regulatorySnapshot=False, mktDataOptions=[])
+        '''
+        
+        self.reqTickByTickData(reqId=reqId, contract=nq_contract, tickType="AllLast", numberOfTicks=10, ignoreSize=False)
+        print(f"Tick by Tick data request sent for {self.symb} with reqId={reqId}")
         
     def stop(self):
         self.done=True
@@ -99,8 +110,58 @@ class TestApp(EClient, EWrapper):
             print(f"Historical Data End for Request ID {reqId}: Start Date: {start}, End Date: {end}")
             
             #self.disconnect()
+            
+    # Callback for handling market data
+    def tickPrice(self, reqId, tickType, price, attrib):
+        print(f"reqId: {reqId}, tickType: {TickTypeEnum.to_str(tickType)}, price: {price}, attrib: {attrib}")
 
+    def tickSize(self, reqId, tickType, size):
+        print(f"reqId: {reqId}, tickType: {TickTypeEnum.to_str(tickType)}, size: {size}")
+    
+    # Store the market data in a CSV file
+    def store_market_data(self, reqId, data_type, value):
+        # Prepare data dictionary to be written to CSV
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data_dict = {
+            "Timestamp": timestamp,
+            "DataType": data_type,
+            "Value": value
+        }
+        
+        # Open file or initialize writer
+        if os.path.exists(self.csv_filepath):
+            self.csv_file = open(self.csv_filepath, mode="a", newline="")
+            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=data_dict.keys())
+        else:
+            self.csv_file = open(self.csv_filepath, mode="w", newline="")
+            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=data_dict.keys())
+            self.csv_writer.writeheader()
+        
+        # Write the data row
+        self.csv_writer.writerow(data_dict)
+    
+    def tickByTickAllLast(self, reqId: int, tickType: int, time: int, price: float,
+                          size: Decimal, tickAtrribLast: TickAttribLast, exchange: str,
+                          specialConditions: str):
+        super().tickByTickAllLast(reqId, tickType, time, price, size, tickAtrribLast,exchange, specialConditions)
+        
+        formatted_time = datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')  # Adjusted reference
 
+        print(
+            f"ReqId: {reqId} | Time: {formatted_time} | Price: {price:.4f} | "
+            f"Size: {size:.0f} | Exchange: {exchange} | Spec Cond: {specialConditions} | "
+            f"PastLimit: {tickAtrribLast.pastLimit} | Unreported: {tickAtrribLast.unreported}"
+        )
+
+    def historicalTicksLast(self, reqId: int, ticks, done: bool):
+        print(f"Historical Ticks Last Data for ReqId {reqId}:")
+        
+        for tick in ticks:
+            formatted_time = datetime.fromtimestamp(tick.time).strftime('%Y-%m-%d %H:%M:%S')  # Adjusted reference
+            print(f"Live Tick | ReqId: {reqId} | Time: {formatted_time} | Price: {tick.price:.2f} | Size: {tick.size}")
+        
+        if done:
+            print(f"Historical tick data for ReqId {reqId} is complete.")
 
 
 # Create the application instance
