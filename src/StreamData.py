@@ -20,7 +20,9 @@ class TestApp(EClient, EWrapper):
     def set_symbol(self, symb):
         self.symb = symb
         filetime=(datetime.now() + timedelta(days=1)).strftime('%Y%m%d')
-        self.csv_filepath=f"TickData_{symb}_{filetime}.csv"
+        self.csv_filepath=os.path.join(os.getcwd(), 
+                                       "Data/OriginalFuturesData/NQ/TickData", 
+                                       f"TickData_{symb}_{filetime}.csv")
 
 
     def generate_reqId(self):
