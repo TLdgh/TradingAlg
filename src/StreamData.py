@@ -3,7 +3,7 @@ from ibapi.wrapper import *
 from ibapi.ticktype import TickTypeEnum
 from datetime import datetime
 from decimal import Decimal
-import threading, pytz, csv, os
+import threading, pytz, csv, os, time, timedelta
 
 class TestApp(EClient, EWrapper):
     def __init__(self):
@@ -19,7 +19,7 @@ class TestApp(EClient, EWrapper):
 
     def set_symbol(self, symb):
         self.symb = symb
-        self.csv_filepath=f"HistoricalData_{symb}.csv"
+        self.csv_filepath=f"TickData_{symb}_{(datetime.now() + timedelta(days=1)).strftime('%Y%m%d')}.csv"
 
 
     def generate_reqId(self):
@@ -54,29 +54,37 @@ class TestApp(EClient, EWrapper):
         current_time=datetime.now(time_z)
         current_time=current_time.strftime("%Y%m%d %H:%M:%S US/Central")
         
-        # Request contract details for NQ contract
+        # Request contract details
         reqId = self.generate_reqId()
+        print(f"-------------------------------------------------")
+        print(f"Contract detail is obtained for {self.symb} with Request ID: {reqId}")
+        print(f"-------------------------------------------------")
         self.reqContractDetails(reqId=reqId, contract=nq_contract)
-        print(f"Contract detail is obtained with reqId: {reqId}")
         
         '''
-        # Request the historical data
+        # Request the historical data        
+        # print(f"Historical Data is obtained with reqId: {reqId}")
         self.reqHistoricalData(reqId=reqId, contract=nq_contract,endDateTime=current_time, 
                         durationStr="2 W", barSizeSetting="30 mins", 
                         whatToShow="TRADES", useRTH=0,formatDate=1,keepUpToDate=False,chartOptions=[])
-        print(f"Historical Data is obtained with reqId: {reqId}")
-        
+
+        # Request the market data
+        # print(f"Market data request sent for {self.symb} with reqId={reqId}")
         self.reqMarketDataType(1)
         self.reqMktData(reqId=reqId, contract=nq_contract, genericTickList="",snapshot=False, regulatorySnapshot=False, mktDataOptions=[])
+
         '''
         
-        self.reqTickByTickData(reqId=reqId, contract=nq_contract, tickType="AllLast", numberOfTicks=0, ignoreSize=False)
-        print(f"Tick by Tick data request sent for {self.symb} with reqId={reqId}")
+        # Request the tick by tick data. If Historical ticks, change numberOfTicks=...
+        print(f"-------------------------------------------------")
+        print(f"Tick by Tick data request sent for {self.symb} with Request ID={reqId}")
+        print(f"-------------------------------------------------")
+        self.reqTickByTickData(reqId=reqId, contract=nq_contract, tickType="Last", numberOfTicks=0, ignoreSize=False)
 
 
     def stop(self):
         self.done=True
-        self.disconnect()
+        self.cancelTickByTickData(reqId=self.current_reqId)
 
 
     def error(self, reqId, errorCode, errorString):
@@ -84,15 +92,13 @@ class TestApp(EClient, EWrapper):
 
 
     def contractDetails(self, reqId, contract_info):
-        print(f"Contract Details for Request ID {reqId}:\n")
         print(f"Symbol: {contract_info.contract.symbol}\n")
         print(f"Exchange: {contract_info.contract.exchange}\n")
         print(f"Currency: {contract_info.contract.currency}\n")
         print(f"Minimum Tick: {contract_info.minTick}\n")
         print(f"Multiplier: {contract_info.contract.multiplier}\n")
-        
-        attrs=vars(contract_info)
-        print("\n".join(f"{name}: {value}" for name, value in attrs.items()))
+        print(f"Contract Month: {contract_info.contractMonth}\n")
+        print(f"timeZoneId: {contract_info.timeZoneId}\n")
 
 
     # This callback method will handle the historical data once received
@@ -134,7 +140,7 @@ class TestApp(EClient, EWrapper):
 
 
     # Store the market data in a CSV file
-    def store_market_data(self, reqId, data_type, value):
+    def store_market_data(self, reqId, data_type, value):        
         # Prepare data dictionary to be written to CSV
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         data_dict = {
@@ -158,27 +164,14 @@ class TestApp(EClient, EWrapper):
 
     def tickByTickAllLast(self, reqId: int, tickType: int, time: int, price: float,
                           size: Decimal, tickAtrribLast: TickAttribLast, exchange: str,
-                          specialConditions: str):
-        super().tickByTickAllLast(reqId, tickType, time, price, size, tickAtrribLast,exchange, specialConditions)
-        
+                          specialConditions: str):        
         formatted_time = datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')  # Adjusted reference
-        
-        print(
-            f"ReqId: {reqId} | Time: {formatted_time} | Price: {price:.4f} | "
-            f"Size: {size:.0f} | Exchange: {exchange} | Spec Cond: {specialConditions} | "
-            f"PastLimit: {tickAtrribLast.pastLimit} | Unreported: {tickAtrribLast.unreported}"
-        )
         
         # Data dictionary to be stored
         data = {
-            "ReqId": reqId,
             "Timestamp": formatted_time,
             "Price": round(price, 4),
-            "Size": int(size),
-            "Exchange": exchange,
-            "SpecialConditions": specialConditions,
-            "PastLimit": tickAtrribLast.pastLimit,
-            "Unreported": tickAtrribLast.unreported,
+            "Size": int(size)
         }
         
         # Initialize the CSV writer if not already done
@@ -186,14 +179,13 @@ class TestApp(EClient, EWrapper):
         
         # Write data to CSV
         self.csv_writer.writerow(data)
-        print(f"Data written to CSV for ReqId {reqId}: {data}")
 
 
     def historicalTicksLast(self, reqId: int, ticks, done: bool):
-        print(f"Historical Ticks Last Data for ReqId {reqId}:")
+        print(f"Historical Ticks of Last Data for ReqId {reqId}:")
         
         # Fieldnames for the CSV
-        fieldnames = ["ReqId", "Timestamp", "Price", "Size"]
+        fieldnames = ["Timestamp", "Price", "Size"]
         
         # Initialize the CSV writer if not already done
         self._initialize_csv(fieldnames=fieldnames)
@@ -202,16 +194,11 @@ class TestApp(EClient, EWrapper):
         for tick in ticks:
             formatted_time = datetime.fromtimestamp(tick.time).strftime('%Y-%m-%d %H:%M:%S')
             data = {
-                "ReqId": reqId,
                 "Timestamp": formatted_time,
                 "Price": round(tick.price, 2),
                 "Size": tick.size,
             }
             self.csv_writer.writerow(data)
-        
-        if done:
-            print(f"Historical tick data for ReqId {reqId} is complete.")
-
 
 
 
@@ -221,8 +208,10 @@ class TestApp(EClient, EWrapper):
 # Create the application instance
 app = TestApp()
 app.connect('127.0.0.1', 7496, 2)    
+time.sleep(3)
 
 app.set_symbol(symb="NQ")
 app.start()
 threading.Thread(target=app.run).start()
 app.stop()
+app.disconnect()
