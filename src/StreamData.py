@@ -1,9 +1,9 @@
 from ibapi.client import *
 from ibapi.wrapper import *
 from ibapi.ticktype import TickTypeEnum
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
-import threading, pytz, csv, os, time, timedelta
+import threading, pytz, csv, os, time
 
 class TestApp(EClient, EWrapper):
     def __init__(self):
@@ -19,7 +19,8 @@ class TestApp(EClient, EWrapper):
 
     def set_symbol(self, symb):
         self.symb = symb
-        self.csv_filepath=f"TickData_{symb}_{(datetime.now() + timedelta(days=1)).strftime('%Y%m%d')}.csv"
+        filetime=(datetime.now() + timedelta(days=1)).strftime('%Y%m%d')
+        self.csv_filepath=f"TickData_{symb}_{filetime}.csv"
 
 
     def generate_reqId(self):
@@ -149,14 +150,8 @@ class TestApp(EClient, EWrapper):
             "Value": value
         }
         
-        # Open file or initialize writer
-        if os.path.exists(self.csv_filepath):
-            self.csv_file = open(self.csv_filepath, mode="a", newline="")
-            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=data_dict.keys())
-        else:
-            self.csv_file = open(self.csv_filepath, mode="w", newline="")
-            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=data_dict.keys())
-            self.csv_writer.writeheader()
+        # Initialize the CSV writer if not already done
+        self._initialize_csv(fieldnames=data_dict.keys())
         
         # Write the data row
         self.csv_writer.writerow(data_dict)
