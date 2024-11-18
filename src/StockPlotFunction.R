@@ -780,6 +780,7 @@ getSectorProbability<-function(data, specRet=NULL, nam){
   return(df)
 }
 
+
 SectorRetProbability<-function(datalist, specRet=NULL){
   if(is.null(specRet)==FALSE){
     SuccessRate_list<-map2(datalist, names(datalist), ~getSectorProbability(data=.x, specRet=specRet, nam=.y))}
@@ -791,4 +792,23 @@ SectorRetProbability<-function(datalist, specRet=NULL){
   succ_curve%>%plot_ly(x=~AbsoluteReturn,y=~Reliability,color=~Source,colors=custom_colors[1:length(datalist)],type="scatter", mode="marker")
 }
 
+
+TickDistribution<-function(tickdata_path){
+  x=read.csv(tickdata_path, header = TRUE)
+  p1=x%>%plot_ly(x=~Timestamp, y=~Price, type = "scatter", mode="lines",name = "Price")
+  y=x%>%group_by(Price)%>%summarise(Size=sum(Size))
+  
+  density_data <- density(y$Price, weights = y$Size/ sum(y$Size), bw=10)  # Normalize weights
+  scale_factor <- max(y$Size) / max(density_data$y)
+  density_data$y <- density_data$y * scale_factor
+  
+  p2=y%>%plot_ly(x=~Size,y=~Price,type="bar", orientation="h",name = "Size")%>%
+    add_trace(x = ~density_data$y, y = ~density_data$x,type="scatter", mode="lines",name="Density")
+  
+  subplot(p1,p2,nrows = 1 ,shareY = TRUE, widths = c(0.8,0.2))%>%
+    layout(hovermode = "x unified",
+           plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%
+    config(scrollZoom=TRUE)
+  
+}
 

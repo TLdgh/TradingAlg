@@ -26,7 +26,7 @@ library(readxl)
 library(IBrokers)
 
 #User must specify the IB port number
-tws <- twsConnect(port = 7496) #to connect with TWS
+tws <- twsConnect(port = 7496, ) #to connect with TWS
 isConnected(tws)#check if connected or not
 twsConnectionTime(tws)# check what time did you connect
 twsDisconnect(tws)#to disconnect
@@ -173,7 +173,7 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
   FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
 }
-MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F,NQ30F=NQ30F))
+MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F))
 
 
 

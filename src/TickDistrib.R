@@ -59,16 +59,3 @@ reqMktData(tws,contract, eventWrapper = customWrapper(1), file = fh)
 close(fh)
 
 
-
-x=read.csv("TickDistri_NQ.csv", header = FALSE)
-colnames(x)=c("Time","Last","LastSize","Volume")
-y=x%>%filter(!if_all(c(Last,Volume), is.na))
-y[1,"Volume"]=first(na.omit(y$Volume))-1
-y=y%>%mutate(Volume=if_else(is.na(Volume), lag(Volume)+1, Volume))%>%na.omit()%>%
-  mutate(LastSize=if_else(row_number()>1 & (Volume-LastSize)>lag(Volume), Volume-lag(Volume), LastSize))
-
-y%>%plot_ly(x=~LastSize,y=~Last,type="bar", orientation="h")
-
-
-
-
