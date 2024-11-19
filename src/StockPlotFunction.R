@@ -793,8 +793,10 @@ SectorRetProbability<-function(datalist, specRet=NULL){
 }
 
 
-TickDistribution<-function(tickdata_path){
-  x=read.csv(tickdata_path, header = TRUE)
+TickDistribution<-function(tickdata=NULL, tickdata_path, subtime=NULL){
+  if(is.null(tickdata)==TRUE){x=read.csv(tickdata_path, header = TRUE)}else{x=tickdata}
+  if(is.null(subtime)==FALSE){x=subset(x, Timestamp<=subtime)}
+
   p1=x%>%plot_ly(x=~Timestamp, y=~Price, type = "scatter", mode="lines",name = "Price")
   y=x%>%group_by(Price)%>%summarise(Size=sum(Size))
   
