@@ -808,7 +808,7 @@ TickDistribution<-function(tickdata=NULL, tickdata_path, subtime=NULL){
     add_trace(x = ~density_data$y, y = ~density_data$x,type="scatter", mode="lines",name="Density")
   
   subplot(p1,p2,nrows = 1 ,shareY = TRUE, widths = c(0.8,0.2))%>%
-    layout(hovermode = "x unified",
+    layout(hovermode = "y unified",
            plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%
     config(scrollZoom=TRUE)
   

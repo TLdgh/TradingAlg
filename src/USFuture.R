@@ -177,10 +177,20 @@ MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F))
 
 
 
-
 OutputLoc<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=OutputLoc)
 for (i in 1:length(OutputLoc)){
   FutToBePrepared$ReadCombData(OutputCombtxt = OutputLoc[i] , nam=nam[i])     #This src load the combined data
 }
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
+
+
+
+x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241118.csv", header = TRUE)
+y=read.csv("TickData_NQ_20241119.csv", header = TRUE)
+bind_rows(x,y)%>%TickDistribution(tickdata = .)
+
+
+
+
+
