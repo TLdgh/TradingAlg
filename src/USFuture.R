@@ -26,7 +26,7 @@ library(readxl)
 library(IBrokers)
 
 #User must specify the IB port number
-tws <- twsConnect(port = 7496, ) #to connect with TWS
+tws <- twsConnect(port = 7496, clientId = 3) #to connect with TWS
 isConnected(tws)#check if connected or not
 twsConnectionTime(tws)# check what time did you connect
 twsDisconnect(tws)#to disconnect
@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("Continuous","WContinuous"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("1H","2H"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -173,7 +173,7 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
   FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
 }
-MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F))
+MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F, NQ30F=NQ30F))
 
 
 
@@ -185,12 +185,15 @@ for (i in 1:length(OutputLoc)){
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
 
 
+w=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241119.csv", header = TRUE)
+x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241120.csv", header = TRUE)
+y=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241121.csv", header = TRUE)
+z=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241122.csv", header = TRUE)
 
-x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241118.csv", header = TRUE)
-y=read.csv("TickData_NQ_20241119.csv", header = TRUE)
-bind_rows(x,y)%>%TickDistribution(tickdata = .)
+bind_rows(x,y)%>%bind_rows(., z)%>%TickDistribution(tickdata = .)
 
 
 
+bind_rows(w,x)%>%bind_rows(.,y)%>%bind_rows(., z)%>%TickDistribution(tickdata = .)
 
 

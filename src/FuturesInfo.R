@@ -30,6 +30,8 @@ GetFutInfo<-setRefClass(
         else if(BasicInfo[i,2]=="5F"){barsize<-"5 mins"; duration<-"2 W"}
         else if(BasicInfo[i,2]=="30F"){barsize<-"30 mins"; duration<-"1 M"}
         else if(BasicInfo[i,2]=="1H"){barsize<-"1 hour"; duration<-"3 M"}
+        else if(BasicInfo[i,2]=="2H"){barsize<-"2 hours"; duration<-"3 M"}
+        else if(BasicInfo[i,2]=="4H"){barsize<-"4 hours"; duration<-"3 M"}
         else{barsize<-"Continuous"; duration<-"Continuous"}
         
         if(BasicInfo[i,1]=="NQ"){
@@ -74,57 +76,47 @@ GetFutInfo<-setRefClass(
         CombFileLoc_Fut<-paste0("/Users/tengli/R/TradingAlg","/CandleStickComb/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], "Comb.csv") #read the combined data
         .self$InputCombtxt <- c(InputCombtxt,OutputFileLoc_Fut) #this gives all the input locations of data files for candlestick combination
         .self$OutputCombtxt <- c(OutputCombtxt,CombFileLoc_Fut)  #this gives all the locations of the combined data files
-        
-        if(RealData==TRUE){
-          if(FutToBePrepared[[i]][1,"barSize"]!="Continuous"){
-            .self$Get_IntradayFut(tws,FutToBePrepared[[i]][1,"Symb"],FutToBePrepared[[i]][1,"exch"],FutToBePrepared[[i]][1,"expiry"],FutToBePrepared[[i]][1,"currency"],
-                                  FutToBePrepared[[i]][1,"multiplier"],FutToBePrepared[[i]][1,"endDateTime"],FutToBePrepared[[i]][1,"barSize"],FutToBePrepared[[i]][1,"duration"],
-                                  InputFileLoc_Fut)
-          }else{
-            cat("You are preparing the continuous futures contract!", "\n")
-            if(FutToBePrepared[[i]][1,"intv"]=="5FContinuous"){.self$Get_ContinuousFut(tws,NQ5FExpD)}
-            else if(FutToBePrepared[[i]][1,"intv"]=="30FContinuous"){.self$Get_ContinuousFut(tws,NQ30FExpD)}
-            else if(FutToBePrepared[[i]][1,"intv"]=="1HContinuous"){.self$Get_ContinuousFut(tws,NQ1HExpD)}
-            else if(FutToBePrepared[[i]][1,"intv"]=="Continuous"){.self$Get_ContinuousFut(tws,NQExpD)}
-            else if(FutToBePrepared[[i]][1,"intv"]=="WContinuous"){.self$Get_ContinuousFut(tws,NQWExpD)}
-          }
-        }
-        cat("The following data is: ", nam[i], "\n")
-        
-        Fut_data<-read.csv(file = InputFileLoc_Fut, header = T)
-        Fut_data<-Fut_data[,1:6]
-        colnames(Fut_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
-        Fut_data <- Fut_data[order(Fut_data$Date, decreasing = TRUE),]
-        print(head(Fut_data))
-        print(tail(Fut_data))
-        write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
-        
-        .self$DownloadData(nam = nam[i], fileloc=OutputFileLoc_Fut, LoadData= LoadData)
-        
-        if(i<length(FutToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
         .self$RawDataLocation[nam[i]]<-InputFileLoc_Fut
+        
+        if( !(FutToBePrepared[[i]][1,"intv"] %in% c("2H","2HContinuous","4H","4HContinuous")) ){
+          if(RealData==TRUE){      
+            if(FutToBePrepared[[i]][1,"barSize"]!="Continuous"){
+              .self$Get_IntradayFut(tws,FutToBePrepared[[i]][1,"Symb"],FutToBePrepared[[i]][1,"exch"],FutToBePrepared[[i]][1,"expiry"],FutToBePrepared[[i]][1,"currency"],
+                                    FutToBePrepared[[i]][1,"multiplier"],FutToBePrepared[[i]][1,"endDateTime"],FutToBePrepared[[i]][1,"barSize"],FutToBePrepared[[i]][1,"duration"],
+                                    InputFileLoc_Fut)
+            }else{
+              cat("You are preparing the continuous futures contract!", "\n")
+              if(FutToBePrepared[[i]][1,"intv"]=="5FContinuous"){.self$Get_ContinuousFut(tws,NQ5FExpD)}
+              else if(FutToBePrepared[[i]][1,"intv"]=="30FContinuous"){.self$Get_ContinuousFut(tws,NQ30FExpD)}
+              else if(FutToBePrepared[[i]][1,"intv"]=="1HContinuous"){.self$Get_ContinuousFut(tws,NQ1HExpD)}
+              else if(FutToBePrepared[[i]][1,"intv"]=="Continuous"){.self$Get_ContinuousFut(tws,NQExpD)}
+              else if(FutToBePrepared[[i]][1,"intv"]=="WContinuous"){.self$Get_ContinuousFut(tws,NQWExpD)}
+            }
+          }
+          
+          Fut_data<-read.csv(file = InputFileLoc_Fut, header = T)
+          Fut_data<-Fut_data[,1:6]
+          colnames(Fut_data) <- c("Date", "Open", "High","Low", "Close", "Volume")
+          Fut_data <- Fut_data[order(Fut_data$Date, decreasing = TRUE),]
+          write.csv(Fut_data, file = OutputFileLoc_Fut, row.names = FALSE)
+          .self$DownloadData(nam = nam[i], fileloc=OutputFileLoc_Fut, LoadData= LoadData)
+          
+          if(i<length(FutToBePrepared)){print("Please wait for 20 seconds");Sys.sleep(20)}
+        }
       }
       
-      #check if there's 1H data:
-      Exist1H<-which(names(RawDataLocation) %in% c("NQ1H","NQ1HContinuous"))
-      if(length(Exist1H)!=0){
-        for(i in Exist1H){
-          if(FutToBePrepared[[i]][1,"barSize"]!="Continuous"){
-            NewBarOutputfile<-paste0("/Users/tengli/R/TradingAlg/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4H.csv") #Save the new bar data at this location
-            .self$OutputCombtxt[i]<-paste0("/Users/tengli/R/TradingAlg/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HComb.csv")  #this gives the location of the combined data files
-            .self$nam[i]<-paste0(FutToBePrepared[[i]][1,"Symb"],"4H")
-          }else{
-            NewBarOutputfile<-paste0("/Users/tengli/R/TradingAlg/Data/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuous.csv") #Save the new bar data at this location
-            .self$OutputCombtxt[i]<-paste0("/Users/tengli/R/TradingAlg/CandleStickComb/",FutToBePrepared[[i]][1,"Symb"],"/",FutToBePrepared[[i]][1,"Symb"],"4HContinuousComb.csv")  #this gives the location of the combined data files
-            .self$nam[i]<-paste0(FutToBePrepared[[i]][1,"Symb"],"4HContinuous")
-          }
+      #check if there's 2H or 4H data:
+      ExistHs<-which(names(RawDataLocation) %in% c("NQ2H","NQ2HContinuous","NQ4H","NQ4HContinuous"))
+      if(length(ExistHs)!=0){
+        for(i in ExistHs){
+          b=substr(names(RawDataLocation)[i], 3,3)%>%as.numeric()
+          fp=ifelse((FutToBePrepared[[i]][1,"barSize"]=="Continuous"), 
+                    "/Users/tengli/R/TradingAlg/Data/OriginalFuturesData/NQ/NQ1HContinuous.csv",
+                    "/Users/tengli/R/TradingAlg/Data/OriginalFuturesData/NQ/NQ1H.csv")
           
-          .self$RawDataLocation[nam[i]]<-paste0("/Users/tengli/R/TradingAlg/Data/OriginalFuturesData/", FutToBePrepared[[i]][1,"Symb"], "/", nam[i], ".csv")
-          write.csv(.self$FutNewBarSize(DataFile=RawDataLocation[[i]], intv="1H", barSize = 4), file=NewBarOutputfile, row.names = FALSE)
-          .self$InputCombtxt[i]<-NewBarOutputfile#this gives the input location of data files for candlestick combination app
-          
-          .self$DownloadData(nam = nam[i], fileloc=NewBarOutputfile, LoadData=LoadData)
-        }
+          write.csv(.self$FutNewBarSize(DataFile=fp, intv="1H", barSize = b), file=.self$InputCombtxt[i], row.names = FALSE)
+          .self$DownloadData(nam=nam[i], fileloc = .self$InputCombtxt[i], LoadData = LoadData)
+        }          
       }
       
       write.table(.self$InputCombtxt,"/Users/tengli/R/TradingAlg/CandleStickComb/InputLoc.txt",sep="\n",col.names=FALSE, row.names=FALSE,quote = FALSE)
@@ -280,6 +272,9 @@ GetFutInfo<-setRefClass(
     DownloadData=function(nam, fileloc, LoadData){
       if(LoadData){df <- read.csv(fileloc, header = T)%>%arrange(Date)
       assign(nam, df, envir = .GlobalEnv)}
+      cat("The following data is: ", nam, "\n")
+      print(head(df))
+      print(tail(df))
     },
     
     
@@ -289,7 +284,7 @@ GetFutInfo<-setRefClass(
       DataInput <- rbind(DataInput, last(DataInput)) #use the last time as a ghost bar
       DataInput$Index[nrow(DataInput)]<-as.character(as.POSIXct(DataInput$Index[nrow(DataInput)], format="%Y-%m-%d %H:%M:%S", tz=TimeZ)+hours(1)) #change the time for the ghost bar
       
-      if(intv %in% c("1H","1HContinuous")){ #currently only support conversion from 1H to 4H
+      if(intv %in% c("1H","1HContinuous")){ #currently only support conversion from 1H to 2H and 4H
         barintv<-c(which(format(as.POSIXct(DataInput[,1], tz=TimeZ), "%H:%M:%S")=="18:00:00"), nrow(DataInput)) #get the interval from 18:00:00 everyday
       }
       
