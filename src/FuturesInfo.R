@@ -28,6 +28,7 @@ GetFutInfo<-setRefClass(
         if(BasicInfo[i,2]=="30S"){barsize<-"30 secs";duration<-"28800 S"}
         else if(BasicInfo[i,2]=="1F"){barsize<-"1 min"; duration<-"2 D"}
         else if(BasicInfo[i,2]=="5F"){barsize<-"5 mins"; duration<-"2 W"}
+        else if(BasicInfo[i,2]=="15F"){barsize<-"15 mins"; duration<-"1 M"}
         else if(BasicInfo[i,2]=="30F"){barsize<-"30 mins"; duration<-"1 M"}
         else if(BasicInfo[i,2]=="1H"){barsize<-"1 hour"; duration<-"3 M"}
         else if(BasicInfo[i,2]=="2H"){barsize<-"2 hours"; duration<-"3 M"}
