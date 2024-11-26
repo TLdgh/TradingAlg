@@ -92,12 +92,12 @@ for(stock in All){
     warning=function(w){
       # Handling the warning: Skip this iteration
       warning_message <- paste("Warning for stock", stock, ":", w$message, "\n")
-      writeLines(warning_message, con = file("warning_log.txt", open = "a"))  # Open in append mode
+      writeLines(warning_message, con = file("logs/InitializeStock_log.txt", open = "a"))  # Open in append mode
     }
   )
   next # Skip to the next iteration
 }
-close(file("InitializeStock_log.txt", open = "a"))
+close(file("logs/InitializeStock_log.txt", open = "a"))
 
 
 
