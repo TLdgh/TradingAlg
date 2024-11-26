@@ -80,7 +80,7 @@ if __name__=="__main__":
   root_directory = os.path.dirname(os.path.dirname(currentfile_path))
   
   # Configure logging to write to a file
-  logging.basicConfig(filename=os.path.join(root_directory,'log.txt'), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+  logging.basicConfig(filename=os.path.join(root_directory,'src','log.txt'), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
   # Redirect warnings to the logging system
   logging.captureWarnings(True)
