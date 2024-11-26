@@ -17,7 +17,7 @@ ChartReplay(Data=list(NQ5FContinuous=NQ5FContinuous,
 ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous,
                       NQ30FContinuous=NQ30FContinuous,
                       NQ5FContinuous=NQ5FContinuous), 
-            StartDate = "2020-04-17 14:55:00",UserInput = TRUE)
+            StartDate = "2020-08-07 11:10:00",UserInput = TRUE)
 
 
 

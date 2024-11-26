@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("1F","5F","15F","30F","1H","2H","4H"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("Continuous"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -173,7 +173,7 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
   FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
 }
-MultiChart(list(NQ1F=NQ1F,NQ5F=NQ5F, NQ30F=NQ30F))
+MultiChart(list(NQ5F=NQ5F, NQ30F=NQ30F))
 
 
 
@@ -185,10 +185,9 @@ for (i in 1:length(OutputLoc)){
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
 
 
-w=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241119.csv", header = TRUE)
-x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241120.csv", header = TRUE)
-y=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241121.csv", header = TRUE)
-z=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241122.csv", header = TRUE)
+x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241121.csv", header = TRUE)
+y=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241122.csv", header = TRUE)
+z=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241125.csv", header = TRUE)
 
 bind_rows(x,y)%>%bind_rows(., z)%>%TickDistribution(tickdata = .)
 

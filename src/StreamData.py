@@ -3,17 +3,36 @@ from ibapi.wrapper import *
 from ibapi.ticktype import TickTypeEnum
 from datetime import datetime, timedelta
 from decimal import Decimal
-import threading, pytz, csv, os, time
+import threading, pytz, csv, os, time, logging
+
+
+# Set up logging configuration
+currentfile_path = os.path.abspath(__file__)
+# Get the root directory (the directory containing the script)
+root_directory = os.path.dirname(os.path.dirname(currentfile_path))
+
+# Configure logging to write to a file
+logging.basicConfig(
+    filename=os.path.join(root_directory, 'TickData_log.txt'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s\n',
+    filemode='w'
+)
+
+# Create a logger object
+logger = logging.getLogger(__name__)
+
 
 class TestApp(EClient, EWrapper):
     def __init__(self):
-        EClient.__init__(self, self)
+        EClient.__init__(self, wrapper=self) 
         
         self.csv_file=None
         self.csv_writer=None
         self.csv_filepath=None
         self.current_reqId = 0  # To track request IDs
         self.symb=None
+        self.lock = threading.Lock()  # Thread-safe lock
         self.done = False  # Flag to indicate when to stop the application
 
 
@@ -86,12 +105,13 @@ class TestApp(EClient, EWrapper):
 
 
     def stop(self):
-        self.done=True
-        self.cancelTickByTickData(reqId=self.current_reqId)
+        with self.lock:
+            self.done=True
+            self.cancelTickByTickData(reqId=self.current_reqId)
 
 
     def error(self, reqId, errorCode, errorString):
-        print("Error. Id: " , reqId, " Code: " , errorCode , " Error Message: " , errorString)      
+        logger.error(f"Error. Id: {reqId}, Code: {errorCode}, Message: {errorString}")   
 
 
     def contractDetails(self, reqId, contract_info):
@@ -201,14 +221,43 @@ class TestApp(EClient, EWrapper):
 
 
 
+if __name__ == "__main__":
+    logger.info("Starting the application.")  # This will log the start of the application.
+    app = TestApp()  # Create an instance of TestApp (this is the main application).
+    app.connect('127.0.0.1', 7496, 2)  # Connect to the IB server
+    time.sleep(3)  # Sleep to wait for connection (a bit of delay).
 
-# Create the application instance
-app = TestApp()
-app.connect('127.0.0.1', 7496, 2)    
-time.sleep(3)
+    app.set_symbol(symb="NQ")  # Set the symbol for market data.
+    app.start()  # Start the application (which begins sending requests).
 
-app.set_symbol(symb="NQ")
-app.start()
-threading.Thread(target=app.run).start()
-app.stop()
-app.disconnect()
+    # Create a separate thread for the application to run.
+    app_thread = threading.Thread(target=app.run, name="AppThread", daemon=True)
+    app_thread.start()  # Start the app thread.
+
+    # Create another thread to monitor time.
+    def time_checker(app_instance):
+        while not app_instance.done:
+            current_time = datetime.now()
+            if current_time.hour == 17 and current_time.minute >= 0 and current_time.minute <= 50:
+                print("The application has automatically logged out at 17:00.")
+                app_instance.stop()  # Stop the application if time criteria are met.
+                app_instance.disconnect()
+                break
+            time.sleep(10)  # Check every minute.
+
+    # Start the time-checking thread.
+    time_check_thread = threading.Thread(target=time_checker, args=(app,), name="TimeCheckerThread", daemon=True)
+    time_check_thread.start()
+
+    # Main thread waits for app_thread and time_check_thread to finish.
+    try:
+        while not app.done:
+            time.sleep(1)  # Main thread idle while others do the work.
+    except KeyboardInterrupt:
+        logger.error("Terminating the application...")  # Log termination.
+        app.stop()  # Stop the app.
+        app.disconnect()  # Disconnect from the server.
+
+    # Wait for all threads to complete before the main thread proceeds. (since these threads are daemon threads).
+    app_thread.join()  # Wait for app_thread to finish.
+    time_check_thread.join()  # Wait for time_check_thread to finish.
