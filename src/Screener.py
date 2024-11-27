@@ -66,7 +66,7 @@ def downloadVIX(root_directory):
           # Check if the request was successful (status code 200 means success)
           if response.status_code == 200:
               # Save the .xlsx file to the specified directory
-              with open(full_path, 'wb') as file:
+              with open(full_path, 'w') as file:
                   file.write(response.content)
               logging.info(f"File downloaded successfully and saved to: {full_path}")
           else:
@@ -80,7 +80,7 @@ if __name__=="__main__":
   root_directory = os.path.dirname(os.path.dirname(currentfile_path))
   
   # Configure logging to write to a file
-  logging.basicConfig(filename=os.path.join(root_directory,'src','log.txt'), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+  logging.basicConfig(filename=os.path.join(root_directory,'logs','screener_log.txt'), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
   # Redirect warnings to the logging system
   logging.captureWarnings(True)

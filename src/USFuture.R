@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("Continuous"), RealData=TRUE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("4H"), RealData=TRUE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -185,9 +185,9 @@ for (i in 1:length(OutputLoc)){
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
 
 
-x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241121.csv", header = TRUE)
-y=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241122.csv", header = TRUE)
-z=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241125.csv", header = TRUE)
+x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241122.csv", header = TRUE)
+y=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241125.csv", header = TRUE)
+z=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241126.csv", header = TRUE)
 
 bind_rows(x,y)%>%bind_rows(., z)%>%TickDistribution(tickdata = .)
 
