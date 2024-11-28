@@ -66,7 +66,7 @@ def downloadVIX(root_directory):
           # Check if the request was successful (status code 200 means success)
           if response.status_code == 200:
               # Save the .xlsx file to the specified directory
-              with open(full_path, 'w') as file:
+              with open(full_path, 'wb') as file:
                   file.write(response.content)
               logging.info(f"File downloaded successfully and saved to: {full_path}")
           else:
