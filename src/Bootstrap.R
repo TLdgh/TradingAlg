@@ -1,5 +1,5 @@
-PickModel<-function(PriceData, Test=FALSE){   #this gives the information of every complete planet, including data, class, slope etc.
-  ModelInfo<-MACDTest(PriceData)
+PickModel<-function(PriceData, Title, Test=FALSE){   #this gives the information of every complete planet, including data, class, slope etc.
+  ModelInfo<-MACDTest(PriceData, Title)
   if(Test==FALSE){
     if(ModelInfo[[length(ModelInfo)]][["Reversal"]]=="ReverseUnknown"){ModelInfo<-ModelInfo[-length(ModelInfo)]}
   }
@@ -89,10 +89,10 @@ FitModel<-function(MainClassData,ClassData){
 
 
 
-#The OriginalData must be included in a named list like list=(NQ=NQ)
-MainBootstrap<-function(DataToBeFit,OriginalData, ModelInfo=NULL){ #create results and combine and average them
-  if(is.null(ModelInfo)==TRUE){ModelInfo<-do.call(c,lapply(OriginalData, function(x) PickModel(x)))} #contains 1-level sublist of all planets
-  DataInfo<-PickModel(DataToBeFit, Test = TRUE) #should contain only 1-level sublist of one planet, should have the same structure as ModelInfo
+#The OriginalData must be included in a named list like list=(NQ=NQ). Title is the name of DataToBeFit
+MainBootstrap<-function(DataToBeFit,Title,OriginalData, ModelInfo=NULL){ #create results and combine and average them
+  if(is.null(ModelInfo)==TRUE){ModelInfo<-do.call(c,lapply(names(OriginalData), function(nam) PickModel(OriginalData[[nam]], Title=nam)))} #contains 1-level sublist of all planets
+  DataInfo<-PickModel(DataToBeFit, Title, Test = TRUE) #should contain only 1-level sublist of one planet, should have the same structure as ModelInfo
   DataInfo<-DataInfo[length(DataInfo)] #make sure there's only the most recent one to be tested
   
   ModelInfoSlope<-sapply(1:length(ModelInfo), function(i) (ModelInfo[[i]]$SLOPE))

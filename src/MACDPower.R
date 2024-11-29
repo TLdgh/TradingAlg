@@ -17,7 +17,7 @@ checkdiv<-function(intervals, dir){
       
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
-    if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
+    if(length(A2df)==0 | length(df)<2){print("not enough MACD histograms to be considered. Inconclusive!");return(0)}
     
     minDEA=df%>%map(~min(.x$DEA))%>%unlist()
     #print(minDEA)
@@ -42,7 +42,7 @@ checkdiv<-function(intervals, dir){
       
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
-    if(length(A2df)==0 | length(df)<2){stop("not enough MACD histograms to be considered. Inconclusive!")}
+    if(length(A2df)==0 | length(df)<2){print("not enough MACD histograms to be considered. Inconclusive!");return(0)}
     
     maxDEA=df%>%map(~max(.x$DEA))%>%unlist()
     last_df=df[[length(df)]]$MACD

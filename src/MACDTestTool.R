@@ -1,4 +1,4 @@
-MACDTest<-function(Pricedata, CheckReversal=FALSE){
+MACDTest<-function(Pricedata, Title, CheckReversal=FALSE){
   SBPStr<-ChanLunStr(Pricedata)
   Data_macd<-PricedataMACD(Pricedata) #calculate the MACD
   Data_mfi<-PricedataMFI(Pricedata) #calculate the MFI
@@ -11,7 +11,7 @@ MACDTest<-function(Pricedata, CheckReversal=FALSE){
     if((which(StarData$Date==BiEndD)+2)<=nrow(StarData)){
       Pdate<-StarData[which(StarData$Date==BiEndD)+2,"Date"]
     }else{Pdate<-BiEndD}
-    result<-MACDPower(DataToBeTested=subset(Pricedata,Date<=Pdate),BarOverride=FALSE,SBPStr=SBPStr,Data_macd=Data_macd, Data_mfi=Data_mfi,Data_boll=Data_boll)
+    result<-MACDPower(DataToBeTested=subset(Pricedata,Date<=Pdate),Title=Title,BarOverride=FALSE,SBPStr=SBPStr,Data_macd=Data_macd, Data_mfi=Data_mfi,Data_boll=Data_boll)
     result[["SLOPE"]]<-result[["BOLL信号"]][1]
     if(OutIndex+3<=nrow(Bi)){
       Reversal<-ifelse(Reversal1==1,TRUE,FALSE)
