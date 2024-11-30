@@ -20,6 +20,11 @@ ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous,
             StartDate = "2020-08-07 11:10:00",UserInput = TRUE)
 
 
+#底背离测试
+ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous,
+                      NQ30FContinuous=NQ30FContinuous,
+                      NQ5FContinuous=NQ5FContinuous), 
+            StartDate = "2020-06-04 19:10:00",UserInput = TRUE)
 
 ChartReplay(Data = list(XLK_daily=XLK_daily, XLK_weekly=XLK_weekly), 
             StartDate = "2016-02-10", PausePeriod = 7)
