@@ -1,52 +1,65 @@
 Pricedata=NQ30FContinuous
 Data_macd<-PricedataMACD(Pricedata) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(Pricedata)
+Data_EMA60<-FuncEMA60(Pricedata)
+Data_EMA30<-FuncEMA30(Pricedata)
 
 SBPStr<-ChanLunStr(Pricedata)
 StarData<-SBPStr$StarData
 Bi<-SBPStr$Bi
 BiPlanetStr<-SBPStr$BiPlanetStr
 
-PL=data.frame(Date=NA, buyP=0, sellP=0,Profit=0)
+PL=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellRefDate=NA)
 i=1
 while(i<=(nrow(Bi)-4)){
   if(Bi$SLOPE[i]==-1 & Bi$MAX[i+2]<Bi$MAX[i] & Bi$MAX[i+2]<Bi$MAX[i+3]){
     ind=which(Pricedata$Date>=Bi$BiStartD[i+3] & Pricedata$Date<=Bi$BiEndD[i+3] & Pricedata$High>=Bi$MAX[i+2])%>%first()
     #cat("BiStartD:",Bi$BiStartD[i+2],'\n')
-
+    
     #check MACD reversal
-    macd_rev1=subset(Data_macd, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiEndD[i+1])
+    macd_rev1=subset(Data_macd, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiStartD[i+3]) 
+    macd_rev1_bygroup=macd_rev1%>%split_interval()#group the macd into pos and neg values
     macd_rev2=subset(Data_macd, Date>=Bi$BiStartD[i+3] & Date<=Bi$BiEndD[i+3])
-    maxMACD=list(macd_rev1,macd_rev2)%>%map(~max(.x$MACD))
-
-    mf_rev1=subset(Data_MF, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiEndD[i+1])
+    revindex1 <- which(sapply(macd_rev1_bygroup, function(df) any(df$MACD>0))) #get the index of the df whose MACD>0
+    if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)} #the max of the last positive MACD group
+    
+    mf_rev1=subset(Data_MF, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiStartD[i+3])
     mf_rev2=subset(Data_MF, Date>=Bi$BiStartD[i+3] & Date<=Bi$BiEndD[i+3])
-    maxMF=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow))
+    maxMF=list(mf_rev1,mf_rev2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = TRUE)[1:3]))
     maxMF_EMA=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow_EMA))
     
-    if(maxMACD[[2]]>0.98*maxMACD[[1]] & 
-       (maxMF[[2]]>maxMF[[1]] | maxMF_EMA[[2]]>maxMF_EMA[[1]])){rev=1}else{rev=0}
+    if(length(revindex1)==0){rev=1}
+    else if((length(revindex1)!=0 & max(macd_rev2$MACD) > 0.98*lastMaxMacd) &
+            (maxMF[[2]]>maxMF[[1]])
+    ){rev=1}else{rev=0}
     #cat("rev",rev,'\n')
     
     #check MACD divergence
-    macd_div1 <- subset(Data_macd,Date>=Bi$BiStartD[i] & Date<=Bi$BiEndD[i])
+    macd_div1 <- subset(Data_macd,Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2])
+    macd_div1_bygroup=macd_div1%>%split_interval()
     macd_div2 <- subset(Data_macd,Date>=Bi$BiStartD[i+2] & Date<=Bi$BiEndD[i+2])
-    minMACD<-list(macd_div1,macd_div2)%>%map(~min(.x$MACD))
-    minDEA<-list(macd_div1,macd_div2)%>%map(~min(.x$DEA))
+    divindex1 <- which(sapply(macd_div1_bygroup, function(df) any(df$MACD<0)))
+    if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
     
-    mf_div1 <- subset(Data_MF,Date>=Bi$BiStartD[i] & Date<=Bi$BiEndD[i])
+    #假跌破
+    falsebreakout=ifelse((min(macd_div2$MACD) < 2*min(macd_div1$MACD)) & (2*max(macd_div2$MACD) < max(macd_rev2$MACD)), 1, 0)
+    
+    mf_div1 <- subset(Data_MF,Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2])
     mf_div2 <- subset(Data_MF,Date>=Bi$BiStartD[i+2] & Date<=Bi$BiEndD[i+2])
-    minMF<-list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow))
+    minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
     
-    if(minMACD[[2]]>minMACD[[1]] | minDEA[[2]]>minDEA[[1]]){div=1}else{div=0}
+    if(length(divindex1)==0 | falsebreakout==1){div=1}
+    else if((length(divindex1)!=0 & min(macd_div2$MACD) > lastMinMacd) &
+            (minMF[[2]]>minMF[[1]])
+    ){div=1}else{div=0}
     
     #cat("div",div,'\n')
     
     ordertime=ymd_hms(Pricedata$Date[ind], tz="America/Toronto")%>%hour()
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
+    if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
       buyP=Pricedata[ind,"Close"]
       #cat("bought price:", buyP,'\n')
       #cat("bought time:", Pricedata[ind,"Date"],'\n')
@@ -55,35 +68,64 @@ while(i<=(nrow(Bi)-4)){
     
     j=2
     stoploss=Bi$MIN[i+2] #止损在笔2的最低点
+    profittaker=0
     
     while((i+2+j)<=nrow(Bi)){
-      if(Bi$MAX[i+3]>=Bi$MAX[i+2+j]){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
-        pricebreak1=subset(Pricedata, Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2+j])%>%mutate(Ret=log(Close/Open))%>%summarize(min=min(Ret))%>%as.numeric()
-        pricebreak2=subset(Pricedata, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%mutate(Ret=log(Close/Open))%>%summarize(min=min(Ret))%>%as.numeric()
+      if(Bi$MAX[i+3]>=Bi$MAX[i+2+j] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
+        # Calculate minimum return and corresponding price break date
+        price_subset <- subset(Pricedata, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
+        minRet <- min(log(price_subset$Close / price_subset$Open)) # Compute min return directly
+        pricebreak <- subset(Pricedata, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
+        pbindex <- which(log(pricebreak$Close / pricebreak$Open) < 2 * minRet)[1] # Get first index
+        pbdate <- if (!is.na(pbindex)) pricebreak$Date[pbindex] else NA
         
-        macdbreak1=subset(Data_macd, Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2+j])%>%summarize(min=min(MACD))%>%as.numeric()
-        macdbreak2=subset(Data_macd, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%summarize(min=min(MACD))%>%as.numeric()
+        # Calculate minimum MACD and corresponding MACD break date
+        macd_subset <- subset(Data_macd, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
+        minMacd <- min(macd_subset$MACD[2:nrow(macd_subset)]) # Compute min MACD directly
+        macdbreak <- subset(Data_macd, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
+        mbindex <- which(macdbreak$MACD < 1.35 * minMacd)[1]
+        mbdate <- if (!is.na(mbindex)) macdbreak$Date[mbindex] else NA
         
-        mfbreak1=subset(Data_MF, Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2+j])%>%summarize(min=min(MoneyFlow))%>%as.numeric()
-        mfbreak2=subset(Data_MF, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%summarize(min=min(MoneyFlow))%>%as.numeric()
+        # Calculate minimum MoneyFlow and corresponding MoneyFlow break date
+        mf_subset <- subset(Data_MF, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
+        minMF <- min(mf_subset$MoneyFlow[2:nrow(mf_subset)]) # Compute min MoneyFlow directly
+        mfbreak <- subset(Data_MF, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
+        mfbindex <- which(mfbreak$MoneyFlow < minMF)
+        mfbindex <- ifelse(length(mfbindex)>=2, mfbindex[2], NA)
+        mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
         
-        if(Bi$MIN[i+2+j]<=stoploss ){ #任何时候下降笔破止损就卖出
+        # Consolidate clear positions
+        ClearPosition <- na.omit(c(pbdate, mbdate, mfbdate))
+        
+        if(length(ClearPosition)==0 & Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
           sellP=stoploss
-          #cat("止损:",sellP,'\n')
+          sellReason="stoploss"
+          j=j-2 #go back at least 2 steps to restart with at least three lines.
+          sellRefDate=Bi$BiEndD[i+2]
           break}
-        else if(pricebreak2<=1.2*pricebreak1 & macdbreak2<=2*macdbreak1 & mfbreak2<=mfbreak1){ #如果不破止损，但加速下跌，保本
-          sellP=Bi$MIN[i+2+j]
-          #cat("止损:",sellP,'\n')
-          break
+        else if(length(ClearPosition)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+          accP=Pricedata[which(Pricedata$Date==min(ClearPosition)),"Close"]
+          if(accP<Data_EMA60[which(Data_EMA60$Date==min(ClearPosition)),"EMA60"]){
+            sellP=max(stoploss, accP)
+            sellReason="acceDecrease"
+            sellRefDate=min(ClearPosition)
+            j=j-2 #go back at least 2 steps to restart with at least three lines.
+            #cat("止损:",sellP,'\n')
+            break}else{j=j+2}
         }
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        stoploss=max(Pricedata[ind,"Low"], Bi$MIN[i+2+j-2])
-        #cat("Profit taker: ", stoploss)
-        if(Bi$MIN[i+2+j]<=stoploss){
-          sellP=stoploss
+        profittaker=max(mean(Bi$MIN[i+2],Pricedata[ind,"Low"]), Bi$MIN[i+2+j-2]*0.999)
+        #cat("Profit taker: ", profittaker)
+        if(Bi$MIN[i+2+j]<=profittaker & 
+           any(Pricedata[which(Pricedata$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
+           ){
+          sellP=profittaker
+          sellReason="takeprofit"
+          sellRefDate=Bi$BiEndD[i+2+j-2]
           #cat("sellP:",sellP,"\n")
+          j=j-2
           break}
         else{j=j+2
         #cat("move on to: ",j,"\n")
@@ -91,7 +133,7 @@ while(i<=(nrow(Bi)-4)){
       }
     }
     i=i+2+j-1 #往回数一笔，因为后面i=i+1
-    PL=rbind(PL, data.frame(Date=Pricedata[ind,"Date"], buyP, sellP, Profit=sellP-buyP))
+    PL=rbind(PL, data.frame(Date=Pricedata[ind,"Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
   }
   i=i+1
   #cat("Restart from i: ", i,"\n")
