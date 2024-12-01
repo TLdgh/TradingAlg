@@ -1,4 +1,4 @@
-CombData=NQ5FContinuous
+CombData=NQ30FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_EMA60<-FuncEMA60(CombData)
@@ -29,7 +29,7 @@ while(i<=(nrow(Bi)-4)){
     macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
     revindex1 <- which(sapply(macd_rev1_bygroup, function(df) any(df$MACD>0))) #get the index of the df whose MACD>0
     if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)} #the max of the last positive MACD group
-
+    
     mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
     maxMF=list(mf_rev1,mf_rev2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = TRUE)[1:3]))
@@ -67,10 +67,12 @@ while(i<=(nrow(Bi)-4)){
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
     if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
-      ind2=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])#如果笔12没有MACD>0，则是后者
-      buyP=min(BreakoutStructure$Price[ind1, "Close"], CombData[which(CombData$Date==ind2),"Close"])
+      target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
+      ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
+      buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
+      
       #cat("bought price:", buyP,'\n')
-      #cat("bought time:", CombData[ind1,"Date"],'\n')
+      #cat("bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]),'\n')
     }
     else{i=i+1;next}  
     
@@ -124,11 +126,11 @@ while(i<=(nrow(Bi)-4)){
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        profittaker=max(mean(Bi$MIN[i+2],BreakoutStructure$Price[ind1, "Low"]), Bi$MIN[i+2+j-2]*0.999)
+        profittaker=max(mean(Bi$MIN[i+2],CombData[ind1, "Low"]), Bi$MIN[i+2+j-2]*0.999)
         #cat("Profit taker: ", profittaker)
         if(Bi$MIN[i+2+j]<=profittaker & 
            any(CombData[which(CombData$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
-           ){
+        ){
           sellP=profittaker
           sellReason="takeprofit"
           sellRefDate=Bi$BiEndD[i+2+j-2]
