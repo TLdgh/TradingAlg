@@ -60,7 +60,7 @@ while(i<=(nrow(Bi)-4)){
     
     if(length(divindex1)==0 | falsebreakout==1){div=1}
     else if((length(divindex1)!=0 & min(macd_div2$MACD) > lastMinMacd) &
-            (minMF[[2]]>minMF[[1]])
+            (minMF[[2]]>0.999*minMF[[1]])
     ){div=1}else{div=0}
     
     #cat("div",div,'\n')
@@ -250,7 +250,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       if(length(divindex1)==0 | falsebreakout==1){div=1}
       else if((length(divindex1)!=0 & min(macd_div2$MACD) > lastMinMacd) &
-              (minMF[[2]]>minMF[[1]])
+              (minMF[[2]]>0.999*minMF[[1]])
       ){div=1}else{div=0}
       
       cat("div",div,'div start date:',BreakoutStructure$Bi[1,"BiStartD"] ,'\n')
