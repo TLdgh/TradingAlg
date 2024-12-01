@@ -20,18 +20,18 @@ while(i<=(nrow(Bi)-4)){
                            MF=filter(Data_MF,Date>=start_ind, Date<=end_ind)
     )
     
-    ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[2+1,"MAX"])%>%first()
+    ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[1+2,"MAX"])%>%first()
     #cat("BiStartD:",Bi$BiStartD[i+2],'\n')
     
     #check MACD reversal
-    macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
+    macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     macd_rev1_bygroup=macd_rev1%>%split_interval()#group the macd into pos and neg values
-    macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & Date<=BreakoutStructure$Bi[3+1,"BiEndD"])
+    macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
     revindex1 <- which(sapply(macd_rev1_bygroup, function(df) any(df$MACD>0))) #get the index of the df whose MACD>0
     if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)} #the max of the last positive MACD group
 
-    mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
-    mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & Date<=BreakoutStructure$Bi[3+1,"BiEndD"])
+    mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+    mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
     maxMF=list(mf_rev1,mf_rev2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = TRUE)[1:3]))
     maxMF_EMA=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow_EMA))
     
@@ -42,17 +42,17 @@ while(i<=(nrow(Bi)-4)){
     #cat("rev",rev,'\n')
     
     #check MACD divergence
-    macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[0+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+    macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     macd_div1_bygroup=macd_div1%>%split_interval()
-    macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[2+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
+    macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     divindex1 <- which(sapply(macd_div1_bygroup, function(df) any(df$MACD<0)))
     if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
     
     #假跌破
     falsebreakout=ifelse((min(macd_div2$MACD) < 2*min(macd_div1$MACD)) & (2*max(macd_div2$MACD) < max(macd_rev2$MACD)), 1, 0)
     
-    mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[0+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
-    mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[2+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
+    mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+    mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
     
