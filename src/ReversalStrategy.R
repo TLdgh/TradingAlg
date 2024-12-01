@@ -1,15 +1,13 @@
-Pricedata=NQ5FContinuous
-Data_macd<-PricedataMACD(Pricedata) #calculate the MACD
-Data_MF<-PricedataMoneyFlow(Pricedata)
-Data_EMA60<-FuncEMA60(Pricedata)
-Data_EMA30<-FuncEMA30(Pricedata)
+CombData=NQ5FContinuous
+Data_macd<-PricedataMACD(CombData) #calculate the MACD
+Data_MF<-PricedataMoneyFlow(CombData)
+Data_EMA60<-FuncEMA60(CombData)
+Data_EMA30<-FuncEMA30(CombData)
 
-SBPStr<-ChanLunStr(Pricedata)
-StarData<-SBPStr$StarData
+SBPStr<-ChanLunStr(CombData)
 Bi<-SBPStr$Bi
-BiPlanetStr<-SBPStr$BiPlanetStr
 
-PL=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellRefDate=NA)
+PL_test=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellRefDate=NA)
 i=1
 while(i<=(nrow(Bi)-4)){
   if(Bi$SLOPE[i]==-1 & Bi$MAX[i+2]<Bi$MAX[i] & Bi$MAX[i+2]<Bi$MAX[i+3]){
@@ -17,7 +15,7 @@ while(i<=(nrow(Bi)-4)){
     end_ind=Bi$BiEndD[i+3]
     
     BreakoutStructure=list(Bi=filter(Bi,BiStartD>=start_ind, BiEndD<=end_ind), 
-                           Price=filter(Pricedata,Date>=start_ind, Date<=end_ind),
+                           Price=filter(CombData,Date>=start_ind, Date<=end_ind),
                            MACD=filter(Data_macd,Date>=start_ind, Date<=end_ind),
                            MF=filter(Data_MF,Date>=start_ind, Date<=end_ind)
     )
@@ -70,9 +68,9 @@ while(i<=(nrow(Bi)-4)){
     # MACD 和 MFI 创新高，时间7点以后，买入
     if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
       ind2=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])#如果笔12没有MACD>0，则是后者
-      buyP=min(BreakoutStructure$Price[ind1, "Close"], Pricedata[which(Pricedata$Date==ind2),"Close"])
+      buyP=min(BreakoutStructure$Price[ind1, "Close"], CombData[which(CombData$Date==ind2),"Close"])
       #cat("bought price:", buyP,'\n')
-      #cat("bought time:", Pricedata[ind1,"Date"],'\n')
+      #cat("bought time:", CombData[ind1,"Date"],'\n')
     }
     else{i=i+1;next}  
     
@@ -83,9 +81,9 @@ while(i<=(nrow(Bi)-4)){
     while((i+2+j)<=nrow(Bi)){
       if(Bi$MAX[i+3]>=Bi$MAX[i+2+j] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
         # Calculate minimum return and corresponding price break date
-        price_subset <- subset(Pricedata, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
+        price_subset <- subset(CombData, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
         minRet <- min(log(price_subset$Close / price_subset$Open)) # Compute min return directly
-        pricebreak <- subset(Pricedata, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
+        pricebreak <- subset(CombData, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
         pbindex <- which(log(pricebreak$Close / pricebreak$Open) < 2 * minRet)[1] # Get first index
         pbdate <- if (!is.na(pbindex)) pricebreak$Date[pbindex] else NA
         
@@ -114,7 +112,7 @@ while(i<=(nrow(Bi)-4)){
           sellRefDate=Bi$BiEndD[i+2]
           break}
         else if(length(ClearPosition)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
-          accP=Pricedata[which(Pricedata$Date==min(ClearPosition)),"Close"]
+          accP=CombData[which(CombData$Date==min(ClearPosition)),"Close"]
           if(accP<Data_EMA60[which(Data_EMA60$Date==min(ClearPosition)),"EMA60"]){
             sellP=max(stoploss, accP)
             sellReason="acceDecrease"
@@ -129,7 +127,7 @@ while(i<=(nrow(Bi)-4)){
         profittaker=max(mean(Bi$MIN[i+2],BreakoutStructure$Price[ind1, "Low"]), Bi$MIN[i+2+j-2]*0.999)
         #cat("Profit taker: ", profittaker)
         if(Bi$MIN[i+2+j]<=profittaker & 
-           any(Pricedata[which(Pricedata$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
+           any(CombData[which(CombData$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
            ){
           sellP=profittaker
           sellReason="takeprofit"
@@ -143,18 +141,18 @@ while(i<=(nrow(Bi)-4)){
       }
     }
     i=i+2+j-1 #往回数一笔，因为后面i=i+1
-    PL=rbind(PL, data.frame(Date=BreakoutStructure$Price[ind1, "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
+    PL_test=rbind(PL_test, data.frame(Date=BreakoutStructure$Price[ind1, "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
   }
   i=i+1
   #cat("Restart from i: ", i,"\n")
 }
 
 
-PL=PL[2:nrow(PL),]
-sum(PL$Profit)
+PL_test=PL_test[2:nrow(PL_test),]
+sum(PL_test$Profit)
 
-pos=PL%>%filter(Profit > 0)%>%select(Profit)
-neg=PL%>%filter(Profit <= 0)%>%select(Profit)
+pos=PL_test%>%filter(Profit > 0)%>%select(Profit)
+neg=PL_test%>%filter(Profit <= 0)%>%select(Profit)
 df=bind_rows(pos,neg)%>%mutate(Index=1:n())
 cat("success rate: ", nrow(pos)/nrow(df))
 
