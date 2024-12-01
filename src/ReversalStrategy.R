@@ -43,11 +43,8 @@ while(i<=(nrow(Bi)-4)){
     
     #check MACD divergence
     macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
-    macd_div1_bygroup=macd_div1%>%split_interval()
     macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
-    divindex1 <- which(sapply(macd_div1_bygroup, function(df) any(df$MACD<0)))
-    if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
-    
+
     #假跌破
     falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
                            (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
@@ -58,8 +55,8 @@ while(i<=(nrow(Bi)-4)){
     minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
     
-    if(length(divindex1)==0 | falsebreakout==1){div=1}
-    else if((length(divindex1)!=0 & min(macd_div2$MACD) > lastMinMacd) &
+    if(falsebreakout==1){div=1}
+    else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
             (0.999*minMF[[2]]>minMF[[1]])
     ){div=1}else{div=0}
     
@@ -233,11 +230,8 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       #check MACD divergence
       macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
-      macd_div1_bygroup=macd_div1%>%split_interval()
       macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
-      divindex1 <- which(sapply(macd_div1_bygroup, function(df) any(df$MACD<0)))
-      if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
-      
+
       #假跌破
       falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
                              (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
@@ -248,8 +242,8 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
       minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
       
-      if(length(divindex1)==0 | falsebreakout==1){div=1}
-      else if((length(divindex1)!=0 & min(macd_div2$MACD) > lastMinMacd) &
+      if(falsebreakout==1){div=1}
+      else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
               (0.999*minMF[[2]]>minMF[[1]])
       ){div=1}else{div=0}
       
