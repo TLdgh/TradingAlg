@@ -1,4 +1,4 @@
-Pricedata=NQ30FContinuous
+Pricedata=NQ5FContinuous
 Data_macd<-PricedataMACD(Pricedata) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(Pricedata)
 Data_EMA60<-FuncEMA60(Pricedata)
@@ -13,39 +13,48 @@ PL=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellR
 i=1
 while(i<=(nrow(Bi)-4)){
   if(Bi$SLOPE[i]==-1 & Bi$MAX[i+2]<Bi$MAX[i] & Bi$MAX[i+2]<Bi$MAX[i+3]){
-    ind=which(Pricedata$Date>=Bi$BiStartD[i+3] & Pricedata$Date<=Bi$BiEndD[i+3] & Pricedata$High>=Bi$MAX[i+2])%>%first()
+    start_ind=Bi$BiStartD[i]
+    end_ind=Bi$BiEndD[i+3]
+    
+    BreakoutStructure=list(Bi=filter(Bi,BiStartD>=start_ind, BiEndD<=end_ind), 
+                           Price=filter(Pricedata,Date>=start_ind, Date<=end_ind),
+                           MACD=filter(Data_macd,Date>=start_ind, Date<=end_ind),
+                           MF=filter(Data_MF,Date>=start_ind, Date<=end_ind)
+    )
+    
+    ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[2+1,"MAX"])%>%first()
     #cat("BiStartD:",Bi$BiStartD[i+2],'\n')
     
     #check MACD reversal
-    macd_rev1=subset(Data_macd, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiStartD[i+3]) 
+    macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
     macd_rev1_bygroup=macd_rev1%>%split_interval()#group the macd into pos and neg values
-    macd_rev2=subset(Data_macd, Date>=Bi$BiStartD[i+3] & Date<=Bi$BiEndD[i+3])
+    macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & Date<=BreakoutStructure$Bi[3+1,"BiEndD"])
     revindex1 <- which(sapply(macd_rev1_bygroup, function(df) any(df$MACD>0))) #get the index of the df whose MACD>0
     if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)} #the max of the last positive MACD group
-    
-    mf_rev1=subset(Data_MF, Date>=Bi$BiStartD[i+1] & Date<=Bi$BiStartD[i+3])
-    mf_rev2=subset(Data_MF, Date>=Bi$BiStartD[i+3] & Date<=Bi$BiEndD[i+3])
+
+    mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
+    mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[3+1,"BiStartD"] & Date<=BreakoutStructure$Bi[3+1,"BiEndD"])
     maxMF=list(mf_rev1,mf_rev2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = TRUE)[1:3]))
     maxMF_EMA=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow_EMA))
     
     if(length(revindex1)==0){rev=1}
-    else if((length(revindex1)!=0 & max(macd_rev2$MACD) > 0.98*lastMaxMacd) &
-            (maxMF[[2]]>maxMF[[1]])
+    else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.98*lastMaxMacd) &
+            (maxMF[[2]]>=maxMF[[1]])
     ){rev=1}else{rev=0}
     #cat("rev",rev,'\n')
     
     #check MACD divergence
-    macd_div1 <- subset(Data_macd,Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2])
+    macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[0+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     macd_div1_bygroup=macd_div1%>%split_interval()
-    macd_div2 <- subset(Data_macd,Date>=Bi$BiStartD[i+2] & Date<=Bi$BiEndD[i+2])
+    macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[2+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
     divindex1 <- which(sapply(macd_div1_bygroup, function(df) any(df$MACD<0)))
     if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
     
     #假跌破
     falsebreakout=ifelse((min(macd_div2$MACD) < 2*min(macd_div1$MACD)) & (2*max(macd_div2$MACD) < max(macd_rev2$MACD)), 1, 0)
     
-    mf_div1 <- subset(Data_MF,Date>=Bi$BiStartD[i] & Date<=Bi$BiStartD[i+2])
-    mf_div2 <- subset(Data_MF,Date>=Bi$BiStartD[i+2] & Date<=Bi$BiEndD[i+2])
+    mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[0+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+    mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[2+1,"BiStartD"] & Date<=BreakoutStructure$Bi[2+1,"BiEndD"])
     minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
     
@@ -56,13 +65,14 @@ while(i<=(nrow(Bi)-4)){
     
     #cat("div",div,'\n')
     
-    ordertime=ymd_hms(Pricedata$Date[ind], tz="America/Toronto")%>%hour()
+    ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
     if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
-      buyP=Pricedata[ind,"Close"]
+      ind2=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])#如果笔12没有MACD>0，则是后者
+      buyP=min(BreakoutStructure$Price[ind1, "Close"], Pricedata[which(Pricedata$Date==ind2),"Close"])
       #cat("bought price:", buyP,'\n')
-      #cat("bought time:", Pricedata[ind,"Date"],'\n')
+      #cat("bought time:", Pricedata[ind1,"Date"],'\n')
     }
     else{i=i+1;next}  
     
@@ -116,7 +126,7 @@ while(i<=(nrow(Bi)-4)){
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        profittaker=max(mean(Bi$MIN[i+2],Pricedata[ind,"Low"]), Bi$MIN[i+2+j-2]*0.999)
+        profittaker=max(mean(Bi$MIN[i+2],BreakoutStructure$Price[ind1, "Low"]), Bi$MIN[i+2+j-2]*0.999)
         #cat("Profit taker: ", profittaker)
         if(Bi$MIN[i+2+j]<=profittaker & 
            any(Pricedata[which(Pricedata$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
@@ -133,7 +143,7 @@ while(i<=(nrow(Bi)-4)){
       }
     }
     i=i+2+j-1 #往回数一笔，因为后面i=i+1
-    PL=rbind(PL, data.frame(Date=Pricedata[ind,"Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
+    PL=rbind(PL, data.frame(Date=BreakoutStructure$Price[ind1, "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
   }
   i=i+1
   #cat("Restart from i: ", i,"\n")
