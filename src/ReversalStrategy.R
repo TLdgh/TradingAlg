@@ -49,7 +49,9 @@ while(i<=(nrow(Bi)-4)){
     if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
     
     #假跌破
-    falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)), 1, 0)
+    falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
+                           (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
+                           (max(mf_rev2$MoneyFlow) >= max(mf_rev1$MoneyFlow)), 1, 0)
     
     mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -237,7 +239,9 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
       
       #假跌破
-      falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)), 1, 0)
+      falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
+                             (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
+                             (max(mf_rev2$MoneyFlow) >= max(mf_rev1$MoneyFlow)), 1, 0)
       
       mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
       mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
