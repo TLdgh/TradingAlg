@@ -49,7 +49,7 @@ while(i<=(nrow(Bi)-4)){
     if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
     
     #假跌破
-    falsebreakout=ifelse((min(macd_div2$MACD) < 2*min(macd_div1$MACD)) & (2*max(macd_div2$MACD) < max(macd_rev2$MACD)), 1, 0)
+    falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)), 1, 0)
     
     mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -100,7 +100,7 @@ while(i<=(nrow(Bi)-4)){
         mf_subset <- subset(Data_MF, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
         minMF <- min(mf_subset$MoneyFlow[2:nrow(mf_subset)]) # Compute min MoneyFlow directly
         mfbreak <- subset(Data_MF, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
-        mfbindex <- which(mfbreak$MoneyFlow < minMF)
+        mfbindex <- which(mfbreak$MoneyFlow < 1.05*minMF)
         mfbindex <- ifelse(length(mfbindex)>=2, mfbindex[2], NA)
         mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
         
@@ -237,7 +237,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       if(length(divindex1)!=0){lastMinMacd=min(macd_div1_bygroup[[last(divindex1)]]$MACD)} #the min of the last negative MACD group
       
       #假跌破
-      falsebreakout=ifelse((min(macd_div2$MACD) < 2*min(macd_div1$MACD)) & (2*max(macd_div2$MACD) < max(macd_rev2$MACD)), 1, 0)
+      falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)), 1, 0)
       
       mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
       mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -285,7 +285,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           mf_subset <- filter(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiStartD"])
           minMF <- min(mf_subset$MoneyFlow[2:nrow(mf_subset)]) # Compute min MoneyFlow directly
           mfbreak <- filter(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])
-          mfbindex <- which(mfbreak$MoneyFlow < minMF)
+          mfbindex <- which(mfbreak$MoneyFlow < 1.05*minMF)
           mfbindex <- ifelse(length(mfbindex)>=2, mfbindex[2], NA)
           mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
           
