@@ -9,7 +9,7 @@ checkdiv<-function(intervals, dir){
     
     A1df=split_interval(intervals$l1)%>%
       map(~filter(.x, DIFF<=0 & DEA<=0))%>%
-      keep(~all(.x$MACD<=0))
+      keep(~nrow(.x)>=1 && all(.x$MACD<=0))
     
     A2df=split_interval(intervals$l2)%>%
       map(~filter(.x, DIFF<=0 & DEA<=0))%>%
@@ -17,17 +17,20 @@ checkdiv<-function(intervals, dir){
     
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
-    if(length(A2df)==0 | length(df)<2){print("not enough MACD histograms to be considered. Inconclusive!");return(0)}
+    if(length(df)<2){print("not enough MACD histograms to be considered. Inconclusive!");return(0)}
+    else{
+      minDEA=df%>%map(~min(.x$DEA))%>%unlist()
+      #print(minDEA)
+      last_df=df[[length(df)]]$MACD
+      second_last_df=df[[length(df)-1]]$MACD
+      compareMACD=length(which(last_df>min(second_last_df)))/length(last_df)
+      #print(compareMACD)
+      if(length(compareMACD)!=0){
+        return(mean(c(last(minDEA)>minDEA[length(minDEA)-1], compareMACD>=0.7)))
+      }else{return(0)}
+    }
     
-    minDEA=df%>%map(~min(.x$DEA))%>%unlist()
-    #print(minDEA)
-    last_df=df[[length(df)]]$MACD
-    second_last_df=df[[length(df)-1]]$MACD
-    compareMACD=length(which(last_df>min(second_last_df)))/length(last_df)
-    #print(compareMACD)
-    if(length(compareMACD)!=0){
-      return(mean(c(last(minDEA)>minDEA[length(minDEA)-1], compareMACD>=0.7)))
-    }else{return(0)}
+    
     
   }
   else{
