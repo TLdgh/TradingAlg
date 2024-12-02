@@ -1,6 +1,7 @@
 CombData=NQ30FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
+Data_MFI<-PricedataMFI(CombData)
 Data_EMA60<-FuncEMA60(CombData)
 Data_EMA30<-FuncEMA30(CombData)
 
@@ -17,7 +18,8 @@ while(i<=(nrow(Bi)-4)){
     BreakoutStructure=list(Bi=filter(Bi,BiStartD>=start_ind, BiEndD<=end_ind), 
                            Price=filter(CombData,Date>=start_ind, Date<=end_ind),
                            MACD=filter(Data_macd,Date>=start_ind, Date<=end_ind),
-                           MF=filter(Data_MF,Date>=start_ind, Date<=end_ind)
+                           MF=filter(Data_MF,Date>=start_ind, Date<=end_ind),
+                           MFI=filter(Data_MFI,Date>=start_ind, Date<=end_ind)
     )
     
     ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[1+2,"MAX"])%>%first()
@@ -52,12 +54,15 @@ while(i<=(nrow(Bi)-4)){
     
     mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
-    minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
-    minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
+    mfi_div1 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+    mfi_div2 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     
-    if(falsebreakout==1){div=1}
+    minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
+    minMFI<-list(mfi_div1,mfi_div2)%>%map(~min(.x$MFI))
+    
+    if(falsebreakout==1){cat("false breakout at:", BreakoutStructure$Bi[1+3,"BiStartD"]);div=1}
     else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-            (0.999*minMF[[2]]>minMF[[1]])
+            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
     ){div=1}else{div=0}
     
     #cat("div",div,'\n')
@@ -191,6 +196,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 LatestBreakout<-function(CombData, specifyDate=NULL){
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
+  Data_MFI<-PricedataMFI(CombData)
   Data_EMA60<-FuncEMA60(CombData)
   
   SBPStr<-ChanLunStr(CombData)
@@ -205,7 +211,8 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       BreakoutStructure=list(Bi=filter(Bi,BiStartD>=start_ind), 
                              Price=filter(CombData,Date>=start_ind),
                              MACD=filter(Data_macd,Date>=start_ind),
-                             MF=filter(Data_MF,Date>=start_ind)
+                             MF=filter(Data_MF,Date>=start_ind),
+                             MFI=filter(Data_MFI,Date>=start_ind)
       )
       
       ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[1+2,"MAX"])%>%first()
@@ -239,12 +246,15 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
       mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      mfi_div1 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+      mfi_div2 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      
       minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
-      minMF_EMA=list(mf_div1,mf_div2)%>%map(~min(.x$MoneyFlow_EMA))
+      minMFI<-list(mfi_div1,mfi_div2)%>%map(~min(.x$MFI))
       
       if(falsebreakout==1){div=1}
       else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-              (0.999*minMF[[2]]>minMF[[1]])
+              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
       ){div=1}else{div=0}
       
       cat("div",div,'div start date:',BreakoutStructure$Bi[1,"BiStartD"] ,'\n')
