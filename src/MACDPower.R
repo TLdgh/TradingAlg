@@ -762,7 +762,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
       
       if(falsebreakout==1){div=1}
       else if(
-        ((min(macd_div2$MACD) > min(macd_div1$MACD)) & ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0)) ) | (exists("power_res") && power_res > 5)
+        ((min(macd_div2$MACD) > min(macd_div1$MACD)) & ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0)) ))
       ){div=1}else{div=0}
       
       
