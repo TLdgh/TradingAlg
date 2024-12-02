@@ -271,8 +271,12 @@ MACDCalculator<-function(Pricedata, Data_macd, MACDType, Period, SBPStr, Schedul
 
 MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
   Total_interval<-subset(Data_mfi,Date>=Period$In1 & Date<=Period$Out2)
-  Total_interval_MoneyFlow<-subset(Data_MoneyFlow,Date>=Period$In2 & Date<=Period$Out2)
-  MFRatio<-Total_interval_MoneyFlow%>%summarise(Pos=sum(MoneyFlow[MoneyFlow>0]), Neg=sum(MoneyFlow[MoneyFlow<=0]))
+  MoneyFlow1<-subset(Data_MoneyFlow,Date>=Period$In1 & Date<=Period$In2)
+  MoneyFlow2<-subset(Data_MoneyFlow,Date>=Period$Out1 & Date<=Period$Out2)
+  MFRatio <- list(MoneyFlow1, MoneyFlow2) %>%
+    map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
+                          Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
+    )
   
   In1Price<-StarData[which(StarData$Date==Period$In1),]$Price
   In2Price<-StarData[which(StarData$Date==Period$In2),]$Price
@@ -286,7 +290,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     Strength_pos<-ifelse(maxat!=nrow(area_pos), (nrow(area_pos)-maxat+1)/nrow(area_pos), 0)
     
     #量比
-    MFRatio<-MFRatio%>%summarise(Ratio=abs(Neg)/Pos)%>%as.numeric()
+    MFRatio<- 1-MFRatio[[2]]$Pos/MFRatio[[1]]$Pos
   }else{
     Direction<- -1
     
@@ -296,7 +300,7 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     Strength_neg<-ifelse(minat!=nrow(area_neg), (nrow(area_neg)-minat+1)/nrow(area_neg), 0)
     
     #量比
-    MFRatio<-MFRatio%>%summarise(Ratio=Pos/abs(Neg))%>%as.numeric()
+    MFRatio<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
   }
   
   
@@ -307,12 +311,12 @@ MFICalculator<-function(Pricedata, Data_mfi, Data_MoneyFlow, StarData, Period){
     rownames(DivergenceMatrix)<-c("MFI 上涨背驰")      
     DivergenceMatrix["MFI 上涨背驰","强度"]<-(Strength_pos)
     DivergenceMatrix["MFI 上涨背驰","量比"]<-MFRatio
-    DivergenceMatrix["MFI 上涨背驰","背驰"]<-(Strength_pos>0.33 & MFRatio>0.9)
+    DivergenceMatrix["MFI 上涨背驰","背驰"]<-(Strength_pos>0.33 & MFRatio>0)
   }else{
     rownames(DivergenceMatrix)<-c("MFI 下跌背驰")      
     DivergenceMatrix["MFI 下跌背驰","强度"]<-(Strength_neg)
     DivergenceMatrix["MFI 下跌背驰","量比"]<-MFRatio
-    DivergenceMatrix["MFI 下跌背驰","背驰"]<-(Strength_neg>0.33 & MFRatio>0.9)
+    DivergenceMatrix["MFI 下跌背驰","背驰"]<-(Strength_neg>0.33 & MFRatio>0)
   }
   return(DivergenceMatrix)
 }

@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5FContinuous","30FContinuous","4HContinuous"), RealData=FALSE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -166,8 +166,8 @@ PnL(data)
 #######################################################################################################
 #######################################################################################################
 #Automatic detecting trendreversal:
-#Step1: go to ScheduleDownload.R to update the contract you want to check and run CandleApp
-#Step2: if you need to get the updated data, run the following:
+#Step1: Go to ScheduleDownload.R to update the contract you want to check and run CandleApp
+#Step2: To get the updated data, run the following:
 InputLoc<-readLines(paste0(getwd(),"/CandleStickComb/InputLoc.txt"))
 nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
@@ -183,6 +183,18 @@ for (i in 1:length(OutputLoc)){
   FutToBePrepared$ReadCombData(OutputCombtxt = OutputLoc[i] , nam=nam[i])     #This src load the combined data
 }
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
+
+
+
+#Step3: check reversal:
+#Planet
+MACDPower(DataToBeTested=subset(NQ5F, Date<="2024-11-29 11:00:00"),Title = "NQ5F") 
+
+#Threeline
+MACDThreeLineTest(NQ5FComb, specifyDate = '2024-11-28 11:10:00') #this checks only the divergence, and if rev exists, check the falsebreakout
+#OR
+LatestBreakout(NQ5FComb, specifyDate = '2024-11-29 06:45:00') #this checks both the divergence and the true reversal with structure break
+
 
 
 x=read.csv("Data/OriginalFuturesData/NQ/TickData/TickData_NQ_20241125.csv", header = TRUE)
