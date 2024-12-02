@@ -46,7 +46,7 @@ while(i<=(nrow(Bi)-4)){
     #check MACD divergence
     macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
-
+    
     #假跌破
     falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
                            (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
@@ -238,7 +238,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       #check MACD divergence
       macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
       macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
-
+      
       #假跌破
       falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
                              (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
@@ -267,8 +267,17 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
         buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
-        cat("bought price:", buyP, "bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]), '\n')
-      }else{ExistPosition=FALSE; cat("No position should be opened. Either div, rev or ordertime is not satisfied.", '\n')}
+        cat("Open position price:", buyP, "Open position time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]), '\n')
+      }else{
+        ExistPosition=FALSE
+        cat(
+          "No position should be opened.",
+          if (rev == 0) "---rev not satisfied.",
+          if (div == 0) "---div not satisfied.",
+          if (ordertime > 23 | ordertime < 7) "---ordertime not satisfied.",
+          '\n'
+        )
+      }
       
       j=2
       stoploss=BreakoutStructure$Bi[1+2,"MIN"] #止损在笔2的最低点
