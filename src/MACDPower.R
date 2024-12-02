@@ -480,7 +480,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       macd_rev1_bygroup=macd_rev1%>%split_interval()#group the macd into pos and neg values
       macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
       revindex1 <- which(sapply(macd_rev1_bygroup, function(df) any(df$MACD>0))) #get the index of the df whose MACD>0
-      if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)} #the max of the last positive MACD group
+      if(length(revindex1)!=0){lastMaxMacd=max(macd_rev1_bygroup[[last(revindex1)]]$MACD)}else{lastMaxMacd=0} #the max of the last positive MACD group
       
       mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
       mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
@@ -643,7 +643,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             sellP=profittaker
             sellReason="takeprofit"
             sellRefDate=BreakoutStructure$Bi[1+2+j-2,"BiEndD"]
-            #cat("sellP:",sellP,"\n")
+            cat("Profittaker was triggered. Close position.", "sellRefDate:", sellRefDate, "value:",sellP, "\n")
             j=j-2
             break}
           else{if((1+2+j)>=nrow(BreakoutStructure$Bi)){cat("No profit should be taken yet.", "sellRefDate:", BreakoutStructure$Bi[1+2+j-2,"BiEndD"], "value:", profittaker, "\n");break}else{j=j+2}
