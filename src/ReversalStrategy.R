@@ -1,4 +1,4 @@
-CombData=NQ1HContinuous
+CombData=NQ4HContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -200,6 +200,26 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 
+#4H
+#9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
+
+#2H
+#11279.04 0.6388889 : with mean sort, 0.999 or mfi or MFRatio
+
+#1H
+#8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
+
+#30F:
+#22701.88 0.6229508 : with mean sort, 0.999 or mfi, 
+#23065.23 0.6290323 : with mean sort, 0.999 or mfi or MFRatio
+
+#5F
+#28014.21 0.4731638 : with mean sort, 0.999 or mfi or MFRatio
+
+
+StockChart(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-31 21:15:00'), "NQ30FContinuous")
+MACDThreeLineTest(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-19 05:00:00'))
+LatestBreakout(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-19 10:00:00'))
 
 
 

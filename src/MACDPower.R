@@ -9,11 +9,11 @@ checkdiv<-function(intervals, dir){
     
     A1df=split_interval(intervals$l1)%>%
       map(~filter(.x, DIFF<=0 & DEA<=0))%>%
-      keep(~nrow(.x)>5 && all(.x$MACD<=0))
+      keep(~all(.x$MACD<=0))
     
     A2df=split_interval(intervals$l2)%>%
       map(~filter(.x, DIFF<=0 & DEA<=0))%>%
-      keep(~nrow(.x)>5 && all(.x$MACD<=0))
+      keep(~nrow(.x)>=5 && all(.x$MACD<=0))
     
     
     if(length(A2df)<2){df=c(A1df, A2df)}else{df=A2df}
