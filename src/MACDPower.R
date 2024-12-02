@@ -668,7 +668,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Price[ind1, "Low"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
           #cat("Profit taker: ", profittaker)
           if(
-            #this is roughly the same as EMA5<EMA20 when down breakout happens (which is used in real trading). 
+            #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
             BreakoutStructure$Bi[1+2+j,"MIN"]<=profittaker & 
             any(BreakoutStructure$Price[which(BreakoutStructure$Price$Date==BreakoutStructure$Bi[1+2+j,"BiEndD"]),"Close"] < filter(Data_EMA60, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%select(EMA60))
           ){
