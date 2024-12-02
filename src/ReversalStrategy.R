@@ -70,7 +70,7 @@ while(i<=(nrow(Bi)-4)){
     ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
+    if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
       target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
       ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
       buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
@@ -262,7 +262,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
       #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
-      if(rev==1 & div==1 & ordertime>=6 & ordertime<=23){
+      if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
         buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
