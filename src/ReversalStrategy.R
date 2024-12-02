@@ -60,7 +60,7 @@ while(i<=(nrow(Bi)-4)){
     minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMFI<-list(mfi_div1,mfi_div2)%>%map(~min(.x$MFI))
     
-    if(falsebreakout==1){cat("false breakout at:", BreakoutStructure$Bi[1+3,"BiStartD"]);div=1}
+    if(falsebreakout==1){div=1}
     else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
             ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
     ){div=1}else{div=0}
