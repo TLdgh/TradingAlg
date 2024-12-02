@@ -1,4 +1,4 @@
-CombData=NQ30FContinuous
+CombData=NQ5FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -56,13 +56,23 @@ while(i<=(nrow(Bi)-4)){
     mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     mfi_div1 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
     mfi_div2 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+    mfema1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1,"BiEndD"])
+    mfema2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
     
     minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
     minMFI<-list(mfi_div1,mfi_div2)%>%map(~min(.x$MFI))
+    #量比
+    MFRatio <- list(mfema1, mfema2) %>%
+      map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
+                            Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
+      )
+    MFRatio<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+    
+    
     
     if(falsebreakout==1){div=1}
     else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
+            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (MFRatio>0))
     ){div=1}else{div=0}
     
     #cat("div",div,'\n')
@@ -79,6 +89,9 @@ while(i<=(nrow(Bi)-4)){
       #cat("bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]),'\n')
     }
     else{i=i+1;next}  
+    
+    
+    
     
     j=2
     stoploss=Bi$MIN[i+2] #止损在笔2的最低点
