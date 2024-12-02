@@ -6,7 +6,7 @@ MACDTest<-function(Pricedata, Title, CheckReversal=FALSE){
   StarData<-SBPStr$StarData
   Bi<-SBPStr$Bi
   BiPlanetStr<-SBPStr$BiPlanetStr
-
+  
   res<-function(BiEndD,OutIndex,Reversal1){
     if((which(StarData$Date==BiEndD)+2)<=nrow(StarData)){
       Pdate<-StarData[which(StarData$Date==BiEndD)+2,"Date"]
@@ -25,29 +25,78 @@ MACDTest<-function(Pricedata, Title, CheckReversal=FALSE){
 }
 
 
-MACDThreeLineTest<-function(Pricedata,LineDivPeriod){
-  Data_macd<-PricedataMACD(Pricedata)
-  LineDiv1MACD<-subset(Data_macd,Date>=LineDivPeriod[1,"BiStartD"] & Date<=LineDivPeriod[1,"BiEndD"])
-  LineDiv2MACD<-subset(Data_macd,Date>=LineDivPeriod[2,"BiStartD"] & Date<=LineDivPeriod[2,"BiEndD"])
+MACDThreeLineTest<-function(CombData, specifyDate=NULL){
+  Data_macd<-PricedataMACD(CombData) #calculate the MACD
+  Data_MF<-PricedataMoneyFlow(CombData)
+  Data_MFI<-PricedataMFI(CombData)
+  Data_EMA60<-FuncEMA60(CombData)
   
-  #the range of time
-  LDiv1Length<-nrow(LineDiv1MACD)
-  LDiv2Length<-nrow(LineDiv2MACD)
-  L_TimeWeight<-LDiv2Length/LDiv1Length
+  SBPStr<-ChanLunStr(CombData)
+  Bi<-SBPStr$Bi
   
-  #the range of price
-  LDiv1Barlength<-abs(Pricedata[which(Pricedata$Date==LineDivPeriod[1,"BiEndD"]),]$Close-Pricedata[which(Pricedata$Date==LineDivPeriod[1,"BiStartD"]),]$Close)    
-  LDiv2Barlength<-abs(Pricedata[which(Pricedata$Date==LineDivPeriod[2,"BiEndD"]),]$Close-Pricedata[which(Pricedata$Date==LineDivPeriod[2,"BiStartD"]),]$Close)
-  L_PriceWeight<-LDiv2Barlength/LDiv1Barlength
+  i=ifelse(is.null(specifyDate), nrow(Bi)-2, which(Bi$BiStartD==specifyDate))
   
-  LDiveMeanWeight<-mean(c(L_TimeWeight,L_PriceWeight))
-  
-  #the MACD data for the lines considered
-  Line_bar_1<-mean(abs(LineDiv1MACD$MACD))*LDiveMeanWeight #the smaller the value, the closer of two EMA lines in MACD, hence more likely to reverse
-  Line_bar_2<-mean(abs(LineDiv2MACD$MACD))*LDiveMeanWeight
-  
-  Area<-as.numeric(Line_bar_1>Line_bar_2)
-  return(Area)
+  while(i>=1){
+    if(i>(nrow(Bi)-2)){stop("Choose a specifyDate that has at least 2 Bi.")}
+    else if(Bi$SLOPE[i]==-1 & Bi$MAX[i+2]<Bi$MAX[i]){
+      start_ind=Bi$BiStartD[i]
+      
+      BreakoutStructure=list(Bi=filter(Bi,BiStartD>=start_ind), 
+                             Price=filter(CombData,Date>=start_ind),
+                             MACD=filter(Data_macd,Date>=start_ind),
+                             MF=filter(Data_MF,Date>=start_ind),
+                             MFI=filter(Data_MFI,Date>=start_ind)
+      )
+      
+      #check MACD divergence
+      macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+      macd_div2 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      
+      #假跌破
+      falsebreakout=ifelse((min(macd_div2$MACD) < 1.3*min(macd_div1$MACD)) & 
+                             (max(macd_rev2$MACD) > 1.3*max(macd_rev1$MACD)) &
+                             (max(mf_rev2$MoneyFlow) >= max(mf_rev1$MoneyFlow)), 1, 0)
+      
+      mf_div1 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+      mf_div2 <- subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      mfi_div1 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
+      mfi_div2 <- subset(BreakoutStructure$MFI, Date>=BreakoutStructure$Bi[1+2,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      
+      minMF<-list(mf_div1,mf_div2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = FALSE)[1:3]))
+      minMFI<-list(mfi_div1,mfi_div2)%>%map(~min(.x$MFI))
+      
+      if(falsebreakout==1){div=1}
+      else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
+              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
+      ){div=1}else{div=0}
+      
+      # Create a data frame with Key and Value columns
+      res <- data.frame(
+        Key = c(
+          "MACD1", "MACD2", 
+          "MF1", "MF2", 
+          "MFI1", "MFI2", 
+          "Period Start", "Period End", 
+          "Divergence", "False Breakout"
+        ),
+        Value = c(
+          min(macd_div1$MACD), min(macd_div2$MACD), 
+          minMF[[1]], minMF[[2]], 
+          minMFI[[1]], minMFI[[2]], 
+          BreakoutStructure$Bi[1, "BiStartD"], 
+          BreakoutStructure$Bi[1 + 2, "BiEndD"],
+          as.logical(div), falsebreakout
+        ),
+        stringsAsFactors = FALSE
+      )
+      
+      # Print the data frame
+      print(res)
+      
+      break
+    }
+    else{i=i-1}
+  }
 }
 
 
