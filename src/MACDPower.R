@@ -607,7 +607,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           "No position should be opened.",
           if (rev == 0) "---rev not satisfied.",
           if (div == 0) "---div not satisfied.",
-          if (ordertime > 23 | ordertime < 7) "---ordertime not satisfied.",
+          if (ordertime > 23 | ordertime < 6) "---ordertime not satisfied.",
           '\n'
         )
       }
