@@ -263,17 +263,18 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
       if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
+        ExistPosition=TRUE
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
         buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
         cat("bought price:", buyP, "bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]), '\n')
-      }else{cat("No position should be opened. Either div, rev or ordertime is not satisfied.", '\n')}
+      }else{ExistPosition=FALSE; cat("No position should be opened. Either div, rev or ordertime is not satisfied.", '\n')}
       
       j=2
       stoploss=BreakoutStructure$Bi[1+2,"MIN"] #止损在笔2的最低点
       profittaker=0
       
-      while((1+2+j)<=nrow(BreakoutStructure$Bi)){
+      while((1+2+j)<=nrow(BreakoutStructure$Bi) & ExistPosition){
         if(BreakoutStructure$Bi[1+3,"MAX"]>=BreakoutStructure$Bi[1+2+j,"MAX"] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
           # Calculate minimum return and corresponding price break date
           price_subset <- filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi[1+1,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiStartD"])
