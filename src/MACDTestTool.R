@@ -34,10 +34,10 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
   
-  i=ifelse(is.null(specifyDate), nrow(Bi)-2, which(Bi$BiStartD==specifyDate))
+  i=ifelse(is.null(specifyDate), nrow(Bi)-3, which(Bi$BiStartD==specifyDate))
   
   while(i>=1){
-    if(i>(nrow(Bi)-2)){stop("Choose a specifyDate that has at least 2 Bi.")}
+    if(i>(nrow(Bi)-3)){stop("Choose a specifyDate that has at least 4 Bi.")}
     else if(Bi$SLOPE[i]==-1 & Bi$MAX[i+2]<Bi$MAX[i]){
       start_ind=Bi$BiStartD[i]
       
@@ -47,6 +47,17 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
                              MF=filter(Data_MF,Date>=start_ind),
                              MFI=filter(Data_MFI,Date>=start_ind)
       )
+      
+      #check MACD reversal
+      macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      macd_rev1_bygroup=macd_rev1%>%split_interval()#group the macd into pos and neg values
+      macd_rev2=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
+          
+      mf_rev1=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
+      mf_rev2=subset(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & Date<=BreakoutStructure$Bi[1+3,"BiEndD"])
+      maxMF=list(mf_rev1,mf_rev2)%>%map(~mean(sort(.x$MoneyFlow, decreasing = TRUE)[1:3]))
+
+
       
       #check MACD divergence
       macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
@@ -70,7 +81,8 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
               ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
       ){div=1}else{div=0}
       
-      # Create a data frame with Key and Value columns
+      
+      
       res <- data.frame(
         Key = c(
           "MACD1", "MACD2", 
@@ -81,7 +93,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         ),
         Value = c(
           min(macd_div1$MACD), min(macd_div2$MACD), 
-          minMF[[1]], minMF[[2]], 
+          minMF[[1]], 0.999*minMF[[2]], 
           minMFI[[1]], minMFI[[2]], 
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
@@ -90,8 +102,11 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         stringsAsFactors = FALSE
       )
       
-      # Print the data frame
+      # Print the data frames
+      cat("\nDivergence Information:\n")
       print(res)
+      
+      
       
       break
     }
