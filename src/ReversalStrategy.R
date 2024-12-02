@@ -1,4 +1,4 @@
-CombData=NQ4HContinuous
+CombData=NQ5FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -7,6 +7,7 @@ Data_EMA30<-FuncEMA30(CombData)
 
 SBPStr<-ChanLunStr(CombData)
 Bi<-SBPStr$Bi
+BiPlanetStr<-SBPStr$BiPlanetStr
 
 PL_test=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellRefDate=NA)
 i=1
@@ -68,11 +69,21 @@ while(i<=(nrow(Bi)-4)){
       )
     mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
     
-    
+    #MACDPower
+    powerind=which(BiPlanetStr$BiEndD==BreakoutStructure$Bi[1+2,"BiEndD"])
+    if(length(powerind)!=0){
+      d1=CombData[max(1,which(CombData$Date==BiPlanetStr[powerind, 'BiStartD'])-500), "Date"]
+      d2=BreakoutStructure$Bi[1+3,"BiEndD"]
+      #cat("Out2",BreakoutStructure$Bi[1+2,"BiEndD"],'\n')
+      powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
+      power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
+      #print(power_res)
+    }
     
     if(falsebreakout==1){div=1}
-    else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))
+    else if(
+      (min(macd_div2$MACD) > min(macd_div1$MACD)) & 
+      ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))     
     ){div=1}else{div=0}
     
     #cat("div",div,'\n')
@@ -80,7 +91,7 @@ while(i<=(nrow(Bi)-4)){
     ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
+    if( ((rev==1 & div==1)|(exists("power_res") && power_res > 5)) & ordertime>=6 & ordertime<=23){
       target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
       ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
       buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
@@ -202,23 +213,27 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
+#14094.19 0.6551724 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #11279.04 0.6388889 : with mean sort, 0.999 or mfi or MFRatio
+#18196.68 0.6491228 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
+#11067.52 0.5421687 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22701.88 0.6229508 : with mean sort, 0.999 or mfi, 
 #23065.23 0.6290323 : with mean sort, 0.999 or mfi or MFRatio
+#24079.87 0.5357143 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
 #28014.21 0.4731638 : with mean sort, 0.999 or mfi or MFRatio
 
 
 StockChart(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-31 21:15:00'), "NQ30FContinuous")
-MACDThreeLineTest(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-19 05:00:00'))
+MACDThreeLineTest(subset(NQ4HContinuous,  Date<='2019-12-19 05:00:00'))
 LatestBreakout(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-19 10:00:00'))
 
 

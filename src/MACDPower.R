@@ -466,6 +466,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
   
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
+  BiPlanetStr<-SBPStr$BiPlanetStr
   
   i=ifelse(is.null(specifyDate), nrow(Bi)-3, which(Bi$BiStartD==specifyDate))
   
@@ -526,11 +527,21 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         )
       mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
       
-      
+      #MACDPower
+      powerind=which(BiPlanetStr$BiEndD==BreakoutStructure$Bi[1+2,"BiEndD"])
+      if(length(powerind)!=0){
+        d1=CombData[max(1,which(CombData$Date==BiPlanetStr[powerind, 'BiStartD'])-500), "Date"]
+        d2=BreakoutStructure$Bi[1+3,"BiEndD"]
+        cat("Out2",BreakoutStructure$Bi[1+2,"BiEndD"],'\n')
+        powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
+        power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
+        print(power_res)
+      }
       
       if(falsebreakout==1){div=1}
-      else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr))
+      else if(
+        (min(macd_div2$MACD) > min(macd_div1$MACD)) & 
+        ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))     
       ){div=1}else{div=0}
       
       
@@ -559,7 +570,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           "MFI1", "MFI2", 
           "MFRatio1","MFRatio2",
           "Period Start", "Period End", 
-          "Divergence", "False Breakout"
+          "Divergence", "Macdpower", "False Breakout"
         ),
         Value = c(
           min(macd_div1$MACD), min(macd_div2$MACD), 
@@ -568,7 +579,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
-          as.logical(div), falsebreakout
+          as.logical(div), ifelse(exists("power_res") && power_res > 5, TRUE, FALSE), falsebreakout
         ),
         stringsAsFactors = FALSE
       )
@@ -584,7 +595,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
       #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
-      if(rev==1 & div==1 & ordertime>=7 & ordertime<=23){
+      if( ((rev==1 & div==1)|(exists("power_res") && power_res > 5)) & ordertime>=6 & ordertime<=23){
         ExistPosition=TRUE
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
@@ -686,6 +697,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
   
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
+  BiPlanetStr<-SBPStr$BiPlanetStr
   
   i=ifelse(is.null(specifyDate), nrow(Bi)-3, which(Bi$BiStartD==specifyDate))
   
@@ -737,11 +749,20 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         )
       mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
       
-      
+      #MACDPower
+      powerind=which(BiPlanetStr$BiEndD==BreakoutStructure$Bi[1+2,"BiEndD"])
+      if(length(powerind)!=0){
+        d1=CombData[max(1,which(CombData$Date==BiPlanetStr[powerind, 'BiStartD'])-500), "Date"]
+        d2=BreakoutStructure$Bi[1+3,"BiEndD"]
+        cat("Out2",BreakoutStructure$Bi[1+2,"BiEndD"],'\n')
+        powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
+        power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
+        print(power_res)
+      }
       
       if(falsebreakout==1){div=1}
-      else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))
+      else if(
+        ((min(macd_div2$MACD) > min(macd_div1$MACD)) & ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0)) ) | (exists("power_res") && power_res > 5)
       ){div=1}else{div=0}
       
       
@@ -753,7 +774,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
           "MFI1", "MFI2", 
           "MFRatio1","MFRatio2",
           "Period Start", "Period End", 
-          "Divergence", "False Breakout"
+          "Divergence", 'Macdpower', "False Breakout"
         ),
         Value = c(
           min(macd_div1$MACD), min(macd_div2$MACD), 
@@ -762,7 +783,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
           MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
-          as.logical(div), falsebreakout
+          as.logical(div), ifelse(exists("power_res") && power_res > 5, TRUE, FALSE), falsebreakout
         ),
         stringsAsFactors = FALSE
       )
