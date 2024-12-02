@@ -267,7 +267,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
         buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
         cat("bought price:", buyP, "bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]), '\n')
-      }else{cat("No position should be opened. Either div, rev or ordertime is not satisfied.")}
+      }else{cat("No position should be opened. Either div, rev or ordertime is not satisfied.", '\n')}
       
       j=2
       stoploss=BreakoutStructure$Bi[1+2,"MIN"] #止损在笔2的最低点
