@@ -233,7 +233,8 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.98*lastMaxMacd) &
               (maxMF[[2]]>=maxMF[[1]])
       ){rev=1}else{rev=0}
-      cat("rev:",rev,'rev start date:',BreakoutStructure$Bi[1+1,"BiStartD"] ,'\n')
+
+      
       
       #check MACD divergence
       macd_div1 <- subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+1,"BiEndD"])
@@ -257,7 +258,51 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
               ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]))
       ){div=1}else{div=0}
       
-      cat("div",div,'div start date:',BreakoutStructure$Bi[1,"BiStartD"] ,'\n')
+      
+      
+      res1 <- data.frame(
+        Key = c(
+          "MACD1", "MACD2", 
+          "MF1", "MF2", 
+          "Period Start", "Period End", 
+          "Reversal", "False Breakout"
+        ),
+        Value = c(
+          0.98*lastMaxMacd, max(macd_rev2$MACD), 
+          maxMF[[1]], maxMF[[2]], 
+          BreakoutStructure$Bi[1 + 1, "BiStartD"], 
+          BreakoutStructure$Bi[1 + 3, "BiEndD"],
+          as.logical(rev), falsebreakout
+        ),
+        stringsAsFactors = FALSE
+      )
+      
+      res2 <- data.frame(
+        Key = c(
+          "MACD1", "MACD2", 
+          "MF1", "MF2", 
+          "MFI1", "MFI2", 
+          "Period Start", "Period End", 
+          "Divergence", "False Breakout"
+        ),
+        Value = c(
+          min(macd_div1$MACD), min(macd_div2$MACD), 
+          minMF[[1]], 0.999*minMF[[2]], 
+          minMFI[[1]], minMFI[[2]], 
+          BreakoutStructure$Bi[1, "BiStartD"], 
+          BreakoutStructure$Bi[1 + 2, "BiEndD"],
+          as.logical(div), falsebreakout
+        ),
+        stringsAsFactors = FALSE
+      )
+      
+      # Print the data frames
+      cat("\nReversal Information:\n")
+      print(res1)
+      cat("\nDivergence Information:\n")
+      print(res2)
+      
+      
       
       ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
       #cat('order time:',ordertime,'\n')
@@ -278,6 +323,8 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           '\n'
         )
       }
+      
+      
       
       j=2
       stoploss=BreakoutStructure$Bi[1+2,"MIN"] #止损在笔2的最低点
