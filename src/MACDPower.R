@@ -667,8 +667,10 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
           profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Price[ind1, "Low"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
           #cat("Profit taker: ", profittaker)
-          if(BreakoutStructure$Bi[1+2+j,"MIN"]<=profittaker & 
-             any(BreakoutStructure$Price[which(BreakoutStructure$Price$Date==BreakoutStructure$Bi[1+2+j,"BiEndD"]),"Close"] < filter(Data_EMA60, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%select(EMA60))
+          if(
+            #this is roughly the same as EMA5<EMA20 when down breakout happens (which is used in real trading). 
+            BreakoutStructure$Bi[1+2+j,"MIN"]<=profittaker & 
+            any(BreakoutStructure$Price[which(BreakoutStructure$Price$Date==BreakoutStructure$Bi[1+2+j,"BiEndD"]),"Close"] < filter(Data_EMA60, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%select(EMA60))
           ){
             sellP=profittaker
             sellReason="takeprofit"
