@@ -1,4 +1,4 @@
-CombData=NQ5FContinuous
+CombData=NQ1HContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -66,13 +66,13 @@ while(i<=(nrow(Bi)-4)){
       map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
                             Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
       )
-    MFRatio<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+    mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
     
     
     
     if(falsebreakout==1){div=1}
     else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (MFRatio>0))
+            ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))
     ){div=1}else{div=0}
     
     #cat("div",div,'\n')

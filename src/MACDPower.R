@@ -521,13 +521,13 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
                               Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
         )
-      MFRatio<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+      mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
       
       
       
       if(falsebreakout==1){div=1}
       else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (MFRatio>0))
+              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr))
       ){div=1}else{div=0}
       
       
@@ -554,6 +554,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           "MACD1", "MACD2", 
           "MF1", "MF2", 
           "MFI1", "MFI2", 
+          "MFRatio1","MFRatio2",
           "Period Start", "Period End", 
           "Divergence", "False Breakout"
         ),
@@ -561,6 +562,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           min(macd_div1$MACD), min(macd_div2$MACD), 
           minMF[[1]], 0.999*minMF[[2]], 
           minMFI[[1]], minMFI[[2]], 
+          MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
           as.logical(div), falsebreakout
@@ -730,13 +732,13 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
                               Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
         )
-      MFRatio<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+      mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
       
       
       
       if(falsebreakout==1){div=1}
       else if((min(macd_div2$MACD) > min(macd_div1$MACD)) &
-              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (MFRatio>0))
+              ((0.999*minMF[[2]]>minMF[[1]]) | (minMFI[[2]]>minMFI[[1]]) | (mfr>0))
       ){div=1}else{div=0}
       
       
@@ -746,6 +748,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
           "MACD1", "MACD2", 
           "MF1", "MF2", 
           "MFI1", "MFI2", 
+          "MFRatio1","MFRatio2",
           "Period Start", "Period End", 
           "Divergence", "False Breakout"
         ),
@@ -753,6 +756,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
           min(macd_div1$MACD), min(macd_div2$MACD), 
           minMF[[1]], 0.999*minMF[[2]], 
           minMFI[[1]], minMFI[[2]], 
+          MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
           as.logical(div), falsebreakout
