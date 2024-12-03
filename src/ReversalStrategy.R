@@ -1,4 +1,4 @@
-CombData=NQ30FContinuous
+CombData=NQ4HContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -134,23 +134,26 @@ while(i<=(nrow(Bi)-4)){
         
         # Consolidate clear positions
         ClearPosition <- na.omit(c(pbdate, mbdate, mfbdate))
+        if(length(ClearPosition)!=0){
+          ClearPosition=sort(ClearPosition)
+          accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
+          accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
+          accPind=which(accPind==TRUE)
+        }
         
-        if(length(ClearPosition)==0 & Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
+        if(length(accPind)==0 & Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
           sellP=stoploss
           sellReason="stoploss"
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           sellRefDate=Bi$BiEndD[i+2]
           break}
-        else if(length(ClearPosition)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
-          accP=CombData[which(CombData$Date==min(ClearPosition)),"Close"]
-          if(accP<Data_EMA60[which(Data_EMA60$Date==min(ClearPosition)),"EMA60"]){
-            sellP=max(stoploss, accP)
-            sellReason="acceDecrease"
-            sellRefDate=min(ClearPosition)
-            j=j-2 #go back at least 2 steps to restart with at least three lines.
-            #cat("止损:",sellP,'\n')
-            break}else{j=j+2}
-        }
+        else if(length(accPind)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+          sellP=max(stoploss, accP)
+          sellReason="acceDecrease"
+          sellRefDate=ClearPosition[accPind]
+          j=j-2 #go back at least 2 steps to restart with at least three lines.
+          #cat("止损:",sellP,'\n')
+          break}
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
@@ -232,9 +235,10 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 #28014.21 0.4731638 : with mean sort, 0.999 or mfi or MFRatio
 
 
-StockChart(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-31 21:15:00'), "NQ30FContinuous")
-MACDThreeLineTest(subset(NQ4HContinuous,  Date<='2019-12-19 05:00:00'))
-LatestBreakout(subset(NQ30FContinuous, Date>='2019-11-09 21:15:00' & Date<='2019-12-19 10:00:00'))
+StockChart(NQ30FContinuous)
+d='2023-02-15 22:00:00'
+MACDThreeLineTest(NQ4HContinuous,  specifyDate=d)
+LatestBreakout(NQ4HContinuous,  specifyDate=d)
 
 
 

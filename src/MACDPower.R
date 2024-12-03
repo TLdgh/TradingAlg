@@ -644,25 +644,31 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           
           # Consolidate clear positions
           ClearPosition <- na.omit(c(pbdate, mbdate, mfbdate))
+          if(length(ClearPosition)!=0){
+            ClearPosition=sort(ClearPosition)
+            accP=BreakoutStructure$Price[which(BreakoutStructure$Price$Date %in% ClearPosition),"Close"]
+            accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
+            accPind=which(accPind==TRUE)
+          }
           
-          if(length(ClearPosition)==0 & BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ #任何时候下降笔破止损就卖出
+          if(length(accPind)==0 & BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ #任何时候下降笔破止损就卖出
             sellP=stoploss
             sellReason="stoploss"
             j=j-2 #go back at least 2 steps to restart with at least three lines.
             sellRefDate=BreakoutStructure$Bi[1+2,"BiEndD"]
             cat("stoploss was triggered!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
-          else if(length(ClearPosition)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
-            accP=BreakoutStructure$Price[which(BreakoutStructure$Price$Date==min(ClearPosition)),"Close"]
-            if(accP<Data_EMA60[which(Data_EMA60$Date==min(ClearPosition)),"EMA60"]){
-              sellP=max(stoploss, accP)
-              sellReason="acceDecrease"
-              sellRefDate=min(ClearPosition)
-              j=j-2 #go back at least 2 steps to restart with at least three lines.
-              cat("acceDecrease. Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
-              break}else{j=j+2}
-          }
-          else{if((1+2+j)>=nrow(BreakoutStructure$Bi)){cat("No stoploss triggered.", "sellRefDate:", BreakoutStructure$Bi[1+2,"BiEndD"], "value:", stoploss, "\n");break}else{j=j+2}} #以上都不满足则继续笔3区间震荡
+          else if(length(accPind)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+            sellP=max(stoploss, accP)
+            sellReason="acceDecrease"
+            sellRefDate=ClearPosition[accPind]
+            j=j-2 #go back at least 2 steps to restart with at least three lines.
+            cat("acceDecrease. Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
+            break}
+          else if((1+2+j)>=nrow(BreakoutStructure$Bi)){
+            cat("No stoploss triggered.", "sellRefDate:", BreakoutStructure$Bi[1+2,"BiEndD"], "value:", stoploss, "\n")
+            break}
+          else{j=j+2} #以上都不满足则继续笔3区间震荡
         }
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
           profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Price[ind1, "Low"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
