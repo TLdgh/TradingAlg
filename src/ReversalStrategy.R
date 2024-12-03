@@ -30,7 +30,7 @@ while(i<=(nrow(Bi)-4)){
     if(length(indexbreakhigh)!=0){      
       ordertime=timebreakhigh[indexbreakhigh, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } #get the hours, or all NA if daily.
     }else{ordertime=NA}
-    if(!all(is.na(ordertime)) && any(ordertime>=6)){ind1=indexbreakhigh[which(ordertime>=6)]}else{ind1=first(indexbreakhigh)} #if not all NA and there's hour>=6
+    if(!all(is.na(ordertime)) && any(ordertime>=6)){ind1=indexbreakhigh[min(which(ordertime>=6))]}else{ind1=first(indexbreakhigh)} #if not all NA and there's hour>=6
   
     
     #check MACD reversal
@@ -250,7 +250,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 StockChart(NQ30FContinuous)
-d='2020-09-28 06:00:00'
+d='2020-11-05 06:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))
