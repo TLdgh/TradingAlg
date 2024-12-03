@@ -604,8 +604,12 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & 
           ((!all(is.na(ordertime)) && any(ordertime>=6 & ordertime<=23) ) | all(is.na(ordertime)) ) ){ #if is na, it means it's daily/weekly time
         ExistPosition=TRUE
-        target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
-        ind2=which(timebreakhigh$Date==target_date)#如果笔12没有MACD>0，则是后者
+        
+        #The target date is the latest date when both MACD and MF break high, and if this date is before the one when price breaks high, we have a better price and can enter earlier.
+        target_date_macd=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
+        target_date_mf=mf_rev2[which(mf_rev2$MoneyFlow>=max(mf_rev1$MoneyFlow)),"Date"]%>%first()
+        target_date=max(target_date_macd,target_date_mf)
+        ind2=which(timebreakhigh$Date==target_date)
         buyP=min(BreakoutStructure$Bi[1+2,"MAX"], timebreakhigh[ind2, "Close"])
         cat("Open position price:", buyP, "Open position time:", min(timebreakhigh[c(ind1, ind2),"Date"]), '\n')
       }else{

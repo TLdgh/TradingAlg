@@ -1,4 +1,4 @@
-CombData=NQ5FContinuous
+CombData=NQ30FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -99,8 +99,12 @@ while(i<=(nrow(Bi)-4)){
     # MACD 和 MFI 创新高，时间7点以后，买入
     if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & 
         ((!all(is.na(ordertime)) && any(ordertime>=6 & ordertime<=23) ) | all(is.na(ordertime)) ) ){ #if is na, it means it's daily/weekly time
-      target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
-      ind2=which(timebreakhigh$Date==target_date)#如果笔12没有MACD>0，则是后者
+      
+      #The target date is the latest date when both MACD and MF break high, and if this date is before the one when price breaks high, we have a better price and can enter earlier.
+      target_date_macd=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
+      target_date_mf=mf_rev2[which(mf_rev2$MoneyFlow>=max(mf_rev1$MoneyFlow)),"Date"]%>%first()
+      target_date=max(target_date_macd,target_date_mf)
+      ind2=which(timebreakhigh$Date==target_date)
       buyP=min(BreakoutStructure$Bi[1+2,"MAX"], timebreakhigh[ind2, "Close"])
       
       #cat("bought price:", buyP,'\n')
@@ -230,27 +234,27 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#14645.23 0.7727273 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#13325.18 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#16484.71 0.6521739 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#15522.47 0.6304348 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#11985.73 0.6231884 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#10155.15 0.6086957 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#28943.22 0.6241611 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#27456.34 0.6040268 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
 #37730.36 0.5289766 : with mean sort, 0.999 or mfi or MFRatio
 
 
-StockChart(NQ30FContinuous)
-d='2020-09-28 06:00:00'
+StockChart(NQ4HContinuous)
+d='2021-04-01 06:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))
