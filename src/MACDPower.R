@@ -651,14 +651,15 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             accPind=which(accPind==TRUE)
           }
           
-          if(length(accPind)==0 & BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ #任何时候下降笔破止损就卖出
+          if((!exists('accPind') | (exists('accPind') && length(accPind)==0) ) &
+             BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ #任何时候下降笔破止损就卖出
             sellP=stoploss
             sellReason="stoploss"
             j=j-2 #go back at least 2 steps to restart with at least three lines.
             sellRefDate=BreakoutStructure$Bi[1+2,"BiEndD"]
             cat("stoploss was triggered!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
-          else if(length(accPind)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+          else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
             sellP=max(stoploss, accP)
             sellReason="acceDecrease"
             sellRefDate=ClearPosition[accPind]

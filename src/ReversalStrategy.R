@@ -141,13 +141,14 @@ while(i<=(nrow(Bi)-4)){
           accPind=which(accPind==TRUE)
         }
         
-        if(length(accPind)==0 & Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
+        if((!exists('accPind') | (exists('accPind') && length(accPind)==0) ) &
+           Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
           sellP=stoploss
           sellReason="stoploss"
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           sellRefDate=Bi$BiEndD[i+2]
           break}
-        else if(length(accPind)!=0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+        else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
           sellP=max(stoploss, accP)
           sellReason="acceDecrease"
           sellRefDate=ClearPosition[accPind]
