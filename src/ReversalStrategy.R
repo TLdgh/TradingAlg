@@ -25,8 +25,13 @@ while(i<=(nrow(Bi)-4)){
                            MFI=filter(Data_MFI,Date>=start_ind, Date<=end_ind)
     )
     
-    ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[1+2,"MAX"])%>%first()
-    #cat("BiStartD:",Bi$BiStartD[i+2],'\n')
+    timebreakhigh=filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi[1+3,"BiStartD"])
+    indexbreakhigh=which(timebreakhigh$High>=BreakoutStructure$Bi[1+2,"MAX"]) #find the indices on which prices break up.
+    if(length(indexbreakhigh)!=0){      
+      ordertime=timebreakhigh[indexbreakhigh, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } #get the hours, or all NA if daily.
+    }else{ordertime=NA}
+    if(!all(is.na(ordertime)) && any(ordertime>=6)){ind1=indexbreakhigh[which(ordertime>=6)]}else{ind1=first(indexbreakhigh)} #if not all NA and there's hour>=6
+  
     
     #check MACD reversal
     macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -90,16 +95,16 @@ while(i<=(nrow(Bi)-4)){
     
     #cat("div",div,'\n')
     
-    ordertime=BreakoutStructure$Price[ind1, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } 
-    #cat('order time:',ordertime,'\n')
+    
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ((!is.na(ordertime) && ordertime>=6 && ordertime<=23) | is.na(ordertime)) ){ #if is na, it means it's daily/weekly time
+    if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & 
+        ((!all(is.na(ordertime)) && any(ordertime>=6 & ordertime<=23) ) | all(is.na(ordertime)) ) ){ #if is na, it means it's daily/weekly time
       target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
-      ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
-      buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
+      ind2=which(timebreakhigh$Date==target_date)#如果笔12没有MACD>0，则是后者
+      buyP=min(BreakoutStructure$Bi[1+2,"MAX"], timebreakhigh[ind2, "Close"])
       
       #cat("bought price:", buyP,'\n')
-      #cat("bought time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]),'\n')
+      #cat("bought time:", min(timebreakhigh[c(ind1, ind2),"Date"]),'\n')
     }
     else{i=i+1;next}  
     
@@ -166,7 +171,7 @@ while(i<=(nrow(Bi)-4)){
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        profittaker=max(mean(Bi$MIN[i+2],CombData[ind1, "Low"]), Bi$MIN[i+2+j-2]*0.999)
+        profittaker=max(mean(Bi$MIN[i+2],Bi$MAX[i+2]), Bi$MIN[i+2+j-2]*0.999)
         #cat("Profit taker: ", profittaker)
         if(Bi$MIN[i+2+j]<=profittaker & 
            any(CombData[which(CombData$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
@@ -183,7 +188,7 @@ while(i<=(nrow(Bi)-4)){
       }
     }
     i=i+2+j-1 #往回数一笔，因为后面i=i+1
-    PL_test=rbind(PL_test, data.frame(Date=BreakoutStructure$Price[min(ind1, ind2), "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
+    PL_test=rbind(PL_test, data.frame(Date=timebreakhigh[min(ind1, ind2), "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
   }
   i=i+1
   #cat("Restart from i: ", i,"\n")
@@ -245,7 +250,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 StockChart(NQ30FContinuous)
-d='2020-09-28 14:00:00'
+d='2020-09-28 06:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))

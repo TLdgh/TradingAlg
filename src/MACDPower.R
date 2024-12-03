@@ -484,7 +484,12 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
                              MFI=filter(Data_MFI,Date>=start_ind)
       )
       
-      ind1=which(BreakoutStructure$Price$Date>=BreakoutStructure$Bi[1+3,"BiStartD"] & BreakoutStructure$Price$High>=BreakoutStructure$Bi[1+2,"MAX"])%>%first()
+      timebreakhigh=filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi[1+3,"BiStartD"])
+      indexbreakhigh=which(timebreakhigh$High>=BreakoutStructure$Bi[1+2,"MAX"]) #find the indices on which prices break up.
+      if(length(indexbreakhigh)!=0){      
+        ordertime=timebreakhigh[indexbreakhigh, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } #get the hours, or all NA if daily.
+      }else{ordertime=NA}
+      if(!all(is.na(ordertime)) && any(ordertime>=6)){ind1=indexbreakhigh[which(ordertime>=6)]}else{ind1=first(indexbreakhigh)} #if not all NA and there's hour>=6
       
       #check MACD reversal
       macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -595,22 +600,21 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       
       
-      ordertime=BreakoutStructure$Price[ind1, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } 
-      #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
-      if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ((!is.na(ordertime) && ordertime>=6 && ordertime<=23) | is.na(ordertime)) ){ #if is na, it means it's daily/weekly time
+      if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & 
+          ((!all(is.na(ordertime)) && any(ordertime>=6 & ordertime<=23) ) | all(is.na(ordertime)) ) ){ #if is na, it means it's daily/weekly time
         ExistPosition=TRUE
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
-        ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
-        buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
-        cat("Open position price:", buyP, "Open position time:", min(BreakoutStructure$Price[c(ind1, ind2),"Date"]), '\n')
+        ind2=which(timebreakhigh$Date==target_date)#如果笔12没有MACD>0，则是后者
+        buyP=min(BreakoutStructure$Bi[1+2,"MAX"], timebreakhigh[ind2, "Close"])
+        cat("Open position price:", buyP, "Open position time:", min(timebreakhigh[c(ind1, ind2),"Date"]), '\n')
       }else{
         ExistPosition=FALSE
         cat(
           "No position should be opened.",
           if (rev == 0) "---rev not satisfied.",
           if (div == 0) "---div not satisfied.",
-          if ((!is.na(ordertime) && (ordertime > 23 | ordertime < 6)) | is.na(ordertime)) "---ordertime not satisfied.",
+          if ((!all(is.na(ordertime)) && any(ordertime > 23 | ordertime < 6)) | all(is.na(ordertime))) "---ordertime not satisfied.",
           '\n'
         )
         break
@@ -684,7 +688,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           else{j=j+2} #以上都不满足则继续笔3区间震荡
         }
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-          profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Price[ind1, "Low"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
+          profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Bi[1+2,"MAX"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
           #cat("Profit taker: ", profittaker)
           if(
             #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
