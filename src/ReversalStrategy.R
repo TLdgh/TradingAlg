@@ -230,27 +230,27 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#13347.94 0.7 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#14645.23 0.7727273 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#14365.64 0.675 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#16484.71 0.6521739 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#8121.6 0.5483871 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#11985.73 0.6231884 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#22163.92 0.5984848 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#28943.22 0.6241611 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
-#32003.31 0.4961538 : with mean sort, 0.999 or mfi or MFRatio
+#37730.36 0.5289766 : with mean sort, 0.999 or mfi or MFRatio
 
 
 StockChart(NQ30FContinuous)
-d='2020-11-05 06:00:00'
+d='2020-09-28 06:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))
