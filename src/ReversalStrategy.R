@@ -151,7 +151,7 @@ while(i<=(nrow(Bi)-4)){
         else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
           sellP=max(stoploss, accP)
           sellReason="acceDecrease"
-          sellRefDate=ClearPosition[accPind]
+          sellRefDate=ClearPosition[accPind[1]]
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           #cat("止损:",sellP,'\n')
           break}
@@ -217,7 +217,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#13958.05 0.6428571 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#13509.31 0.5833333 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio

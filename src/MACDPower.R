@@ -662,7 +662,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
             sellP=max(stoploss, accP)
             sellReason="acceDecrease"
-            sellRefDate=ClearPosition[accPind]
+            sellRefDate=ClearPosition[accPind[1]]
             j=j-2 #go back at least 2 steps to restart with at least three lines.
             cat("acceDecrease. Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
