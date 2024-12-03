@@ -579,7 +579,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
-          as.logical(div), ifelse(exists("power_res") && power_res > 5, TRUE, FALSE), falsebreakout
+          as.logical(div), ifelse(!is.null(power_res) && power_res > 5, TRUE, FALSE), falsebreakout
         ),
         stringsAsFactors = FALSE
       )
@@ -644,9 +644,9 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
           
           # Consolidate clear positions
-          ClearPosition <- na.omit(c(pbdate, mbdate, mfbdate))
+          ClearPosition <- list(pricebreak=pbdate, macdbreak=mbdate, mfbreak=mfbdate)%>%Filter(function(x) !is.na(x), .)
           if(length(ClearPosition)!=0){
-            ClearPosition=sort(ClearPosition)
+            ClearPosition=ClearPosition%>%unlist()%>%sort()
             accP=BreakoutStructure$Price[which(BreakoutStructure$Price$Date %in% ClearPosition),"Close"]
             accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
             accPind=which(accPind==TRUE)
@@ -667,7 +667,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             sellReason="acceDecrease"
             sellRefDate=ClearPosition[accPind[1]]
             j=j-2 #go back at least 2 steps to restart with at least three lines.
-            cat("acceDecrease. Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
+            cat("acceDecrease due to", names(ClearPosition[accPind[1]]), ". Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
           else if((1+2+j)>=nrow(BreakoutStructure$Bi)){
             cat("No stoploss triggered.", "sellRefDate:", BreakoutStructure$Bi[1+2,"BiEndD"], "value:", stoploss, "\n")

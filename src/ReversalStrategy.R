@@ -1,4 +1,4 @@
-CombData=NQ30FContinuous
+CombData=NQ4HContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -133,9 +133,9 @@ while(i<=(nrow(Bi)-4)){
         mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
         
         # Consolidate clear positions
-        ClearPosition <- na.omit(c(pbdate, mbdate, mfbdate))
+        ClearPosition <- list(pricebreak=pbdate, macdbreak=mbdate, mfbreak=mfbdate)%>%Filter(function(x) !is.na(x), .)
         if(length(ClearPosition)!=0){
-          ClearPosition=sort(ClearPosition)
+          ClearPosition=ClearPosition%>%unlist()%>%sort()
           accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
           accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
           accPind=which(accPind==TRUE)
@@ -153,7 +153,7 @@ while(i<=(nrow(Bi)-4)){
           break}
         else if( !is.null(accPind) && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
           sellP=max(stoploss, accP)
-          sellReason="acceDecrease"
+          sellReason=paste("acceDecrease:", names(ClearPosition[accPind[1]]))
           sellRefDate=ClearPosition[accPind[1]]
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           #cat("止损:",sellP,'\n')
@@ -240,7 +240,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 StockChart(NQ30FContinuous)
-d='2023-02-15 22:00:00'
+d='2022-05-04 14:00:00'
 MACDThreeLineTest(NQ4HContinuous,  specifyDate=d)
 LatestBreakout(NQ4HContinuous,  specifyDate=d)
 
