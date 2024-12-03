@@ -499,7 +499,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       maxMF_EMA=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow_EMA))
       
       if(length(revindex1)==0){rev=1}
-      else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.98*lastMaxMacd) &
+      else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.97*lastMaxMacd) &
               (maxMF[[2]]>=maxMF[[1]])
       ){rev=1}else{rev=0}
       
@@ -557,7 +557,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           "Reversal", "False Breakout"
         ),
         Value = c(
-          0.98*lastMaxMacd, max(macd_rev2$MACD), 
+          0.97*lastMaxMacd, max(macd_rev2$MACD), 
           maxMF[[1]], maxMF[[2]], 
           BreakoutStructure$Bi[1 + 1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 3, "BiEndD"],

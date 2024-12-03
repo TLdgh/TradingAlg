@@ -41,7 +41,7 @@ while(i<=(nrow(Bi)-4)){
     maxMF_EMA=list(mf_rev1,mf_rev2)%>%map(~max(.x$MoneyFlow_EMA))
     
     if(length(revindex1)==0){rev=1}
-    else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.98*lastMaxMacd) &
+    else if((length(revindex1)!=0 & max(macd_rev2$MACD) >= 0.97*lastMaxMacd) &
             (maxMF[[2]]>=maxMF[[1]])
     ){rev=1}else{rev=0}
     #cat("rev",rev,'\n')
@@ -241,13 +241,14 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 #22163.92 0.5984848 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
-#28014.21 0.4731638 : with mean sort, 0.999 or mfi or MFRatio
+#32003.31 0.4961538 : with mean sort, 0.999 or mfi or MFRatio
 
 
 StockChart(NQ30FContinuous)
-d='2023-09-14 22:00:00'
-MACDThreeLineTest(NQ4HContinuous,  specifyDate=d)
-LatestBreakout(NQ4HContinuous,  specifyDate=d)
+d='2020-09-28 14:00:00'
+MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
+MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
+LatestBreakout(subset(NQ4HContinuous,Date<=d))
 
 
 
