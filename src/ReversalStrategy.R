@@ -1,13 +1,15 @@
-CombData=NQ4HContinuous
+CombData=AAPL_daily
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
 Data_EMA60<-FuncEMA60(CombData)
 Data_EMA30<-FuncEMA30(CombData)
 
+minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
 SBPStr<-ChanLunStr(CombData)
 Bi<-SBPStr$Bi
 BiPlanetStr<-SBPStr$BiPlanetStr
+Bi=filter(Bi,BiStartD>=minimumdate)
 
 PL_test=data.frame(Date=NA, buyP=0, stoploss=0, sellP=0,Profit=0, sellReason=NA,sellRefDate=NA)
 i=1
@@ -88,10 +90,10 @@ while(i<=(nrow(Bi)-4)){
     
     #cat("div",div,'\n')
     
-    ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
+    ordertime=BreakoutStructure$Price[ind1, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } 
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if( ((rev==1 & div==1)|(!is.null(power_res) && power_res > 5)) & ordertime>=6 & ordertime<=23){
+    if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ((!is.na(ordertime) && ordertime>=6 && ordertime<=23) | is.na(ordertime)) ){ #if is na, it means it's daily/weekly time
       target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
       ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
       buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
@@ -139,6 +141,9 @@ while(i<=(nrow(Bi)-4)){
           accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
           accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
           accPind=which(accPind==TRUE)
+          # This checks if stoploss happens before accDecrease
+          anylower=filter(CombData, Date>=Bi$BiStartD[i + 2 + j] & Date<=Bi$BiEndD[i + 2 + j] & Low<=stoploss)%>%first()
+          if(nrow(anylower)==1 & ( !is.null(accPind) && length(accPind)>0 && ClearPosition[accPind[1]]>anylower$Date)){accP=NULL;accPind=NULL}
         }else{
           accP=NULL
           accPind=NULL

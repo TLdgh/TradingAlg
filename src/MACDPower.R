@@ -464,9 +464,12 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
   Data_MFI<-PricedataMFI(CombData)
   Data_EMA60<-FuncEMA60(CombData)
   
+  #Make sure to start from the date on which all data have no NA
+  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
   BiPlanetStr<-SBPStr$BiPlanetStr
+  Bi=filter(Bi,BiStartD>=minimumdate)
   
   i=ifelse(is.null(specifyDate), nrow(Bi)-3, which(Bi$BiStartD==specifyDate))
   
@@ -592,10 +595,10 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       
       
-      ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
+      ordertime=BreakoutStructure$Price[ind1, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } 
       #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
-      if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ordertime>=6 & ordertime<=23){
+      if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ((!is.na(ordertime) && ordertime>=6 && ordertime<=23) | is.na(ordertime)) ){ #if is na, it means it's daily/weekly time
         ExistPosition=TRUE
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
@@ -607,7 +610,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           "No position should be opened.",
           if (rev == 0) "---rev not satisfied.",
           if (div == 0) "---div not satisfied.",
-          if (ordertime > 23 | ordertime < 6) "---ordertime not satisfied.",
+          if ((!is.na(ordertime) && (ordertime > 23 | ordertime < 6)) | is.na(ordertime)) "---ordertime not satisfied.",
           '\n'
         )
         break
@@ -647,10 +650,16 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           ClearPosition <- list(pricebreak=pbdate, macdbreak=mbdate, mfbreak=mfbdate)%>%Filter(function(x) !is.na(x), .)
           if(length(ClearPosition)!=0){
             ClearPosition=ClearPosition%>%unlist()%>%sort()
-            accP=BreakoutStructure$Price[which(BreakoutStructure$Price$Date %in% ClearPosition),"Close"]
+            accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
             accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
             accPind=which(accPind==TRUE)
-          }else{accP=NULL;accPind=NULL}
+            # This checks if stoploss happens before accDecrease
+            anylower=filter(CombData, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"] & Low<=stoploss)%>%first()
+            if(nrow(anylower)==1 & ( !is.null(accPind) && length(accPind)>0 && ClearPosition[accPind[1]]>anylower$Date)){accP=NULL;accPind=NULL}
+          }else{
+            accP=NULL
+            accPind=NULL
+          }
           
           if((is.null(accPind) | ( !is.null(accPind) && length(accPind)==0) ) &
              BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ 
@@ -707,9 +716,12 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
   Data_MFI<-PricedataMFI(CombData)
   Data_EMA60<-FuncEMA60(CombData)
   
+  #Make sure to start from the date on which all data have no NA
+  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
   BiPlanetStr<-SBPStr$BiPlanetStr
+  Bi=filter(Bi,BiStartD>=minimumdate)
   
   i=ifelse(is.null(specifyDate), nrow(Bi)-3, which(Bi$BiStartD==specifyDate))
   
