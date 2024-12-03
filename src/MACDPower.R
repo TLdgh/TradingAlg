@@ -536,7 +536,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
         powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
         power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
         print(power_res)
-      }
+      }else{power_res=NULL}
       
       if(falsebreakout==1){div=1}
       else if(
@@ -595,7 +595,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
       #cat('order time:',ordertime,'\n')
       # MACD 和 MFI 创新高，时间7点以后，买入
-      if( ((rev==1 & div==1)|(exists("power_res") && power_res > 5)) & ordertime>=6 & ordertime<=23){
+      if( ((rev==1 & div==1)|( !is.null(power_res) && power_res > 5)) & ordertime>=6 & ordertime<=23){
         ExistPosition=TRUE
         target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
         ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
@@ -610,6 +610,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           if (ordertime > 23 | ordertime < 6) "---ordertime not satisfied.",
           '\n'
         )
+        break
       }
       
       
@@ -649,17 +650,19 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             accP=BreakoutStructure$Price[which(BreakoutStructure$Price$Date %in% ClearPosition),"Close"]
             accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
             accPind=which(accPind==TRUE)
-          }
+          }else{accP=NULL;accPind=NULL}
           
-          if((!exists('accPind') | (exists('accPind') && length(accPind)==0) ) &
-             BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ #任何时候下降笔破止损就卖出
+          if((is.null(accPind) | ( !is.null(accPind) && length(accPind)==0) ) &
+             BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ 
+            #任何时候下降笔破止损就卖出
             sellP=stoploss
             sellReason="stoploss"
             j=j-2 #go back at least 2 steps to restart with at least three lines.
             sellRefDate=BreakoutStructure$Bi[1+2,"BiEndD"]
             cat("stoploss was triggered!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
-          else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+          else if( !is.null(accPind) && length(accPind)>0){ 
+            #加速下跌，保本。如果不破止损就提前走，否则止损
             sellP=max(stoploss, accP)
             sellReason="acceDecrease"
             sellRefDate=ClearPosition[accPind[1]]
@@ -767,7 +770,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
         power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
         print(power_res)
-      }
+      }else{power_res=NULL}
       
       if(falsebreakout==1){div=1}
       else if(
@@ -792,7 +795,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
           MFRatio[[1]]$Neg,MFRatio[[2]]$Neg,
           BreakoutStructure$Bi[1, "BiStartD"], 
           BreakoutStructure$Bi[1 + 2, "BiEndD"],
-          as.logical(div), ifelse(exists("power_res") && power_res > 5, TRUE, FALSE), falsebreakout
+          as.logical(div), ifelse( !is.null(power_res) && power_res > 5, TRUE, FALSE), falsebreakout
         ),
         stringsAsFactors = FALSE
       )

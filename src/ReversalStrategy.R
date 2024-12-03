@@ -1,4 +1,4 @@
-CombData=NQ4HContinuous
+CombData=NQ30FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -77,8 +77,8 @@ while(i<=(nrow(Bi)-4)){
       #cat("Out2",BreakoutStructure$Bi[1+2,"BiEndD"],'\n')
       powerlist=MACDPower(filter(CombData,  Date>=d1 & Date<=d2),SBPStr = SBPStr)
       power_res=sum(as.numeric(strsplit(powerlist$Class, "")[[1]]))
-      #print(power_res)
-    }
+    }else{power_res=NULL}
+    
     
     if(falsebreakout==1){div=1}
     else if(
@@ -91,7 +91,7 @@ while(i<=(nrow(Bi)-4)){
     ordertime=ymd_hms(BreakoutStructure$Price[ind1, "Date"], tz="America/Toronto")%>%hour()
     #cat('order time:',ordertime,'\n')
     # MACD 和 MFI 创新高，时间7点以后，买入
-    if( ((rev==1 & div==1)|(exists("power_res") && power_res > 5)) & ordertime>=6 & ordertime<=23){
+    if( ((rev==1 & div==1)|(!is.null(power_res) && power_res > 5)) & ordertime>=6 & ordertime<=23){
       target_date=ifelse(length(revindex1)!=0, macd_rev2[first(which(macd_rev2$MACD>lastMaxMacd)),"Date"], macd_rev2[first(which(macd_rev2$MACD>0)),"Date"])
       ind2=which(BreakoutStructure$Price$Date==target_date)#如果笔12没有MACD>0，则是后者
       buyP=min(BreakoutStructure$Price[c(ind1, ind2), "Close"])
@@ -139,16 +139,19 @@ while(i<=(nrow(Bi)-4)){
           accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
           accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
           accPind=which(accPind==TRUE)
+        }else{
+          accP=NULL
+          accPind=NULL
         }
         
-        if((!exists('accPind') | (exists('accPind') && length(accPind)==0) ) &
+        if((is.null(accPind) | ( !is.null(accPind) && length(accPind)==0) ) &
            Bi$MIN[i+2+j]<=stoploss){ #任何时候下降笔破止损就卖出
           sellP=stoploss
           sellReason="stoploss"
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           sellRefDate=Bi$BiEndD[i+2]
           break}
-        else if(exists('accPind') && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
+        else if( !is.null(accPind) && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
           sellP=max(stoploss, accP)
           sellReason="acceDecrease"
           sellRefDate=ClearPosition[accPind[1]]
@@ -217,20 +220,20 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#13509.31 0.5833333 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#13347.94 0.7 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#18196.68 0.6491228 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#14365.64 0.675 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#11277.99 0.5340909 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#8121.6 0.5483871 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#24079.87 0.5357143 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#22320.1 0.6060606 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
 #28014.21 0.4731638 : with mean sort, 0.999 or mfi or MFRatio
