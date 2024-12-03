@@ -178,7 +178,7 @@ while(i<=(nrow(Bi)-4)){
       }
     }
     i=i+2+j-1 #往回数一笔，因为后面i=i+1
-    PL_test=rbind(PL_test, data.frame(Date=BreakoutStructure$Price[ind1, "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
+    PL_test=rbind(PL_test, data.frame(Date=BreakoutStructure$Price[min(ind1, ind2), "Date"], buyP, stoploss, sellP, Profit=sellP-buyP, sellReason,sellRefDate))
   }
   i=i+1
   #cat("Restart from i: ", i,"\n")
@@ -240,7 +240,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 StockChart(NQ30FContinuous)
-d='2022-05-04 14:00:00'
+d='2023-09-14 22:00:00'
 MACDThreeLineTest(NQ4HContinuous,  specifyDate=d)
 LatestBreakout(NQ4HContinuous,  specifyDate=d)
 

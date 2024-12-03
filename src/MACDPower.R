@@ -667,7 +667,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             sellReason="acceDecrease"
             sellRefDate=ClearPosition[accPind[1]]
             j=j-2 #go back at least 2 steps to restart with at least three lines.
-            cat("acceDecrease due to", names(ClearPosition[accPind[1]]), ". Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
+            cat(paste0("acceDecrease due to ", names(ClearPosition[accPind[1]]), "."), "Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
           else if((1+2+j)>=nrow(BreakoutStructure$Bi)){
             cat("No stoploss triggered.", "sellRefDate:", BreakoutStructure$Bi[1+2,"BiEndD"], "value:", stoploss, "\n")
