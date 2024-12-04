@@ -1,4 +1,4 @@
-CombData=NQ30FContinuous
+CombData=NQ5FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -239,7 +239,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 #30153.66 0.6351351 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
-#35433.95 0.5163241 : with mean sort, 0.999 or mfi or MFRatio
+#38032.39 0.544458 : with mean sort, 0.999 or mfi or MFRatio
 
 
 StockChart(NQ4HContinuous)
