@@ -478,11 +478,13 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
   Data_MFI<-PricedataMFI(CombData)
-  Data_EMA30<-FuncEMA30(CombData)
   Data_EMA60<-FuncEMA60(CombData)
+  Data_EMA30<-FuncEMA30(CombData)
+  Data_EMA20<-FuncEMA20(CombData)
+  Data_EMA5<-FuncEMA5(CombData)
   
   #Make sure to start from the date on which all data have no NA
-  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
+  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60,Data_EMA30,Data_EMA20,Data_EMA5), ~.x$Date)%>%Reduce(intersect, .)%>%first()
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
   BiPlanetStr<-SBPStr$BiPlanetStr
@@ -693,19 +695,28 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           else{j=j+2} #以上都不满足则继续笔3区间震荡
         }
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-          breakema60 <- map(list(data=BreakoutStructure$Price, ema60=Data_EMA60), ~ {
+          strucBreak <- map(list(data=BreakoutStructure$Price, ema5=Data_EMA5, ema20=Data_EMA20, ema60=Data_EMA60), ~ {
             filter(.x, Date >= BreakoutStructure$Bi$BiStartD[1+2+j] & Date <= BreakoutStructure$Bi$BiEndD[1+2+j])
           })
-          breakema60=breakema60$data[which(breakema60$data$Close<breakema60$ema60$EMA60)%>%first(),]
-          profitlevel=list(Date=c(BreakoutStructure$Bi$BiEndD[1+2], BreakoutStructure$Bi$BiEndD[1+2+j], BreakoutStructure$Bi$BiEndD[1+2+j-2], breakema60$Date), 
-                           Value=c(BreakoutStructure$Bi$MIN[1+2], mean(c(BreakoutStructure$Bi$MIN[1+2],BreakoutStructure$Bi$MAX[1+2])), BreakoutStructure$Bi$MIN[1+2+j-2]*0.999, breakema60$Close))
+          below60=which(strucBreak$data$Close<strucBreak$ema60$EMA60)%>%first()
+          fivebelow20=which(strucBreak$ema5$EMA5<strucBreak$ema20$EMA20)%>%first()
+          # cleanup
+          strucBreak <- if (is_empty(below60) && is_empty(fivebelow20)) {
+            slice(strucBreak$data, 0) # Zero-row data frame
+          } else {
+            min_index <- c(below60, fivebelow20) %>% discard(is_empty) %>% min()
+            slice(strucBreak$data, min_index)
+          }
+          
+          profitlevel=list(Date=c(BreakoutStructure$Bi$BiEndD[1+2], BreakoutStructure$Bi$BiEndD[1+2+j], BreakoutStructure$Bi$BiEndD[1+2+j-2], strucBreak$Date), 
+                           Value=c(BreakoutStructure$Bi$MIN[1+2], mean(c(BreakoutStructure$Bi$MIN[1+2],BreakoutStructure$Bi$MAX[1+2])), BreakoutStructure$Bi$MIN[1+2+j-2]*0.999, strucBreak$Close))
           
           profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
           #cat("Profit taker: ", profittaker)
           if(
             #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
             BreakoutStructure$Bi$MIN[i+2+j]<=BreakoutStructure$Bi$MIN[i+2+j-2] && 
-            nrow(breakema60)!=0
+            nrow(strucBreak)!=0
           ){
             sellP=profittaker
             sellReason="takeprofit"
@@ -730,10 +741,9 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
   Data_MFI<-PricedataMFI(CombData)
-  Data_EMA60<-FuncEMA60(CombData)
-  
+
   #Make sure to start from the date on which all data have no NA
-  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
+  minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI), ~.x$Date)%>%Reduce(intersect, .)%>%first()
   SBPStr<-ChanLunStr(CombData)
   Bi<-SBPStr$Bi
   BiPlanetStr<-SBPStr$BiPlanetStr

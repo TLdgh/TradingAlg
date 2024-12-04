@@ -4,8 +4,10 @@ Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
 Data_EMA60<-FuncEMA60(CombData)
 Data_EMA30<-FuncEMA30(CombData)
+Data_EMA20<-FuncEMA20(CombData)
+Data_EMA5<-FuncEMA5(CombData)
 
-minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60), ~.x$Date)%>%Reduce(intersect, .)%>%first()
+minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI,Data_EMA60,Data_EMA30,Data_EMA20,Data_EMA5), ~.x$Date)%>%Reduce(intersect, .)%>%first()
 SBPStr<-ChanLunStr(CombData)
 Bi<-SBPStr$Bi
 BiPlanetStr<-SBPStr$BiPlanetStr
@@ -164,17 +166,26 @@ while(i<=(nrow(Bi)-4)){
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        breakema60 <- map(list(data=CombData, ema60=Data_EMA60), ~ {
+        strucBreak <- map(list(data=CombData, ema5=Data_EMA5, ema20=Data_EMA20, ema60=Data_EMA60), ~ {
           filter(.x, Date >= Bi$BiStartD[i+2+j] & Date <= Bi$BiEndD[i+2+j])
         })
-        breakema60=breakema60$data[which(breakema60$data$Close<breakema60$ema60$EMA60)%>%first(),]
-        profitlevel=list(Date=c(Bi$BiEndD[i+2], Bi$BiEndD[i+2+j], Bi$BiEndD[i+2+j-2], breakema60$Date), 
-                         Value=c(Bi$MIN[i+2], mean(c(Bi$MIN[i+2],Bi$MAX[i+2])), Bi$MIN[i+2+j-2]*0.999, breakema60$Close))
+        below60=which(strucBreak$data$Close<strucBreak$ema60$EMA60)%>%first()
+        fivebelow20=which(strucBreak$ema5$EMA5<strucBreak$ema20$EMA20)%>%first()
+        # cleanup
+        strucBreak <- if (is_empty(below60) && is_empty(fivebelow20)) {
+          slice(strucBreak$data, 0) # Zero-row data frame
+        } else {
+          min_index <- c(below60, fivebelow20) %>% discard(is_empty) %>% min()
+          slice(strucBreak$data, min_index)
+        }
+        
+        profitlevel=list(Date=c(Bi$BiEndD[i+2], Bi$BiEndD[i+2+j], Bi$BiEndD[i+2+j-2], strucBreak$Date), 
+                         Value=c(Bi$MIN[i+2], mean(c(Bi$MIN[i+2],Bi$MAX[i+2])), Bi$MIN[i+2+j-2]*0.999, strucBreak$Close))
         
         profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
         #cat("Profit taker: ", profittaker)
         if(Bi$MIN[i+2+j]<=Bi$MIN[i+2+j-2] && 
-           nrow(breakema60)!=0
+           nrow(strucBreak)!=0
         ){
           sellP=profittaker
           sellReason="takeprofit"
@@ -230,20 +241,20 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#12524.42 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#13273.07 0.7826087 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#13901.49 0.7173913 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#14919.05 0.7391304 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#9922.892 0.6666667 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#9866.777 0.6619718 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#28881.89 0.6233766 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#29075.01 0.6363636 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
 #38032.39 0.544458 : with mean sort, 0.999 or mfi or MFRatio
