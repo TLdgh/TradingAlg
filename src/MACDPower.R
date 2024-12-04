@@ -648,7 +648,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       profittaker=0
       
       while((1+2+j)<=nrow(BreakoutStructure$Bi) & ExistPosition){
-        if(BreakoutStructure$Bi[1+3,"MAX"]>=BreakoutStructure$Bi[1+2+j,"MAX"] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
+        if(BreakoutStructure$Bi[1+3,"MAX"]>=BreakoutStructure$Bi[1+2+j,"MAX"]){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
           # Consolidate clear positions
           ClearPosition=getMins(BreakoutStructure, 
                                 d1=BreakoutStructure$Bi[1+2+j-2,"BiStartD"], 

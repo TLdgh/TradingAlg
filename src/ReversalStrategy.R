@@ -1,4 +1,4 @@
-CombData=NQ4HContinuous
+CombData=NQ5FContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -120,7 +120,7 @@ while(i<=(nrow(Bi)-4)){
     profittaker=0
     
     while((i+2+j)<=nrow(Bi)){
-      if(Bi$MAX[i+3]>=Bi$MAX[i+2+j] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
+      if(Bi$MAX[i+3]>=Bi$MAX[i+2+j]){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
         
         testdata=list(Price=filter(CombData,Date>=start_ind & Date<=Bi$BiEndD[i+2+j]),
                       MACD=filter(Data_macd,Date>=start_ind & Date<=Bi$BiEndD[i+2+j]),
@@ -230,20 +230,20 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#14034.28 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#12524.42 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#15834.08 0.7045455 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#13901.49 0.7173913 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#11323.29 0.6666667 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#9922.892 0.6666667 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#30153.66 0.6351351 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#28881.89 0.6233766 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
 #38032.39 0.544458 : with mean sort, 0.999 or mfi or MFRatio
