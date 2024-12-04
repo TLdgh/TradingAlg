@@ -31,7 +31,7 @@ while(i<=(nrow(Bi)-4)){
       ordertime=timebreakhigh[indexbreakhigh, "Date"]%>%ymd_hms(tz="America/Toronto", quiet = TRUE)%>%{ ifelse(!is.na(.), hour(.), NA) } #get the hours, or all NA if daily.
     }else{ordertime=NA}
     if(!all(is.na(ordertime)) && any(ordertime>=6)){ind1=indexbreakhigh[min(which(ordertime>=6))]}else{ind1=first(indexbreakhigh)} #if not all NA and there's hour>=6
-  
+    
     
     #check MACD reversal
     macd_rev1=subset(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -121,34 +121,23 @@ while(i<=(nrow(Bi)-4)){
     
     while((i+2+j)<=nrow(Bi)){
       if(Bi$MAX[i+3]>=Bi$MAX[i+2+j] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
-        # Calculate minimum return and corresponding price break date
-        price_subset <- subset(CombData, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
-        minRet <- min(log(price_subset$Close / price_subset$Open)) # Compute min return directly
-        pricebreak <- subset(CombData, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
-        pbindex <- which(log(pricebreak$Close / pricebreak$Open) < 2 * minRet)[1] # Get first index
-        pbdate <- if (!is.na(pbindex)) pricebreak$Date[pbindex] else NA
         
-        # Calculate minimum MACD and corresponding MACD break date
-        macd_subset <- subset(Data_macd, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
-        minMacd <- min(macd_subset$MACD[2:nrow(macd_subset)]) # Compute min MACD directly
-        macdbreak <- subset(Data_macd, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
-        mbindex <- which(macdbreak$MACD < 1.35 * minMacd)[1]
-        mbdate <- if (!is.na(mbindex)) macdbreak$Date[mbindex] else NA
-        
-        # Calculate minimum MoneyFlow and corresponding MoneyFlow break date
-        mf_subset <- subset(Data_MF, Date >= Bi$BiStartD[i + 1] & Date <= Bi$BiStartD[i + 2 + j])
-        minMF <- min(mf_subset$MoneyFlow[2:nrow(mf_subset)]) # Compute min MoneyFlow directly
-        mfbreak <- subset(Data_MF, Date >= Bi$BiStartD[i + 2 + j] & Date <= Bi$BiEndD[i + 2 + j])
-        mfbindex <- which(mfbreak$MoneyFlow < 1.05*minMF)
-        mfbindex <- ifelse(length(mfbindex)>=2, mfbindex[2], NA)
-        mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
+        testdata=list(Price=filter(CombData,Date>=start_ind & Date<=Bi$BiEndD[i+2+j]),
+                      MACD=filter(Data_macd,Date>=start_ind & Date<=Bi$BiEndD[i+2+j]),
+                      MF=filter(Data_MF,Date>=start_ind & Date<=Bi$BiEndD[i+2+j])
+        )
         
         # Consolidate clear positions
-        ClearPosition <- list(pricebreak=pbdate, macdbreak=mbdate, mfbreak=mfbdate)%>%Filter(function(x) !is.na(x), .)
+        ClearPosition=getMins(testdata, 
+                              d1=Bi[i+2+j-2,"BiStartD"], 
+                              d2=Bi[i+2+j-2,"BiEndD"],
+                              d3=Bi[i+2+j,"BiStartD"], 
+                              d4=Bi[i+2+j,"BiEndD"])%>%keep(~ length(.x) > 0)
+        
         if(length(ClearPosition)!=0){
           ClearPosition=ClearPosition%>%unlist()%>%sort()
-          accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
-          accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
+          accP=CombData$Close[match(ClearPosition, CombData$Date)]
+          accPind=accP<Data_EMA30$EMA30[match(ClearPosition, Data_EMA30$Date)]
           accPind=which(accPind==TRUE)
           # This checks if stoploss happens before accDecrease
           anylower=filter(CombData, Date>=Bi$BiStartD[i + 2 + j] & Date<=Bi$BiEndD[i + 2 + j] & Low<=stoploss)%>%first()
@@ -165,8 +154,8 @@ while(i<=(nrow(Bi)-4)){
           j=j-2 #go back at least 2 steps to restart with at least three lines.
           sellRefDate=Bi$BiEndD[i+2]
           break}
-        else if( !is.null(accPind) && length(accPind)>0){ #加速下跌，保本。如果不破止损就提前走，否则止损
-          sellP=max(stoploss, accP)
+        else if( !is.null(accPind) && length(accPind)>1){ #加速下跌，保本。如果不破止损就提前走，否则止损
+          sellP=max(stoploss, accP[accPind[1]])
           sellReason=paste("acceDecrease:", names(ClearPosition[accPind[1]]))
           sellRefDate=ClearPosition[accPind[1]]%>%as.character()
           j=j-2 #go back at least 2 steps to restart with at least three lines.
@@ -234,27 +223,27 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 #4H
 #9715.95 0.7058824 : with mean sort, 0.999 or mfi or MFRatio
-#13325.18 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#14034.28 0.7272727 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #2H
 #13825.65 0.6666667 : with mean sort, 0.999 or mfi or MFRatio
-#15522.47 0.6304348 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#15834.08 0.7045455 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #1H
 #8326.048 0.5666667 : with mean sort, 0.999 or mfi or MFRatio
-#10155.15 0.6086957 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#11323.29 0.6666667 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #30F:
 #22968.68 0.624 : with mean sort, 0.999 or mfi, 
 #23332.02 0.6299213 : with mean sort, 0.999 or mfi or MFRatio
-#27456.34 0.6040268 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
+#30153.66 0.6351351 : with mean sort, 0.999 or mfi or MFRatio, and macdpower
 
 #5F
-#37730.36 0.5289766 : with mean sort, 0.999 or mfi or MFRatio
+#35433.95 0.5163241 : with mean sort, 0.999 or mfi or MFRatio
 
 
 StockChart(NQ4HContinuous)
-d='2021-04-01 06:00:00'
+d='2021-05-13 02:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))

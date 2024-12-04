@@ -456,12 +456,29 @@ CoDivergence<-function(DataToBeTested, Period=NULL, BarOverride=FALSE, Data_macd
 
 
 
+getMins<-function(BreakoutStructure,d1,d2,d3,d4){
+  previousLow <- lapply(BreakoutStructure[c("Price", "MACD","MF")], function(df) {
+    subset(df, Date >= d1 & Date <= d2)
+  })
+  minRet=previousLow[['Price']]%>%transmute(Date, Value=log(Close/Open))%>%arrange(Value, Date)%>%slice_min(order_by = Value, n = 1, with_ties = FALSE)
+  minMacd=previousLow[['MACD']]%>%select(c(Date, Value=MACD))%>%arrange(Value, Date)%>%slice_min(order_by = Value, n = 1, with_ties = FALSE)
+  minMF=previousLow[['MF']]%>%select(c(Date, Value=MoneyFlow))%>%arrange(Value, Date)%>%slice_min(order_by = Value, n = 1, with_ties = FALSE)
+  
+  currentLow <- lapply(BreakoutStructure[c("Price", "MACD","MF")], function(df) {
+    subset(df, Date >= d3 & Date <= d4)})
+  currentRet=currentLow[['Price']]%>%transmute(Date, Value=log(Close/Open))%>%filter(Value<=minRet$Value)%>%first()
+  currentMacd=currentLow[['MACD']]%>%select(c(Date, Value=MACD))%>%filter(Value<=minMacd$Value)%>%first()
+  currentMF=currentLow[['MF']]%>%select(c(Date, Value=MoneyFlow))%>%filter(Value<=minMF$Value)%>%first()
+  
+  return(list(pricebreak=currentRet$Date, macdbreak=currentMacd$Date, mfbreak=currentMF$Date)) 
+}
 
 #This is the function to check the strategy at any customized time, or of the most recent breakout structure
 LatestBreakout<-function(CombData, specifyDate=NULL){
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
   Data_MFI<-PricedataMFI(CombData)
+  Data_EMA30<-FuncEMA30(CombData)
   Data_EMA60<-FuncEMA60(CombData)
   
   #Make sure to start from the date on which all data have no NA
@@ -632,34 +649,18 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
       
       while((1+2+j)<=nrow(BreakoutStructure$Bi) & ExistPosition){
         if(BreakoutStructure$Bi[1+3,"MAX"]>=BreakoutStructure$Bi[1+2+j,"MAX"] & profittaker==0){ #如果笔4及以后的下降笔最高点小于笔3最高点，也就是在笔3区间内盘整
-          # Calculate minimum return and corresponding price break date
-          price_subset <- filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi[1+1,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiStartD"])
-          minRet <- min(log(price_subset$Close / price_subset$Open)) # Compute min return directly
-          pricebreak <- filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])
-          pbindex <- which(log(pricebreak$Close / pricebreak$Open) < 2 * minRet)[1] # Get first index
-          pbdate <- if (!is.na(pbindex)) pricebreak$Date[pbindex] else NA
-          
-          # Calculate minimum MACD and corresponding MACD break date
-          macd_subset <- filter(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+1,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiStartD"])
-          minMacd <- min(macd_subset$MACD[2:nrow(macd_subset)]) # Compute min MACD directly
-          macdbreak <- filter(BreakoutStructure$MACD, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])
-          mbindex <- which(macdbreak$MACD < 1.35 * minMacd)[1]
-          mbdate <- if (!is.na(mbindex)) macdbreak$Date[mbindex] else NA
-          
-          # Calculate minimum MoneyFlow and corresponding MoneyFlow break date
-          mf_subset <- filter(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+1,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiStartD"])
-          minMF <- min(mf_subset$MoneyFlow[2:nrow(mf_subset)]) # Compute min MoneyFlow directly
-          mfbreak <- filter(BreakoutStructure$MF, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"], Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])
-          mfbindex <- which(mfbreak$MoneyFlow < 1.05*minMF)
-          mfbindex <- ifelse(length(mfbindex)>=2, mfbindex[2], NA)
-          mfbdate <- if (!is.na(mfbindex)) mfbreak$Date[mfbindex] else NA
-          
           # Consolidate clear positions
-          ClearPosition <- list(pricebreak=pbdate, macdbreak=mbdate, mfbreak=mfbdate)%>%Filter(function(x) !is.na(x), .)
+          ClearPosition=getMins(BreakoutStructure, 
+                                d1=BreakoutStructure$Bi[1+2+j-2,"BiStartD"], 
+                                d2=BreakoutStructure$Bi[1+2+j-2,"BiEndD"],
+                                d3=BreakoutStructure$Bi[1+2+j,"BiStartD"], 
+                                d4=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%keep(~ length(.x) > 0)
+
+          #print(ClearPosition)
           if(length(ClearPosition)!=0){
             ClearPosition=ClearPosition%>%unlist()%>%sort()
-            accP=CombData[which(CombData$Date %in% ClearPosition),"Close"]
-            accPind=accP<Data_EMA60[which(Data_EMA60$Date %in% ClearPosition),"EMA60"]
+            accP=CombData$Close[match(ClearPosition, CombData$Date)]
+            accPind=accP<Data_EMA30$EMA30[match(ClearPosition, Data_EMA30$Date)]
             accPind=which(accPind==TRUE)
             # This checks if stoploss happens before accDecrease
             anylower=filter(CombData, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"] & Low<=stoploss)%>%first()
@@ -678,11 +679,11 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             sellRefDate=BreakoutStructure$Bi[1+2,"BiEndD"]
             cat("stoploss was triggered!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
-          else if( !is.null(accPind) && length(accPind)>0){ 
+          else if( !is.null(accPind) && length(accPind)>1){ 
             #加速下跌，保本。如果不破止损就提前走，否则止损
-            sellP=max(stoploss, accP)
+            sellP=max(stoploss, accP[accPind[1]])
             sellReason="acceDecrease"
-            sellRefDate=ClearPosition[accPind[1]]
+            sellRefDate=ClearPosition[accPind[1]]%>%as.character()
             j=j-2 #go back at least 2 steps to restart with at least three lines.
             cat(paste0("acceDecrease due to ", names(ClearPosition[accPind[1]]), "."), "Exit immediately!", "sellRefDate:", sellRefDate, "value:", sellP, "\n")
             break}
