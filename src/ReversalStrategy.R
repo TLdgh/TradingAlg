@@ -1,4 +1,4 @@
-CombData=NQ5FContinuous
+CombData=NQ4HContinuous
 Data_macd<-PricedataMACD(CombData) #calculate the MACD
 Data_MF<-PricedataMoneyFlow(CombData)
 Data_MFI<-PricedataMFI(CombData)
@@ -164,14 +164,21 @@ while(i<=(nrow(Bi)-4)){
         else{j=j+2} #以上都不满足则继续笔3区间震荡
       }
       else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-        profittaker=max(mean(Bi$MIN[i+2],Bi$MAX[i+2]), Bi$MIN[i+2+j-2]*0.999)
+        breakema60 <- map(list(data=CombData, ema60=Data_EMA60), ~ {
+          filter(.x, Date >= Bi$BiStartD[i+2+j] & Date <= Bi$BiEndD[i+2+j])
+        })
+        breakema60=breakema60$data[which(breakema60$data$Close<breakema60$ema60$EMA60)%>%first(),]
+        profitlevel=list(Date=c(Bi$BiEndD[i+2], Bi$BiEndD[i+2+j], Bi$BiEndD[i+2+j-2], breakema60$Date), 
+                         Value=c(Bi$MIN[i+2], mean(c(Bi$MIN[i+2],Bi$MAX[i+2])), Bi$MIN[i+2+j-2]*0.999, breakema60$Close))
+        
+        profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
         #cat("Profit taker: ", profittaker)
-        if(Bi$MIN[i+2+j]<=profittaker & 
-           any(CombData[which(CombData$Date==Bi$BiEndD[i+2+j]),"Close"] < subset(Data_EMA60, Date>=Bi$BiStartD[i+2+j] & Date<=Bi$BiEndD[i+2+j])%>%select(EMA60))
+        if(Bi$MIN[i+2+j]<=Bi$MIN[i+2+j-2] && 
+           nrow(breakema60)!=0
         ){
           sellP=profittaker
           sellReason="takeprofit"
-          sellRefDate=Bi$BiEndD[i+2+j-2]
+          sellRefDate=profitlevel$Date[which(profitlevel$Value==profittaker)]
           #cat("sellP:",sellP,"\n")
           j=j-2
           break}
@@ -243,7 +250,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 StockChart(NQ4HContinuous)
-d='2021-05-13 02:00:00'
+d='2020-02-28 02:00:00'
 MACDThreeLineTest(subset(NQ4HContinuous,Date<=d))
 MACDPower(subset(NQ4HContinuous,Date<=d),"NQ4HContinuous")
 LatestBreakout(subset(NQ4HContinuous,Date<=d))

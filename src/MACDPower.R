@@ -693,16 +693,23 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           else{j=j+2} #以上都不满足则继续笔3区间震荡
         }
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-          profittaker=max(mean(BreakoutStructure$Bi[1+2,"MIN"],BreakoutStructure$Bi[1+2,"MAX"]), BreakoutStructure$Bi[1+2+j-2,"MIN"]*0.999)
+          breakema60 <- map(list(data=BreakoutStructure$Price, ema60=Data_EMA60), ~ {
+            filter(.x, Date >= BreakoutStructure$Bi$BiStartD[1+2+j] & Date <= BreakoutStructure$Bi$BiEndD[1+2+j])
+          })
+          breakema60=breakema60$data[which(breakema60$data$Close<breakema60$ema60$EMA60)%>%first(),]
+          profitlevel=list(Date=c(BreakoutStructure$Bi$BiEndD[1+2], BreakoutStructure$Bi$BiEndD[1+2+j], BreakoutStructure$Bi$BiEndD[1+2+j-2], breakema60$Date), 
+                           Value=c(BreakoutStructure$Bi$MIN[1+2], mean(c(BreakoutStructure$Bi$MIN[1+2],BreakoutStructure$Bi$MAX[1+2])), BreakoutStructure$Bi$MIN[1+2+j-2]*0.999, breakema60$Close))
+          
+          profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
           #cat("Profit taker: ", profittaker)
           if(
             #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
-            BreakoutStructure$Bi[1+2+j,"MIN"]<=profittaker & 
-            any(BreakoutStructure$Price[which(BreakoutStructure$Price$Date==BreakoutStructure$Bi[1+2+j,"BiEndD"]),"Close"] < filter(Data_EMA60, Date>=BreakoutStructure$Bi[1+2+j,"BiStartD"] & Date<=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%select(EMA60))
+            BreakoutStructure$Bi$MIN[i+2+j]<=BreakoutStructure$Bi$MIN[i+2+j-2] && 
+            nrow(breakema60)!=0
           ){
             sellP=profittaker
             sellReason="takeprofit"
-            sellRefDate=BreakoutStructure$Bi[1+2+j-2,"BiEndD"]
+            sellRefDate=profitlevel$Date[which(profitlevel$Value==profittaker)]
             cat("Profittaker was triggered. Close position.", "sellRefDate:", sellRefDate, "value:",sellP, "\n")
             j=j-2
             break}
