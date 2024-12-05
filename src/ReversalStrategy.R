@@ -1,5 +1,5 @@
 testReverseStrategy<-function(CombData){
-  #CombData=NQ30FContinuous
+  #CombData=NQ4HContinuous
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
   Data_MFI<-PricedataMFI(CombData)
@@ -77,7 +77,9 @@ testReverseStrategy<-function(CombData){
         map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
                               Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
         )
-      mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+      mfr<-if_else(MFRatio[[1]]$Neg != 0,
+                   1 - MFRatio[[2]]$Neg / MFRatio[[1]]$Neg,
+                   0)
       
       #MACDPower
       powerind=which(BiPlanetStr$BiEndD==BreakoutStructure$Bi[1+2,"BiEndD"])
@@ -256,19 +258,19 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 
 #4H
-#13273.07 0.7826087
+#12020.572 73.91304
 
 #2H
-#14919.05 0.7391304
+#11334.668 63.82979
 
 #1H
-#9866.777 0.6619718
+#6039.709 57.74648
 
 #30F:
-#29075.01 0.6363636
+#24279.289 60.36585
 
 #5F
-#38032.39 0.544458
+#32737.95 52.44596
 
 
 d1='2019-12-01 09:00:00'
