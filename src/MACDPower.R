@@ -657,7 +657,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
                                 d2=BreakoutStructure$Bi[1+2+j-2,"BiEndD"],
                                 d3=BreakoutStructure$Bi[1+2+j,"BiStartD"], 
                                 d4=BreakoutStructure$Bi[1+2+j,"BiEndD"])%>%keep(~ length(.x) > 0)
-
+          
           #print(ClearPosition)
           if(length(ClearPosition)!=0){
             ClearPosition=ClearPosition%>%unlist()%>%sort()
@@ -672,7 +672,7 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
             accPind=NULL
           }
           
-          if((is.null(accPind) | ( !is.null(accPind) && length(accPind)==0) ) &
+          if((is.null(accPind) | ( !is.null(accPind) && length(accPind)<=1) ) &
              BreakoutStructure$Bi[1+2+j,"MIN"]<=stoploss){ 
             #任何时候下降笔破止损就卖出
             sellP=stoploss
@@ -695,38 +695,43 @@ LatestBreakout<-function(CombData, specifyDate=NULL){
           else{j=j+2} #以上都不满足则继续笔3区间震荡
         }
         else{ #如果突破笔3最高点，则止盈开始。止盈位是前低或者进场k线的最低点，取最大
-          strucBreak <- map(list(data=BreakoutStructure$Price, ema5=Data_EMA5, ema20=Data_EMA20, ema60=Data_EMA60), ~ {
-            filter(.x, Date >= BreakoutStructure$Bi$BiStartD[1+2+j] & Date <= BreakoutStructure$Bi$BiEndD[1+2+j])
-          })
-          below60=which(strucBreak$data$Close<strucBreak$ema60$EMA60)%>%first()
-          fivebelow20=which(strucBreak$ema5$EMA5<strucBreak$ema20$EMA20)%>%first()
-          # cleanup
-          strucBreak <- if (is_empty(below60) && is_empty(fivebelow20)) {
-            slice(strucBreak$data, 0) # Zero-row data frame
-          } else {
-            min_index <- c(below60, fivebelow20) %>% discard(is_empty) %>% min()
-            slice(strucBreak$data, min_index)
-          }
-          
-          profitlevel=list(Date=c(BreakoutStructure$Bi$BiEndD[1+2], BreakoutStructure$Bi$BiEndD[1+2+j], BreakoutStructure$Bi$BiEndD[1+2+j-2], strucBreak$Date), 
-                           Value=c(BreakoutStructure$Bi$MIN[1+2], mean(c(BreakoutStructure$Bi$MIN[1+2],BreakoutStructure$Bi$MAX[1+2])), BreakoutStructure$Bi$MIN[1+2+j-2]*0.999, strucBreak$Close))
-          
-          profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
-          #cat("Profit taker: ", profittaker)
-          if(
-            #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
-            BreakoutStructure$Bi$MIN[i+2+j]<=BreakoutStructure$Bi$MIN[i+2+j-2] && 
-            nrow(strucBreak)!=0
-          ){
-            sellP=profittaker
-            sellReason="takeprofit"
-            sellRefDate=profitlevel$Date[which(profitlevel$Value==profittaker)]
-            cat("Profittaker was triggered. Close position.", "sellRefDate:", sellRefDate, "value:",sellP, "\n")
-            j=j-2
-            break}
-          else{if((1+2+j)>=nrow(BreakoutStructure$Bi)){cat("No profit should be taken yet.", "sellRefDate:", BreakoutStructure$Bi[1+2+j-2,"BiEndD"], "value:", profittaker, "\n");break}else{j=j+2}
-            #cat("move on to: ",j,"\n")
-          }
+          begincheck<-filter(BreakoutStructure$Price, Date>=BreakoutStructure$Bi$BiStartD[1+2+j] & 
+                               Date<=BreakoutStructure$Bi$BiEndD[1+2+j] & Close<=BreakoutStructure$Bi$MIN[1+2+j-2])%>%
+            first()
+          if(nrow(begincheck)!=0){
+            strucBreak <- map(list(data=BreakoutStructure$Price, ema5=Data_EMA5, ema20=Data_EMA20, ema60=Data_EMA60), ~ {
+              filter(.x, Date >= BreakoutStructure$Bi$BiStartD[1+2+j] & Date <= BreakoutStructure$Bi$BiEndD[1+2+j])
+            })
+            below60=which(strucBreak$data$Close<strucBreak$ema60$EMA60)%>%first()
+            fivebelow20=which(strucBreak$ema5$EMA5<strucBreak$ema20$EMA20)%>%first()
+            # cleanup
+            strucBreak <- if (is_empty(below60) && is_empty(fivebelow20)) {
+              slice(strucBreak$data, 0) # Zero-row data frame
+            } else {
+              min_index <- c(below60, fivebelow20) %>% discard(is_empty) %>% min()
+              slice(strucBreak$data, min_index)
+            }
+            
+            profitlevel=list(Date=c(BreakoutStructure$Bi$BiEndD[1+2], BreakoutStructure$Bi$BiEndD[1+2+j], BreakoutStructure$Bi$BiEndD[1+2+j-2], strucBreak$Date), 
+                             Value=c(BreakoutStructure$Bi$MIN[1+2], mean(c(BreakoutStructure$Bi$MIN[1+2],BreakoutStructure$Bi$MAX[1+2])), BreakoutStructure$Bi$MIN[1+2+j-2]*0.999, strucBreak$Close))
+            
+            profittaker=max(min(profitlevel$Value[2], profitlevel$Value[3]), profitlevel$Value[4])
+            #cat("Profit taker: ", profittaker)
+            if(
+              #this is roughly the same as VWEMA5<VWEMA20 or EMA5<EMA60 when down breakout happens (which is used in real trading). 
+              BreakoutStructure$Bi$MIN[i+2+j]<=BreakoutStructure$Bi$MIN[i+2+j-2] && 
+              nrow(strucBreak)!=0
+            ){
+              sellP=profittaker
+              sellReason="takeprofit"
+              sellRefDate=profitlevel$Date[which(profitlevel$Value==profittaker)]
+              cat("Profittaker was triggered. Close position.", "sellRefDate:", sellRefDate, "value:",sellP, "\n")
+              j=j-2
+              break}
+            else{if((1+2+j)>=nrow(BreakoutStructure$Bi)){cat("No profit should be taken yet.", "sellRefDate:", BreakoutStructure$Bi[1+2+j-2,"BiEndD"], "value:", profittaker, "\n");break}else{j=j+2}
+              #cat("move on to: ",j,"\n")
+            }
+          }else{j=j+2}
         }
       }
       break}
@@ -741,7 +746,7 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
   Data_macd<-PricedataMACD(CombData) #calculate the MACD
   Data_MF<-PricedataMoneyFlow(CombData)
   Data_MFI<-PricedataMFI(CombData)
-
+  
   #Make sure to start from the date on which all data have no NA
   minimumdate=map(list(CombData, Data_macd, Data_MF,Data_MFI), ~.x$Date)%>%Reduce(intersect, .)%>%first()
   SBPStr<-ChanLunStr(CombData)
