@@ -275,14 +275,17 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 d1='2019-12-01 09:00:00'
 d2='2020-12-01 09:00:00'
-d='2020-05-14 05:30:00'
-StockChart(subset(NQ30FContinuous,Date>=d1 & Date<=d2),"NQ30FContinuous")
+d="2020-05-28 15:30:00"
+
+ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous,
+                      NQ30FContinuous=NQ30FContinuous), 
+            StartDate=d ,UserInput = TRUE)
 
 MACDThreeLineTest(subset(NQ30FContinuous,Date<=d))
-MACDPower(subset(NQ30FContinuous,Date<=d),"NQ4HContinuous")
-LatestBreakout(subset(NQ30FContinuous,Date<='2020-01-23 09:00:00'))
+MACDPower(subset(NQ30FContinuous,Date<=d), 'NQ30FContinuous')
 
-
+LatestBreakout(subset(NQ30FContinuous,Date<=d))
+LatestBreakout(subset(NQ4HContinuous,Date<='2020-01-08 10:00:00'))
 
 
 

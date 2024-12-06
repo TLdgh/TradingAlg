@@ -222,7 +222,8 @@ FuncEMA20<-function(Pricedata){
 }
 
 FuncEMA5<-function(Pricedata){
-  EMA5<-Pricedata%>%arrange(Date)%>%mutate(EMA5=EVWMA(price=Close, volume=Volume, n=5))%>%
+  EMA5<-Pricedata%>%arrange(Date)%>%mutate(Volume=if_else(Volume == 0, 1, Volume))%>%
+    mutate(EMA5=EVWMA(price=Close, volume=Volume, n=5))%>%
     na.omit()%>%select(Date, EMA5)
   return(EMA5)
 }

@@ -804,7 +804,9 @@ MACDThreeLineTest<-function(CombData, specifyDate=NULL){
         map(~ .x %>%summarise(Pos = sum(MoneyFlow_EMA[MoneyFlow_EMA > 0], na.rm = TRUE),
                               Neg = sum(MoneyFlow_EMA[MoneyFlow_EMA <= 0], na.rm = TRUE))
         )
-      mfr<-1-MFRatio[[2]]$Neg/MFRatio[[1]]$Neg
+      mfr<-if_else(MFRatio[[1]]$Neg != 0,
+                   1 - MFRatio[[2]]$Neg / MFRatio[[1]]$Neg,
+                   0)
       
       #MACDPower
       powerind=which(BiPlanetStr$BiEndD==BreakoutStructure$Bi[1+2,"BiEndD"])

@@ -39,7 +39,7 @@ source("src/Bootstrap.R")
 
 
 #Step 1------------------------------------------
-FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("5F"), RealData=FALSE)
+FutToBePrepared<-GetFutInfo(tws, FUT=c("NQ"),interval=c("1HContinuous","2HContinuous","4HContinuous"), RealData=FALSE)
 
 #Step 2------------------------------------------
 #Please combine the data using the CandleStickApp
@@ -173,15 +173,14 @@ nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=InputLoc)
 for (i in 1:length(InputLoc)){
   FutToBePrepared$DownloadData(nam=nam[i], fileloc = InputLoc[i], LoadData = TRUE)     #This src load the combined data
 }
-MultiChart(list(NQ5F=NQ5F, NQ1F=NQ1F))
-
-
 
 OutputLoc<-readLines(paste0(getwd(),"/CandleStickComb/OutputLoc.txt"))
 nam<-gsub(pattern=".*/|\\.csv.*",replacement = "", x=OutputLoc)
 for (i in 1:length(OutputLoc)){
   FutToBePrepared$ReadCombData(OutputCombtxt = OutputLoc[i] , nam=nam[i])     #This src load the combined data
 }
+
+MultiChart(list(NQ5F=NQ5F, NQ1F=NQ1F))
 MultiChart(list(NQ1F=NQ1FComb,NQ5F=NQ5FComb))
 
 
