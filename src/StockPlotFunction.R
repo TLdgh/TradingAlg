@@ -1,6 +1,6 @@
-PriceChart<-function(Pricedata, Title){
+PriceChart<-function(Pricedata, Title, GlobalMarket){
   if(substr(Title, 1,2)=="NQ"){combfile_path=paste0(getwd(),"/CandleStickComb/NQ/",Title, "Comb.csv")}
-  else if(str_sub(Title,-5)=="daily"){combfile_path=paste0(getwd(),"/CandleStickComb/US/",Title, "Comb.csv")}
+  else if(str_sub(Title,-5)=="daily"){combfile_path=paste0(getwd(),"/CandleStickComb/",GlobalMarket,"/",Title, "Comb.csv")}
   PricedataComb=read.csv(combfile_path)%>%arrange(Date)%>%subset(Date>=first(Pricedata$Date) & Date<=last(Pricedata$Date))
   StarData <- StarFunction(PricedataComb)
   Bi<-BiFunction(StarData)
@@ -247,7 +247,7 @@ MakeDirection<-function(col){
 }
 
 
-StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE, VOIdata=NULL){
+StockChart<-function (Pricedata, Title=NULL, GlobalMarket="US", VIXfile=NULL, VolatilityCheck=FALSE, VOIdata=NULL){
   if(is.null(Title)==TRUE){Title<-deparse(substitute(Pricedata))}
   Alldata=Pricedata%>%arrange(Date)
   
@@ -391,7 +391,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
     layout(xaxis = list(rangeslider = list(visible = F)), shapes=list(MFIlines(y=34), MFIlines(y=-34)))
   
   if(is.null(VIXfile)!=TRUE & is.null(VOIdata)==TRUE){
-    p<-subplot(PriceChart(Alldata, Title), MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15, 0.15)) %>%
+    p<-subplot(PriceChart(Alldata, Title, GlobalMarket), MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15, 0.15)) %>%
       layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
@@ -406,7 +406,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
              annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
              hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   }else if(is.null(VOIdata)!=TRUE & is.null(VIXfile)==TRUE){
-    p<-subplot(PriceChart(Alldata, Title), OIChart, MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.21, 0.13, 0.13, 0.13)) %>%
+    p<-subplot(PriceChart(Alldata, Title, GlobalMarket), OIChart, MACDChart, MoneyFlowChart, MFIChart, nrows=5, shareX=TRUE, heights = c(0.4, 0.21, 0.13, 0.13, 0.13)) %>%
       layout(xaxis=list(anchor="y5",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
@@ -421,7 +421,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
              annotations=list(x=0.5, y=0.98, xref="paper", yref="paper",xanchor="left",text=Title,font=list(color="black"),showarrow=FALSE),
              hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   }else if(is.null(VOIdata)!=TRUE & is.null(VIXfile)!=TRUE){
-    p<-subplot(PriceChart(Alldata, Title), OIChart, MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=6, shareX=TRUE, heights = c(0.4, 0.2, 0.1, 0.1, 0.1, 0.1)) %>%
+    p<-subplot(PriceChart(Alldata, Title, GlobalMarket), OIChart, MACDChart, vix_MACDChart, MoneyFlowChart, MFIChart, nrows=6, shareX=TRUE, heights = c(0.4, 0.2, 0.1, 0.1, 0.1, 0.1)) %>%
       layout(xaxis=list(anchor="y6",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),
@@ -439,7 +439,7 @@ StockChart<-function (Pricedata, Title=NULL, VIXfile=NULL, VolatilityCheck=FALSE
              hovermode = "x unified",plot_bgcolor="#D3D3D3", paper_bgcolor="#D3D3D3")%>%config(scrollZoom=TRUE)
   }
   else{
-    p<-subplot(PriceChart(Alldata, Title), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
+    p<-subplot(PriceChart(Alldata, Title, GlobalMarket), MACDChart, MoneyFlowChart, MFIChart, nrows=4, shareX=TRUE, heights = c(0.4, 0.15, 0.15, 0.15)) %>%
       layout(xaxis=list(anchor="y4",showspikes=TRUE, spikemode='across', spikesnap='cursor', spikethickness=0.5, spikedash='solid',showticklabels=FALSE),
              yaxis=list(side = "left", title = "Price",showspikes=TRUE, spikemode='across', 
                         spikesnap='cursor',spikethickness=0.5, spikedash='solid'),

@@ -275,7 +275,7 @@ df%>%plot_ly(x = ~Profit,type = "histogram",
 
 d1='2019-12-01 09:00:00'
 d2='2020-12-01 09:00:00'
-d="2020-05-28 15:30:00"
+d="2022-06-20 06:00:00"
 
 ChartReplay(Data=list(NQ4HContinuous=NQ4HContinuous,
                       NQ30FContinuous=NQ30FContinuous), 

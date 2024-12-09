@@ -2,13 +2,13 @@ GetStkInfo<-setRefClass(
   "StkToBePrepared",
   fields = list(StkToBePrepared="list", STK="character", interval="character",
                 InputCombtxt="character",OutputCombtxt="character",RawDataLocation="list",nam="character",
-                tws="environment", RealData="logical", TimeZ="character"),
+                tws="environment", RealData="logical", TimeZ="character", GlobalMarket="character"),
   methods = list(
-    initialize=function(STK,interval,tws,RealData = FALSE){
+    initialize=function(STK,interval,tws,RealData = FALSE,GlobalMarket="US"){
       #Create the StkToBePrepared attribute
       BasicInfo<-merge(STK,interval)
       .self$TimeZ<-"America/Toronto"
-      .self$StkToBePrepared<-.self$populateStkInfo(BasicInfo)
+      .self$StkToBePrepared<-.self$populateStkInfo(BasicInfo,GlobalMarket)
       
       #Prepare Stock information
       .self$InputCombtxt<-character()
@@ -20,7 +20,7 @@ GetStkInfo<-setRefClass(
     
     
     
-    populateStkInfo=function(BasicInfo,GlobalMarket="US", A_STOK=NULL){
+    populateStkInfo=function(BasicInfo,GlobalMarket){
       StkInfo<-list()
       
       for (i in 1:nrow(BasicInfo)) {
@@ -38,7 +38,7 @@ GetStkInfo<-setRefClass(
         }
         else if (GlobalMarket=="China"){
           StkInfo[[paste0(BasicInfo[i,1],BasicInfo[i,2])]]<-cbind(SecurityType="STK",Symb=BasicInfo[i,1],intv=BasicInfo[i,2],barSize=barsize,duration=duration,
-                                                                  endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"), GlobalMarket=GlobalMarket, A_STOK=A_STOK)
+                                                                  endDateTime=format(Sys.time(),"%Y%m%d %H:%M:%S"), GlobalMarket=GlobalMarket)
         }
       }
       return(StkInfo)
@@ -62,7 +62,7 @@ GetStkInfo<-setRefClass(
                             InputFileLoc_Stk)
           }
           else{
-            .self$Get_ChineseStock(Symb=.self$StkToBePrepared[[i]][1,"Symb"][[1]], freq=.self$StkToBePrepared[[i]][1,"intv"][[1]], fileloc=InputFileLoc_Stk)
+            print("Download your data with Python.")#.self$Get_ChineseStock(Symb=.self$StkToBePrepared[[i]][1,"Symb"][[1]], freq=.self$StkToBePrepared[[i]][1,"intv"][[1]], fileloc=InputFileLoc_Stk)
           }
         }
         
@@ -178,7 +178,7 @@ GetStkInfo<-setRefClass(
       }else if(DataInfo["SecurityType"] == "STK"){
         if(DataInfo["intv"]=="daily" | DataInfo["intv"]=="weekly" | DataInfo["intv"]=="monthly"){
           if(DataInfo["GlobalMarket"]=="China"){
-            namresult <- paste(DataInfo["A_STOK"],"_",DataInfo["intv"], sep = "")
+            namresult <- paste(DataInfo["Symb"],"_",DataInfo["intv"], sep = "")
           }else{
             namresult <- paste(toupper(DataInfo["Symb"]),"_",DataInfo["intv"], sep = "")
           }
