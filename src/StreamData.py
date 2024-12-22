@@ -70,7 +70,7 @@ class TestApp(EClient, EWrapper):
         nq_contract.secType = "FUT"        # Security type (Futures)
         nq_contract.exchange = "CME"    # Exchange for NQ futures (CME GLOBEX)
         nq_contract.currency = "USD"       # Currency for the contract
-        nq_contract.lastTradeDateOrContractMonth = "20241220"  # Expiration year/month (example: Dec 2023)
+        nq_contract.lastTradeDateOrContractMonth = "20250321"  # Expiration year/month (example: Dec 2023)
         
         time_z=pytz.timezone("US/Central")
         current_time=datetime.now(time_z)
