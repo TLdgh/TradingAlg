@@ -39,7 +39,7 @@ class TestApp(EClient, EWrapper):
     def set_symbol(self, symb):
         self.symb = symb
         filetime=(datetime.now() + timedelta(days=1)).strftime('%Y%m%d')
-        self.csv_filepath=os.path.join(os.getcwd(), 
+        self.csv_filepath=os.path.join(root_directory, 
                                        "Data/OriginalFuturesData/NQ/TickData", 
                                        f"TickData_{symb}_{filetime}.csv")
 
