@@ -9,6 +9,9 @@ TradingVenv
 .RData
 .RDataTmp
 
+# SQL databases 
+*NQData
+
 # User-specific files
 .Ruserdata
 
